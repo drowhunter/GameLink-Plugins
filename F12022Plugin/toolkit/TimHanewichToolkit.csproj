@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Authors>Tim Hanewich</Authors>
+    <Copyright>Tim Hanewich</Copyright>
+    <PackageIcon>ToolIcon.jpg</PackageIcon>
+    <RepositoryUrl>https://github.com/TimHanewich/TimHanewich.Toolkit</RepositoryUrl>
+    <PackageTags>tim hanewich,hanewich,timh,toolkit,tool</PackageTags>
+    <Version>3.0.0</Version>
+    <Description>Unix time helper, matrix multiplication, random name generation, byte array management, string management, and more.</Description>
+    <PackageId>TimHanewich.Toolkit</PackageId>
+    <Product>TimHanewich.Toolkit</Product>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="ToolIcon.jpg">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>

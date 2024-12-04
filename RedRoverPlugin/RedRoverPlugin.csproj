@@ -38,6 +38,6 @@
     <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\YawGEAPI\YawGEAPI.csproj" />
+    <ProjectReference Include="..\YawGLAPI\YawGLAPI.csproj" />
   </ItemGroup>
 </Project>

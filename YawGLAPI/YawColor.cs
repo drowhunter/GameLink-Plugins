@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
-namespace YawGEAPI {
+namespace YawGLAPI {
     public class YawColor : INotifyPropertyChanged {
         public static YawColor BLACK = new YawColor(0, 0, 0);
         public static YawColor WHITE = new YawColor(0, 0, 0);

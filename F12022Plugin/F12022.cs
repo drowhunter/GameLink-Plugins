@@ -7,7 +7,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Threading;
-using YawGEAPI;
+using YawGLAPI;
 
 namespace F12022Plugin
 {

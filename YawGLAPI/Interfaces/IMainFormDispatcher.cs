@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace YawGEAPI
+namespace YawGLAPI
 {
     public interface IMainFormDispatcher
     {

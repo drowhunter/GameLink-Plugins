@@ -8,7 +8,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 using WRCPlugin.Properties;
-using YawGEAPI;
+using YawGLAPI;
 using Newtonsoft;
 using Newtonsoft.Json.Linq;
 using System.Linq;

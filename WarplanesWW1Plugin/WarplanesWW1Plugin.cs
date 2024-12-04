@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 using WarplanesWW1Plugin.Properties;
-using YawGEAPI;
+using YawGLAPI;
 namespace WarplanesWW1Plugin
 {
     [Export(typeof(Game))]

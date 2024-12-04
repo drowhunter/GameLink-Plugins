@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
 
-namespace YawGEAPI
+namespace YawGLAPI
 {
     public interface IProfileManager
     {

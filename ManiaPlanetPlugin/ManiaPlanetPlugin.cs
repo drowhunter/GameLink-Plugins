@@ -6,7 +6,7 @@ using System.Threading;
 using System.IO.MemoryMappedFiles;
 using System.ComponentModel.Composition;
 using System.Runtime.InteropServices;
-using YawGEAPI;
+using YawGLAPI;
 using ManiaPlanetPlugin.Properties;
 using System.Reflection;
 using System.IO;

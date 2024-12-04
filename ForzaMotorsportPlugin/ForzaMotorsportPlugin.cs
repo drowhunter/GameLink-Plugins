@@ -9,7 +9,7 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
-using YawGEAPI;
+using YawGLAPI;
 
 namespace ForzaMotorsportPlugin
 {

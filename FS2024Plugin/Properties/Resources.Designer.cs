@@ -70,7 +70,7 @@ namespace FS2024Plugin.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to .
+        ///   Looks up a localized string similar to Please patch before first use.
         /// </summary>
         internal static string description {
             get {

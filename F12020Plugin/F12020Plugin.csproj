@@ -30,7 +30,7 @@
     <PackageReference Include="TimHanewich.Toolkit" Version="3.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\YawGEAPI\YawGEAPI.csproj" />
+    <ProjectReference Include="..\YawGLAPI\YawGLAPI.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">

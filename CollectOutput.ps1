@@ -35,7 +35,7 @@ foreach ($projectDir in $projectDirectories) {
 
 
 # Remove unwanted DLLs from the output directory
-$excludedFiles = @("YawGEAPI.dll") # Add other files to exclude as needed
+$excludedFiles = @("YawGLAPI.dll") # Add other files to exclude as needed
 foreach ($excludedFile in $excludedFiles) {
     $filePath = Join-Path -Path $outputDirectory -ChildPath $excludedFile
     if (Test-Path $filePath) {

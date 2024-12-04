@@ -27,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\YawGEAPI\YawGEAPI.csproj" />
+    <ProjectReference Include="..\YawGLAPI\YawGLAPI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

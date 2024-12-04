@@ -1,4 +1,4 @@
-﻿namespace YawGEAPI
+﻿namespace YawGLAPI
 {
     public enum ARCADE_EVENT_TYPE
     {

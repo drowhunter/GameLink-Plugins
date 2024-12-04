@@ -6,7 +6,7 @@ using System.ComponentModel.Composition;
 using System.IO;
 using System.Net;
 using System.Reflection;
-using YawGEAPI;
+using YawGLAPI;
 
 namespace YawVR_Game_Engine
 {

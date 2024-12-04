@@ -7,7 +7,7 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
 using System.Threading;
-using YawGEAPI;
+using YawGLAPI;
 namespace HelicopterSimulator
 {
     [Export(typeof(Game))]

@@ -8,7 +8,7 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Threading;
 using System.Xml;
-using YawGEAPI;
+using YawGLAPI;
 
 namespace YawVR_Game_Engine.Plugin
 {

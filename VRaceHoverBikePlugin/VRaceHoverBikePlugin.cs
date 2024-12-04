@@ -9,7 +9,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using VRaceHoverBikePlugin.Properties;
-using YawGEAPI;
+using YawGLAPI;
 
 namespace YawVR_Game_Engine.Plugin
 {

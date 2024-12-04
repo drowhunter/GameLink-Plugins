@@ -9,7 +9,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 using WhitewaterPlugin.Properties;
-using YawGEAPI;
+using YawGLAPI;
 
 namespace WhitewaterPlugin
 {

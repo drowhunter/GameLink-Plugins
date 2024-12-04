@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Net.Sockets;
 using System.Numerics;
 using System.Reflection;
-using YawGEAPI;
+using YawGLAPI;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using Quaternion = System.Numerics.Quaternion;
 

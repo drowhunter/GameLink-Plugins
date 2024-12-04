@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace YawGEAPI
+namespace YawGLAPI
 {
 
     public enum MathType

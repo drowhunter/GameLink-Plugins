@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using YawGEAPI;
+using YawGLAPI;
 namespace MSFS2024
 {
     [Export(typeof(Game))]

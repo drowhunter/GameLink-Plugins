@@ -8,7 +8,7 @@ using System.Net.Http;
 using System.Reflection;
 using System.Threading;
 using WarthunderPlugin.Properties;
-using YawGEAPI;
+using YawGLAPI;
 
 namespace YawVR_Game_Engine.Plugin
 {

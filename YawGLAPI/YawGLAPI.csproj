@@ -4,8 +4,8 @@
     <OutputType>Library</OutputType>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <Configurations>All;Debug;Release</Configurations>
-    <AssemblyTitle>YawGEAPI</AssemblyTitle>
-    <Product>YawGEAPI</Product>
+    <AssemblyTitle>YawGLAPI</AssemblyTitle>
+    <Product>YawGLAPI</Product>
     <Copyright>Copyright ©  2022</Copyright>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>

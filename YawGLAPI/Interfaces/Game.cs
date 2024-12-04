@@ -2,7 +2,7 @@
 using System.IO;
 using System.Reflection;
 
-namespace YawGEAPI
+namespace YawGLAPI
 {
 
     /// <summary>

@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Resources\logo.jpg" />
+    <None Remove="Resources\logo_small.jpg" />
+    <None Remove="Resources\YawGLAPI.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="System.ComponentModel.Composition" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Include="Resources\YawGLAPI.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="YawGLAPI">
+      <HintPath>Resources\YawGLAPI.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\logo.jpg" />
+    <EmbeddedResource Include="Resources\logo_small.jpg" />
+  </ItemGroup>
+
+</Project>

@@ -3,10 +3,12 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+    <Nullable>disable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\default.yawglprofile" />
+    <None Remove="Resources\Fly Dangerous_Default.yawglprofile" />
     <None Remove="Resources\logo.jpg" />
     <None Remove="Resources\logo_small.jpg" />
     <None Remove="Resources\YawGLAPI.dll" />
@@ -18,18 +20,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Page Include="Resources\YawGLAPI.dll" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="YawGLAPI">
-      <HintPath>Resources\YawGLAPI.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
+    <EmbeddedResource Include="Resources\default.yawglprofile" />
     <EmbeddedResource Include="Resources\logo.jpg" />
     <EmbeddedResource Include="Resources\logo_small.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\YawGLAPI\YawGLAPI.csproj" />
   </ItemGroup>
 
 </Project>

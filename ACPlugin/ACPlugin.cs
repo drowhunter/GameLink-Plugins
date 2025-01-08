@@ -10,12 +10,13 @@ using System.Threading;
 using System.Runtime.InteropServices;
 using YawGLAPI;
 using System.ComponentModel.Design;
+using System.Threading.Tasks;
 
 namespace YawVR_Game_Engine.Plugin
 {
     [Export(typeof(Game))]
-    [ExportMetadata("Name", "Assetto Corsa")]
-    [ExportMetadata("Version", "1.2")]
+    [ExportMetadata("Name", "Assetto Corsa (PC)")]
+    [ExportMetadata("Version", "1.3")]
     class ACPlugin : Game
     {
         private IProfileManager controller;
@@ -26,7 +27,7 @@ namespace YawVR_Game_Engine.Plugin
         private MemoryMappedFile sharedMemory;
         private MemoryMappedViewAccessor viewAccessor;
 
-        public string PROCESS_NAME => String.Empty;
+        public string PROCESS_NAME => "acs";
         public int STEAM_ID => 244210;
         public string AUTHOR => "YawVR";
         public bool PATCH_AVAILABLE => false;
@@ -57,19 +58,28 @@ namespace YawVR_Game_Engine.Plugin
 
         public void Init()
         {
-            try
+            bool mmfFound = false;
+            running = true;
+            Task.Run(async delegate
             {
-                sharedMemory = MemoryMappedFile.OpenExisting("Local\\acpmf_physics");
-                viewAccessor = sharedMemory.CreateViewAccessor();
+                do
+                {
+                    try
+                    {
+                        sharedMemory = MemoryMappedFile.OpenExisting("Local\\acpmf_physics");
+                        viewAccessor = sharedMemory.CreateViewAccessor();
 
-                running = true;
-                readThread = new Thread(ReadFunction);
-                readThread.Start();
-            }
-            catch (FileNotFoundException)
-            {
-                Interaction.MsgBox("Shared memory for Assetto Corsa not found. Make sure the game is running and shared memory is enabled.", MsgBoxStyle.Critical, "Error");
-            }
+                        mmfFound = true;
+                        readThread = new Thread(ReadFunction);
+                        readThread.Start();
+                    }
+                    catch (FileNotFoundException)
+                    {
+                        //Keep trying, unless plugin is stopped
+                        await Task.Delay(1000);
+                    }
+                } while (!mmfFound && running);
+            });
         }
 
         public Physics ReadPhysics()

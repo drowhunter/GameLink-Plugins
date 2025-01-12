@@ -1,5 +1,4 @@
-﻿using NoLimits2Plugin.Properties;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
@@ -11,6 +10,7 @@ using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+
 using YawGLAPI;
 
 namespace YawVR_Game_Engine.Plugin
@@ -63,7 +63,9 @@ namespace YawVR_Game_Engine.Plugin
         public bool PATCH_AVAILABLE => true;
 
 
-        public string Description => Resources.description;
+        public string Description => GetString("description.html");
+
+        private string defProfile => GetString("Default.yawglprofile");
         public Stream Logo => GetStream("logo.png");
         public Stream SmallLogo => GetStream("recent.png");
         public Stream Background => GetStream("wide.png");
@@ -299,10 +301,10 @@ namespace YawVR_Game_Engine.Plugin
             quater.z = decodeFloat(bytes, c_nExtraSizeOffset + 56);
             quater.w = decodeFloat(bytes, c_nExtraSizeOffset + 60);
 
-            float yaw = (float)RadianToDegree(quater.toYawFromYUp()) * -1;
-            float pitch = (float) RadianToDegree(quater.toPitchFromYUp()) * -1;
-            float roll = (float) RadianToDegree(quater.toRollFromYUp());
-
+            //float yaw = (float)RadianToDegree(quater.toYawFromYUp()) * -1;
+            //float pitch = (float) RadianToDegree(quater.toPitchFromYUp()) * -1;
+            //float roll = (float) RadianToDegree(quater.toRollFromYUp());
+            var (pitch, yaw, roll) = ToPitchYawRoll(quater);
 
 
             speed = (byte)Math.Round(Math.Pow(speed, 2) / 10, 0);
@@ -313,11 +315,12 @@ namespace YawVR_Game_Engine.Plugin
             float gforcey = decodeFloat(bytes, c_nExtraSizeOffset + 68);
             float gforcez = decodeFloat(bytes, c_nExtraSizeOffset + 72);
 
+            
 
             controller.SetInput(0, speed);
-            controller.SetInput(1, yaw);
-            controller.SetInput(2, pitch);
-            controller.SetInput(3, roll);
+            controller.SetInput(1, -yaw);
+            controller.SetInput(2, -pitch);
+            controller.SetInput(3, -roll);
 
             controller.SetInput(4, gforcex);
             controller.SetInput(5, gforcey);
@@ -344,9 +347,7 @@ namespace YawVR_Game_Engine.Plugin
                 "Force_Z" };
         }
 
-        public List<Profile_Component> DefaultProfile() {
-            return dispatcher.JsonToComponents(Resources.defProfile);
-        }
+        public List<Profile_Component> DefaultProfile() => dispatcher.JsonToComponents(defProfile);
 
         public LedEffect DefaultLED() {
             return new LedEffect(
@@ -392,12 +393,38 @@ namespace YawVR_Game_Engine.Plugin
             file.Save(Path.Combine(desktopPath, linkname + ".lnk"), false);
         }
 
+        (float pitch, float yaw, float roll) ToPitchYawRoll(Quaternion q)
+        {
+            var yaw = (float)Math.Atan2(2 * q.y * q.w - 2 * q.x * q.z, 1 - 2 * q.y * q.y - 2 * q.z * q.z) * 57.29578f;
+            var pitch = (float)Math.Atan2(2 * q.x * q.w - 2 * q.y * q.z, 1 - 2 * q.x * q.x - 2 * q.z * q.z) * 57.29578f;
+            var roll = (float)Math.Asin(2 * q.x * q.y + 2 * q.z * q.w) * 57.29578f;
+
+            return (pitch, yaw, -roll);
+        }
+
         Stream GetStream(string resourceName)
         {
             var assembly = GetType().Assembly;
             var rr = assembly.GetManifestResourceNames();
             string fullResourceName = $"{assembly.GetName().Name}.Resources.{resourceName}";
             return assembly.GetManifestResourceStream(fullResourceName);
+        }
+
+        string GetString(string resourceName)
+        {
+
+            var result = string.Empty;
+
+            using var stream = GetStream(resourceName);
+
+            if (stream != null)
+            {
+                using var reader = new StreamReader(stream);
+                result = reader.ReadToEnd();
+            }
+
+
+            return result;
         }
     }
 }

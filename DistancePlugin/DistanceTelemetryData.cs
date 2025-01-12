@@ -3,47 +3,42 @@ using System.Runtime.InteropServices;
 
 namespace YawVR_Game_Engine.Plugin
 {
-    
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+
+    [StructLayout(LayoutKind.Sequential)]
     internal struct DistanceTelemetryData
     {
-        public int PacketId;
+        public bool GamePaused;
+        public bool IsRacing;
         public float KPH;
-        public float Mass;
-        public float Yaw;
+
         public float Pitch;
+        public float Yaw;
         public float Roll;
-        public float Sway;
+
+        public float xPitch;
+        public float xYaw;
+        public float xRoll;
+
+        public float cForce;
+
         public Vector3 Velocity;
         public Vector3 Accel;
-        public Inputs Inputs;
-        public bool Finished;
-        public bool AllWheelsOnGround;
-        public bool isActiveAndEnabled;
-        public bool Grav;
-        public float AngularDrag;
-        public Tire TireFL;
-        public Tire TireFR;
-        public Tire TireBL;
-        public Tire TireBR;
-    }
 
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct Tire
-    {
-        public bool Contact;
-        public float Position;
-        public float Suspension;
-    }
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct Inputs
-    {
-        public float Gas;
-        public float Brake;
-        public float Steer;
         public bool Boost;
         public bool Grip;
-        public bool Wings;
+        public bool WingsOpen;
+
+        public bool IsCarEnabled;
+        public bool IsCarIsActive;
+        public bool IsCarDestroyed;
+        public bool AllWheelsOnGround;
+        public bool IsGrav;
+
+        public float TireFL;
+        public float TireFR;
+        public float TireBL;
+        public float TireBR;
+
     }
-    
+
 }

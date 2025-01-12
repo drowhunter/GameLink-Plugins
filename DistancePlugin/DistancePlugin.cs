@@ -4,6 +4,7 @@ using SharedLib.TelemetryHelper;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -55,9 +56,9 @@ namespace YawVR_Game_Engine.Plugin
 
         public string[] GetInputData() => Helper.GetInputs<DistanceTelemetryData>(default).Select(_ => _.key).ToArray();
 
-        public LedEffect DefaultLED() => dispatcher.JsonToLED(defProfile);
+        public LedEffect DefaultLED() => new LedEffect(EFFECT_TYPE.KNIGHT_RIDER, 0, new[] { YawColor.WHITE }, 0); //dispatcher.JsonToLED(defProfile);
         public List<Profile_Component> DefaultProfile() => dispatcher.JsonToComponents(defProfile);
-
+            //new List<Profile_Component>();
         public void SetReferences(IProfileManager controller, IMainFormDispatcher dispatcher)
         {
             this.dispatcher = dispatcher;
@@ -90,27 +91,37 @@ namespace YawVR_Game_Engine.Plugin
             {
                 var data = telem.Receive();
 
-                foreach (var (i, (key, value)) in Helper.GetInputs(data).WithIndex())
+                if (data.IsCarIsActive)
                 {
-                    controller.SetInput(i, value);
+                    if (!isRestting) 
+                    { 
+                        foreach (var (i, (key, value)) in Helper.GetInputs(data).WithIndex())
+                        {
+                            controller.SetInput(i, value);
+                        }
+                    }
+                    else
+                    {
+                        isRestting = false;
+                        Thread.Sleep(1000);
+                    }
                 }
+                else if (!isRestting)
+                {
+                        isRestting = true;
+                }
+                
             }
             
         }
 
-
+        bool isRestting = false;
 
 
 
         public Dictionary<string, ParameterInfo[]> GetFeatures() => null;
 
-        //Stream GetStream(string resourceName)
-        //{
-        //    var assembly = GetType().Assembly;
-        //    var rr = assembly.GetManifestResourceNames();
-        //    string fullResourceName = $"{assembly.GetName().Name}.Resources.{resourceName}";
-        //    return assembly.GetManifestResourceStream(fullResourceName);
-        //}
+        
     }
 
     static class Extensions

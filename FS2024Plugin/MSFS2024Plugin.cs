@@ -13,19 +13,17 @@ namespace MSFS2024
     [ExportMetadata("Version", "1.0")]
     class FS2024Plugin : Game
     {
-        private bool isSimRunning = false; // False is the user in menu, true if the user is in controll
+        private bool isSimRunning = false;          // False is the user in menu, true if the user is in control
         private bool isSimRunningPrevious = false;
-        private float[] currentValues; // Stores the current values being sent
-        private float[] targetValues;  // Stores the target values to transition to
-        private bool isTransitioning = false; // Indicates if a transition is active
-        private float transitionDuration = 1.5f; // Transition duration in seconds
-        private float[] initialValues; // Values at the start of the transition
+        private float[] targetValues = null;        // Stores the target values to transition to
+        private float[] initialValues = null;       // Values at the start of the transition
+        private bool isTransitioning = false;       // Indicates if a transition is active
+        private float transitionDuration = 1.5f;    // Transition duration in seconds
         private DateTime transitionStartTime;
 
-        private float yaw_immersive = 0.0f;
-        private float yaw_immersive_twist = 0.0f;
-        private float previous_yaw = 0.0f;
-        private float previous_roll_immersive_temp = 0.0f;
+        private double previous_yaw = 0.0f;
+        private double previous_yaw_immersive = 0.0f;
+        private double previous_roll_immersive_temp = 0.0f;
 
         // SimConnect object
         enum DEFINITIONS
@@ -69,16 +67,16 @@ namespace MSFS2024
             public double engine_rpm_2;
             public double engine_rpm_3;
             public double engine_rpm_4;
-            public double relavite_wind_acc_body_x;
-            public double relavite_wind_acc_body_y;
-            public double relavite_wind_acc_body_z;
+            public double relative_wind_acc_body_x;
+            public double relative_wind_acc_body_y;
+            public double relative_wind_acc_body_z;
             public double rotation_acc_body_x;
             public double rotation_acc_body_y;
             public double rotation_acc_body_z;
             public double aircraft_wind_x;
             public double aircraft_wind_y;
             public double aircraft_wind_z;
-            public double crenter_wheel_rpm;
+            public double center_wheel_rpm;
             public double gear_hydraulic_pressure;
             public double turn_coordinator_ball;
             public double elevator_position;
@@ -105,17 +103,17 @@ namespace MSFS2024
             public double accelerationBodyX;
             public double accelerationBodyY;
             public double accelerationBodyZ;
-            public double planeBankDegrees;
+            public double planeBankDegrees;             // duplicate of heading!
             public double planeHeadingDegreesGyro;
             public double planeHeadingDegreesMagnetic;
             public double planeHeadingDegreesTrue;
             public double planePitchDegrees;
-            public double rotationAccelerationBodyX;
-            public double rotationAccelerationBodyY;
-            public double rotationAccelerationBodyZ;
-            public double rotationVelocityBodyX;
-            public double rotationVelocityBodyY;
-            public double rotationVelocityBodyZ;
+            public double rotationAccelerationBodyX;    // duplicate of rotation_acc_body_x
+            public double rotationAccelerationBodyY;    // duplicate of rotation_acc_body_y
+            public double rotationAccelerationBodyZ;    // duplicate of rotation_acc_body_z
+            public double rotationVelocityBodyX;        // duplicate of vel_x
+            public double rotationVelocityBodyY;        // duplicate of vel_y
+            public double rotationVelocityBodyZ;        // duplicate of vel_z
             public double velocityBodyX;
             public double velocityBodyY;
             public double velocityBodyZ;
@@ -126,7 +124,21 @@ namespace MSFS2024
             public double engRotorRpm2;
             public double engRotorRpm3;
             public double engRotorRpm4;
+
+            // --- Begin McFredward's additional computed fields (not returned from SimConnect):
+            public double pitch_multiplier;
+            public double roll_immersive;
+            public double yaw_immersive;
+            public double yaw_immersive_twist;
+            // --- End McFredward's additional computed fields
         };
+
+        const int kHeading = 5;
+        // Indexes defined for extra fields (based on original 68 fields in Struct1):
+        const int kPitchMultiplier = 69;
+        const int kRollImmersive = 70;
+        const int kYawImmersive = 71;
+        const int kYawImmersiveTwist = 72;
 
         // User-defined win32 event
         const int WM_USER_SIMCONNECT = 0x0402;
@@ -146,8 +158,8 @@ namespace MSFS2024
         float t = 0;
         float periodScale = 1f;
         Random r = new Random();
-        private IMainFormDispatcher dispatcher;
-        private IProfileManager controller;
+        private IMainFormDispatcher dispatcher = null;
+        private IProfileManager controller = null;
         private volatile bool stop = false;
 
         public IntPtr Handle { get; private set; }
@@ -158,35 +170,28 @@ namespace MSFS2024
         }
         public LedEffect DefaultLED()
         {
-
             return dispatcher.JsonToLED(Resources.defProfile);
         }
 
         public void Exit()
         {
             stop = true;
-
         }
 
+        // Returns array of available input variable names.
         public string[] GetInputData()
         {
             Type f = typeof(Struct1);
             FieldInfo[] fields = f.GetFields();
 
-            string[] inputs = new string[fields.Length + 4];  // + pitch_multiplier, roll_immersive, yaw_immersive, yaw_immersive_twist
+            string[] inputs = new string[fields.Length];
 
             for (int i = 0; i < fields.Length; i++)
             {
                 inputs[i] = fields[i].Name;
             }
-            inputs[fields.Length] = "pitch_multiplier";
-            inputs[fields.Length + 1] = "roll_immersive";
-            inputs[fields.Length + 2] = "yaw_immersive";
-            inputs[fields.Length + 3] = "yaw_immersive_twist";
 
             return inputs;
-
-
         }
         public void SetReferences(IProfileManager controller, IMainFormDispatcher dispatcher)
         {
@@ -204,10 +209,8 @@ namespace MSFS2024
             }
             catch (Exception ex)
             {
-
                 dispatcher.ShowNotification(NotificationType.ERROR, "Cannot load Simconnect. Make sure to click patch first!");
             }
-
         }
 
         private SimConnect ConnectToSimconnect()
@@ -348,7 +351,7 @@ namespace MSFS2024
             }
             else if (pauseState == PAUSE_STATE_FLAG_ACTIVE_PAUSE)
             {
-                isSimRunning = false; // Active pause
+                isSimRunning = true; // Active pause - hold motion simulator in position
                 Debug.WriteLine("Simulation in active pause.");
             }
             else if (pauseState == PAUSE_STATE_FLAG_SIM_PAUSE)
@@ -362,6 +365,45 @@ namespace MSFS2024
             }
         }
 
+        private double NormalizeAngle(double angle)
+        {
+            // Bring the angle within the range [-180, 180]
+            while (angle > 180.0f) angle -= 360.0f;
+            while (angle < -180.0f) angle += 360.0f;
+            return angle;
+        }
+
+        private void CalcExtraSimVariables(ref Struct1 s1)
+        {
+            // --- Begin McFredward's additional computed fields (pitch_multiplier, roll_immersive, yaw_immersive, yaw_immersive_twist)
+            // Fix tipping point problem with the raw roll and yaw values:
+            double yaw = s1.heading;       // using heading for yaw
+            double roll_immersive_temp;
+            if (s1.roll < -90)
+            {
+                roll_immersive_temp = -180 - s1.roll;
+            }
+            else if (s1.roll > 90)
+            {
+                roll_immersive_temp = 180 - s1.roll;
+            }
+            else
+            {
+                roll_immersive_temp = s1.roll;
+            }
+
+            s1.pitch_multiplier = isSimRunning ? Math.Cos(s1.pitch * Math.PI / 180.0) : 0.0f;
+            s1.roll_immersive = s1.pitch_multiplier * roll_immersive_temp;
+            double yaw_delta = (s1.pitch_multiplier * NormalizeAngle(previous_yaw - yaw));
+            s1.yaw_immersive = NormalizeAngle(previous_yaw_immersive - yaw_delta);
+            s1.yaw_immersive_twist = NormalizeAngle(s1.yaw_immersive - (yaw_delta + (1 - s1.pitch_multiplier) * NormalizeAngle(previous_roll_immersive_temp - roll_immersive_temp)));
+
+            previous_yaw = yaw;
+            previous_yaw_immersive = s1.yaw_immersive;
+            previous_roll_immersive_temp = roll_immersive_temp;
+            // --- End McFredward's additional computed fields
+        }
+
         private void simconnect_OnRecvSimobjectDataBytype(SimConnect sender, SIMCONNECT_RECV_SIMOBJECT_DATA_BYTYPE data)
         {
             switch ((DATA_REQUESTS)data.dwRequestID)
@@ -369,150 +411,63 @@ namespace MSFS2024
                 case DATA_REQUESTS.REQUEST_1:
                     // Retrieve the data as the specified structure
                     Struct1 s1 = (Struct1)data.dwData[0];
+                    CalcExtraSimVariables(ref s1);
                     FieldInfo[] fields = typeof(Struct1).GetFields();
 
-                    // Initialize arrays if null
-                    if (currentValues == null)
+                    // Initialize array if null
+                    if (targetValues == null)
                     {
-                        currentValues = new float[fields.Length + 4]; // + pitch_multiplier, roll_immersive, yaw_immersive, yaw_immersive_twist
-                        targetValues = new float[fields.Length + 4];
+                        targetValues = new float[fields.Length];
                     }
 
                     // Suppress telemtry during loading screens -> The altitude is higher than 53819 ín this false data!
                     isSimRunning = isSimRunning && s1.altitude < 53819f;
-
-                    // Fix tipping point problem with the raw roll and yaw values
-
-                    float pitch = (float)s1.pitch;
-                    float yaw = (float)s1.heading;
-                    float roll = (float)s1.roll;
-                    float pitch_multiplier = s1.altitude < 53819f ? (float)Math.Cos(Convert.ToDouble(pitch) * Math.PI / 180.0) : 0.0f;
-
-                    float roll_immersive_temp;
-                    if (roll < -90)
+                    if (isSimRunning != isSimRunningPrevious)
                     {
-                        roll_immersive_temp = -180 - roll;
-                    }
-                    else if (roll > 90)
-                    {
-                        roll_immersive_temp = 180 - roll;
-                    }
-                    else
-                    {
-                        roll_immersive_temp = roll;
+                        isSimRunningPrevious = isSimRunning;
+                        // Start transitioning to actual data if resumed
+                        isTransitioning = true;
+                        transitionStartTime = DateTime.Now;
+                        initialValues = (float[])targetValues.Clone();
                     }
 
-                    float roll_immersive = pitch_multiplier * roll_immersive_temp;
-
-                    yaw_immersive = NormalizeAngle(yaw_immersive - (pitch_multiplier * NormalizeAngle(previous_yaw - yaw)));
-                    yaw_immersive_twist = NormalizeAngle(yaw_immersive - (pitch_multiplier * NormalizeAngle(previous_yaw - yaw) + (1 - pitch_multiplier) * NormalizeAngle(previous_roll_immersive_temp - roll_immersive_temp)));
-
-
-
-                    if (!isSimRunning)
-                    {
-
-                        if (isSimRunningPrevious)
-                        {
-                            // Start transitioning to zero if paused
-                            isTransitioning = true;
-                            transitionStartTime = DateTime.Now;
-                            initialValues = (float[])targetValues.Clone(); // target values from the step before
-                        }
-
-                        for (int i = 0; i < fields.Length; i++)
-                        {
-                            if(fields[i].Name == "heading") // Keep heading the same
-                            {
-                                targetValues[i] = (float)Math.Round(Convert.ToSingle(fields[i].GetValue(s1)), 3);
-                            }
-                            else
-                            {
-                                targetValues[i] = 0.0f;
-                            }
-                        }
-                        targetValues[fields.Length] = 0.0f;
-                        targetValues[fields.Length + 1] = 0.0f;
-                        targetValues[fields.Length + 2] = yaw_immersive; // Keep the yaw the same
-                        targetValues[fields.Length + 3] = yaw_immersive_twist;
-                    }
-                    else if (isSimRunning)
-                    {
-                        if (!isSimRunningPrevious)
-                        {
-                            // Start transitioning to actual data if resumed
-                            isTransitioning = true;
-                            transitionStartTime = DateTime.Now;
-                            initialValues = (float[])targetValues.Clone();
-                        }
-
-                        for (int i = 0; i < fields.Length; i++)
-                        {
-                            float value = Convert.ToSingle(fields[i].GetValue(s1));
-                            targetValues[i] = float.IsNaN(value) ? 0.0f : (float)Math.Round(value, 3);
-                        }
-                        targetValues[fields.Length] = pitch_multiplier;
-                        targetValues[fields.Length + 1] = roll_immersive;
-                        targetValues[fields.Length + 2] = yaw_immersive;
-                        targetValues[fields.Length + 3] = yaw_immersive_twist;
-                    }
-
-                    isSimRunningPrevious = isSimRunning;
-
-
+                    float transitionFactor = 1.0f;
                     if (isTransitioning)
                     {
                         DateTime currentTime = DateTime.Now;
                         float elapsedTime = (float)(currentTime - transitionStartTime).TotalSeconds;
 
                         // Calculate interpolation factor (0.0 to 1.0)
-                        float t = Math.Min(elapsedTime / transitionDuration, 1.0f);
-
-                        // Flag for transition completion
-                        bool transitionComplete = t >= 1.0f;
-
-                        for (int i = 0; i < fields.Length + 4; i++)
-                        {
-                            // Linear interpolation between initialValues and targetValues
-                            currentValues[i] = initialValues[i] + (targetValues[i] - initialValues[i]) * t;
-
-                            // Set controller input
-                            controller.SetInput(i, currentValues[i]);
-                        }
-
-                        if (transitionComplete)
-                        {
-                            isTransitioning = false; // End transition
-                        }
+                        transitionFactor = Math.Min(elapsedTime / transitionDuration, 1.0f);
+                        isTransitioning = (transitionFactor < 1.0f);
                     }
-                    else
+
+                    // Load target values if sim is running, otherwise zero everything (w/exceptions):
+                    for (int i = 0; i < fields.Length; i++)
                     {
-                        // Update values directly without transitioning
-                        for (int i = 0; i < fields.Length + 4; i++)
+                        if (isSimRunning || i == kHeading || i == kYawImmersive || i == kYawImmersiveTwist)      // always maintain heading and added yaw variables, even if sim is not running
                         {
-                            currentValues[i] = targetValues[i];
-                            controller.SetInput(i, currentValues[i]);
+                            float value = Convert.ToSingle(fields[i].GetValue(s1));
+                            targetValues[i] = float.IsNaN(value) ? 0.0f : (float)Math.Round(value, 3);      // ?? why was test for NaN added?
                         }
+                        else
+                        {
+                            targetValues[i] = 0.0f;
+                        }
+
+                        if (isTransitioning)
+                        {
+                            //Perform a linear interpolation between initialValues and targetValues:
+                            targetValues[i] = initialValues[i] + (targetValues[i] - initialValues[i]) * transitionFactor;
+                        }
+                        controller.SetInput(i, targetValues[i]);
                     }
-
-                    previous_yaw = yaw;
-                    previous_roll_immersive_temp = roll_immersive_temp;
-
-
                     break;
 
                 default:
                     Debug.WriteLine("Unknown request ID: " + data.dwRequestID);
                     break;
             }
-        }
-
-        private float NormalizeAngle(float angle)
-        {
-            // Bring the angle within the range [-180, 180]
-            while (angle > 180.0f) angle -= 360.0f;
-            while (angle < -180.0f) angle += 360.0f;
-            return angle;
         }
 
         private void ReadFunction()

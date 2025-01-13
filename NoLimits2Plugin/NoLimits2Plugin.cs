@@ -393,11 +393,12 @@ namespace YawVR_Game_Engine.Plugin
             file.Save(Path.Combine(desktopPath, linkname + ".lnk"), false);
         }
 
+        const float Rad2Degf = 57.29578f;
         (float pitch, float yaw, float roll) ToPitchYawRoll(Quaternion q)
         {
-            var yaw = (float)Math.Atan2(2 * q.y * q.w - 2 * q.x * q.z, 1 - 2 * q.y * q.y - 2 * q.z * q.z) * 57.29578f;
-            var pitch = (float)Math.Atan2(2 * q.x * q.w - 2 * q.y * q.z, 1 - 2 * q.x * q.x - 2 * q.z * q.z) * 57.29578f;
-            var roll = (float)Math.Asin(2 * q.x * q.y + 2 * q.z * q.w) * 57.29578f;
+            var yaw = (float)Math.Atan2(2 * (q.y * q.w - q.x * q.z), 1 - 2 * (q.y * q.y + q.z * q.z)) * Rad2Degf;
+            var pitch = (float)Math.Atan2(2 * (q.x * q.w - q.y * q.z), 1 - 2 * (q.x * q.x + q.z * q.z)) * Rad2Degf;
+            var roll = (float)Math.Asin(2 * (q.x * q.y + q.z * q.w)) * Rad2Degf;
 
             return (pitch, yaw, -roll);
         }

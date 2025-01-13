@@ -15,9 +15,7 @@ namespace YawVR_Game_Engine.Plugin
         public float Yaw;
         public float Roll;
 
-        public float xPitch;
-        public float xYaw;
-        public float xRoll;
+        public Vector3 AngularVelocity;
 
         public float cForce;
 

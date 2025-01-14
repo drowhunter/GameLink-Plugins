@@ -17,7 +17,7 @@ namespace YawVR_Game_Engine.Plugin
 {
     [Export(typeof(Game))]
     [ExportMetadata("Name", "Nolimits 2")]
-    [ExportMetadata("Version", "1.2")]
+    [ExportMetadata("Version", "1.3")]
 
 
     class NoLimits2Plugin : Game {

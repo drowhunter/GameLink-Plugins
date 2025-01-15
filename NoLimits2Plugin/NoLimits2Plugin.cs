@@ -1,24 +1,23 @@
-﻿using System;
+﻿using NoLimits2Plugin.Properties;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Sockets;
-//using System.Numerics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-
 using YawGLAPI;
 
 namespace YawVR_Game_Engine.Plugin
 {
     [Export(typeof(Game))]
     [ExportMetadata("Name", "Nolimits 2")]
-    [ExportMetadata("Version", "1.3")]
+    [ExportMetadata("Version", "1.2")]
 
 
     class NoLimits2Plugin : Game {
@@ -64,12 +63,10 @@ namespace YawVR_Game_Engine.Plugin
         public bool PATCH_AVAILABLE => true;
 
 
-        public string Description => GetString("description.html");
+        public string Description => Resources.description;
         public Stream Logo => GetStream("logo.png");
         public Stream SmallLogo => GetStream("recent.png");
         public Stream Background => GetStream("wide.png");
-
-        private string defProfile => GetString("Default.yawglprofile");
 
         private int N_MSG_GET_TELEMETRY = 5;
         //  private int N_MSG_TELEMETRY = 6;
@@ -302,10 +299,9 @@ namespace YawVR_Game_Engine.Plugin
             quater.z = decodeFloat(bytes, c_nExtraSizeOffset + 56);
             quater.w = decodeFloat(bytes, c_nExtraSizeOffset + 60);
 
-            //float yaw = (float)RadianToDegree(quater.toYawFromYUp()) * -1;
-            //float pitch = (float) RadianToDegree(quater.toPitchFromYUp()) * -1;
-            //float roll = (float) RadianToDegree(quater.toRollFromYUp());
-            (float pitch, float yaw, float roll) = ToPitchYawRoll(quater);
+            float yaw = (float)RadianToDegree(quater.toYawFromYUp()) * -1;
+            float pitch = (float) RadianToDegree(quater.toPitchFromYUp()) * -1;
+            float roll = (float) RadianToDegree(quater.toRollFromYUp());
 
 
 
@@ -319,9 +315,9 @@ namespace YawVR_Game_Engine.Plugin
 
 
             controller.SetInput(0, speed);
-            controller.SetInput(1, -yaw);
-            controller.SetInput(2, -pitch);
-            controller.SetInput(3, -roll);
+            controller.SetInput(1, yaw);
+            controller.SetInput(2, pitch);
+            controller.SetInput(3, roll);
 
             controller.SetInput(4, gforcex);
             controller.SetInput(5, gforcey);
@@ -330,7 +326,7 @@ namespace YawVR_Game_Engine.Plugin
 
         }
 
-        
+
 
 
         private static double RadianToDegree(double angle) {
@@ -348,7 +344,9 @@ namespace YawVR_Game_Engine.Plugin
                 "Force_Z" };
         }
 
-        public List<Profile_Component> DefaultProfile() => dispatcher.JsonToComponents(defProfile);
+        public List<Profile_Component> DefaultProfile() {
+            return dispatcher.JsonToComponents(Resources.defProfile);
+        }
 
         public LedEffect DefaultLED() {
             return new LedEffect(
@@ -401,32 +399,5 @@ namespace YawVR_Game_Engine.Plugin
             string fullResourceName = $"{assembly.GetName().Name}.Resources.{resourceName}";
             return assembly.GetManifestResourceStream(fullResourceName);
         }
-
-        string GetString(string resourceName)
-        {
-            var result = string.Empty;
-
-            using var stream = GetStream(resourceName);
-
-            if (stream != null)
-            {
-                using var reader = new StreamReader(stream);
-                result = reader.ReadToEnd();
-            }
-
-            return result;
-        }
-
-        const float RAD2DEG = (float) (180 / Math.PI);
-        public static (float pitch, float yaw, float roll) ToPitchYawRoll(Quaternion q)
-        {
-            var yaw = (float) Math.Atan2(2 * q.y * q.w - 2 * q.x * q.z, 1 - 2 * q.y * q.y - 2 * q.z * q.z) * RAD2DEG;
-            var pitch = (float) Math.Atan2(2 * q.x * q.w - 2 * q.y * q.z, 1 - 2 * q.x * q.x - 2 * q.z * q.z) * RAD2DEG;
-            var roll = (float) Math.Asin(2 * q.x * q.y + 2 * q.z * q.w) * RAD2DEG;
-
-            return (pitch, yaw, -roll) ;
-        }
-
-        
     }
 }

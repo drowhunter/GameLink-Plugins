@@ -97,6 +97,23 @@ namespace YawVR_Game_Engine.Plugin
                     { 
                         foreach (var (i, (key, value)) in Helper.GetInputs(data).WithIndex())
                         {
+                            if(key == "Pitch" || key == "Roll")
+                            {
+                                var v = 0f;
+                                if(Math.Abs(value) <= 90)
+                                {
+                                    v = value;
+                                }
+                                else
+                                {
+                                    v = (180 - Math.Abs(value)) * (value < 0 ? -1 : 1);
+                                }
+                                var max = 90;
+                                var nv = (float)EnsureMapRange(v, -90, 90, -max, max);
+                                controller.SetInput(i, nv);
+                                continue;
+                            }
+
                             controller.SetInput(i, value);
                         }
                     }
@@ -121,11 +138,21 @@ namespace YawVR_Game_Engine.Plugin
 
         public Dictionary<string, ParameterInfo[]> GetFeatures() => null;
 
-        
+        public static double MapRange(double x, double xMin, double xMax, double yMin, double yMax)
+        {
+            return yMin + (yMax - yMin) * (x - xMin) / (xMax - xMin);
+        }
+
+        public static double EnsureMapRange(double x, double xMin, double xMax, double yMin, double yMax)
+        {
+            return Math.Max(Math.Min(MapRange(x, xMin, xMax, yMin, yMax), Math.Max(yMin, yMax)), Math.Min(yMin, yMax));
+        }
     }
 
     static class Extensions
     {
+        
+
         public static IEnumerable<(int index, T value)> WithIndex<T>(this IEnumerable<T> source)
         {
             int index = 0;

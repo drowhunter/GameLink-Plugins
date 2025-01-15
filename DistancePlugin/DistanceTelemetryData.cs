@@ -37,6 +37,15 @@ namespace YawVR_Game_Engine.Plugin
         public float TireBL;
         public float TireBR;
 
+        public Quat Rot;
+    }
+
+    internal struct Quat
+    {
+        public float w;
+        public float x;
+        public float y;
+        public float z;
     }
 
 }

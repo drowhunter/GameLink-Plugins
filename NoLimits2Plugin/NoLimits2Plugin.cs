@@ -17,7 +17,7 @@ namespace YawVR_Game_Engine.Plugin
 {
     [Export(typeof(Game))]
     [ExportMetadata("Name", "Nolimits 2")]
-    [ExportMetadata("Version", "1.3")]
+    [ExportMetadata("Version", "1.4")]
 
 
     class NoLimits2Plugin : Game {
@@ -82,7 +82,7 @@ namespace YawVR_Game_Engine.Plugin
         bool stopThread = false;
 
         private TcpClient tcpClient;
-       // private UdpClient udpClient;
+        const float Rad2Degf = 57.29578f;
 
         Thread readThread;
         public void Exit() {
@@ -267,6 +267,8 @@ namespace YawVR_Game_Engine.Plugin
         private IMainFormDispatcher dispatcher;
         private IProfileManager controller;
 
+        
+
         private void DecodeTelemetry(byte[] bytes) {
             //  int size = bytes.Length;
             //   if (size == 76) {
@@ -290,26 +292,25 @@ namespace YawVR_Game_Engine.Plugin
             
             
             float speed = decodeFloat(bytes, c_nExtraSizeOffset + 32);
-
             float posx = decodeFloat(bytes, c_nExtraSizeOffset + 36);
             float posy = decodeFloat(bytes, c_nExtraSizeOffset + 40);
             float posz = decodeFloat(bytes, c_nExtraSizeOffset + 44);
 
-            Quaternion quater = new Quaternion();
-            quater.x = decodeFloat(bytes, c_nExtraSizeOffset + 48);
-            quater.y = decodeFloat(bytes, c_nExtraSizeOffset + 52);
-            quater.z = decodeFloat(bytes, c_nExtraSizeOffset + 56);
-            quater.w = decodeFloat(bytes, c_nExtraSizeOffset + 60);
-
-            //float yaw = (float)RadianToDegree(quater.toYawFromYUp()) * -1;
-            //float pitch = (float) RadianToDegree(quater.toPitchFromYUp()) * -1;
-            //float roll = (float) RadianToDegree(quater.toRollFromYUp());
+            var quater = new Quaternion()
+            {
+                x = decodeFloat(bytes, c_nExtraSizeOffset + 48),
+                y = decodeFloat(bytes, c_nExtraSizeOffset + 52),
+                z = decodeFloat(bytes, c_nExtraSizeOffset + 56),
+                w = decodeFloat(bytes, c_nExtraSizeOffset + 60),
+            };
+            
             var (pitch, yaw, roll) = ToPitchYawRoll(quater);
 
 
             speed = (byte)Math.Round(Math.Pow(speed, 2) / 10, 0);
 
-         //   controller.SetBuzzer(buzzerAmp, buzzerAmp, buzzerAmp, 17);
+            
+            //  controller.SetBuzzer(buzzerAmp, buzzerAmp, buzzerAmp, 17);
             //  orientation = QuaternionToEuler(quater);
             float gforcex = decodeFloat(bytes, c_nExtraSizeOffset + 64);
             float gforcey = decodeFloat(bytes, c_nExtraSizeOffset + 68);
@@ -321,20 +322,14 @@ namespace YawVR_Game_Engine.Plugin
             controller.SetInput(1, -yaw);
             controller.SetInput(2, -pitch);
             controller.SetInput(3, -roll);
-
             controller.SetInput(4, gforcex);
             controller.SetInput(5, gforcey);
             controller.SetInput(6, gforcez);
-
-
         }
 
+        
 
-
-
-        private static double RadianToDegree(double angle) {
-            return angle * (180.0 / Math.PI);
-        }
+        
 
         public string[] GetInputData() {
             return new string[] {
@@ -393,14 +388,56 @@ namespace YawVR_Game_Engine.Plugin
             file.Save(Path.Combine(desktopPath, linkname + ".lnk"), false);
         }
 
-        const float Rad2Degf = 57.29578f;
+        
         (float pitch, float yaw, float roll) ToPitchYawRoll(Quaternion q)
         {
-            var yaw = (float)Math.Atan2(2 * (q.y * q.w - q.x * q.z), 1 - 2 * (q.y * q.y + q.z * q.z)) * Rad2Degf;
-            var pitch = (float)Math.Atan2(2 * (q.x * q.w - q.y * q.z), 1 - 2 * (q.x * q.x + q.z * q.z)) * Rad2Degf;
-            var roll = (float)Math.Asin(2 * (q.x * q.y + q.z * q.w)) * Rad2Degf;
+            var yaw = Math.Atan2(2 * (q.y * q.w - q.x * q.z), 1 - 2 * (q.y * q.y + q.z * q.z)) * Rad2Degf;
+            var pitch = Math.Atan2(2 * (q.x * q.w - q.y * q.z), 1 - 2 * (q.x * q.x + q.z * q.z)) * Rad2Degf;
+            var roll = Math.Asin(2 * (q.x * q.y + q.z * q.w)) * Rad2Degf;
 
-            return (pitch, yaw, -roll);
+            pitch = Smooth(pitch, 90);
+            roll = Smooth(roll, 90);
+
+            
+
+            if (Math.Abs(roll) > 66) //euler angle drift fix
+            {
+                yaw = Smooth(-q.toYawFromYUp() * Rad2Degf, 90);
+                pitch = Smooth(-q.toPitchFromYUp() * Rad2Degf, 90);
+                //var roll2 = Smooth((float)q.toRollFromYUp() * Rad2Degf, 90);
+            }
+
+
+
+            return ((float)pitch, (float)yaw, (float)-roll);
+        }
+
+        private const float Rad2Deg = 180.0f / (float)Math.PI;
+
+        private static double Smooth(double degrees, float max)
+        {
+            double v = 0;
+            if (Math.Abs(degrees) <= 90)
+            {
+                v = degrees;
+            }
+            else
+            {
+                v = (180 - Math.Abs(degrees)) * (degrees < 0 ? -1 : 1);
+            }
+
+
+            return EnsureMapRange(v, -90, 90, -max, max);
+        }
+
+        private static double MapRange(double x, double xMin, double xMax, double yMin, double yMax)
+        {
+            return yMin + (yMax - yMin) * (x - xMin) / (xMax - xMin);
+        }
+
+        private static double EnsureMapRange(double x, double xMin, double xMax, double yMin, double yMax)
+        {
+            return Math.Max(Math.Min(MapRange(x, xMin, xMax, yMin, yMax), Math.Max(yMin, yMax)), Math.Min(yMin, yMax));
         }
 
         Stream GetStream(string resourceName)

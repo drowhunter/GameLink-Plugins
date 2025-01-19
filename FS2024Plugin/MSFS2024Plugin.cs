@@ -434,8 +434,9 @@ namespace MSFS2024
                         targetValues = new float[fields.Length];
                     }
 
-                    // Suppress telemtry during loading screens -> The altitude is higher than 53819 ín this false data!
-                    isSimRunning = isSimRunning && s1.altitude < 53819f;            // ?? TEST: Could be problematic for some sci-fi aircraft (Halo Penguin)
+                    // Suppress telemetry while paused/in the menus - still need a way to detect initial loading screen phase though.
+                    // (There was a test here for extreme altitude but such altitudes are actually supported, like Space Shuttle
+                    // and sci-fi craft.)
                     if (isSimRunning != isSimRunningPrevious)
                     {
                         isSimRunningPrevious = isSimRunning;

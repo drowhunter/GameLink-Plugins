@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Threading;
 
@@ -47,6 +48,7 @@ namespace YawVR_Game_Engine.Plugin
         public void Exit()
         {
             running = false;
+            telem?.Dispose();
         }
         public void PatchGame()
         {
@@ -89,45 +91,48 @@ namespace YawVR_Game_Engine.Plugin
 
             while (running)
             {
-                var data = telem.Receive();
-
-                if (data.IsCarIsActive)
+                try
                 {
-                    if (!isRestting) 
-                    { 
-                        foreach (var (i, (key, value)) in Helper.GetInputs(data).WithIndex())
-                        {
-                            if(key == "Pitch" || key == "Roll")
-                            {
-                                var v = 0f;
-                                if(Math.Abs(value) <= 90)
-                                {
-                                    v = value;
-                                }
-                                else
-                                {
-                                    v = (180 - Math.Abs(value)) * (value < 0 ? -1 : 1);
-                                }
-                                var max = 90;
-                                var nv = (float)EnsureMapRange(v, -90, 90, -max, max);
-                                controller.SetInput(i, nv);
-                                continue;
-                            }
+                    var data = telem.Receive();
 
-                            controller.SetInput(i, value);
+                    if (data.IsCarIsActive)
+                    {
+                        if (!isRestting)
+                        {
+                            foreach (var (i, (key, value)) in Helper.GetInputs(data).WithIndex())
+                            {
+                                if (key == "Pitch" || key == "Roll")
+                                {
+                                    var v = 0f;
+                                    if (Math.Abs(value) <= 90)
+                                    {
+                                        v = value;
+                                    }
+                                    else
+                                    {
+                                        v = (180 - Math.Abs(value)) * (value < 0 ? -1 : 1);
+                                    }
+                                    var max = 90;
+                                    var nv = (float)EnsureMapRange(v, -90, 90, -max, max);
+                                    controller.SetInput(i, nv);
+                                    continue;
+                                }
+
+                                controller.SetInput(i, value);
+                            }
+                        }
+                        else
+                        {
+                            isRestting = false;
+                            Thread.Sleep(1000);
                         }
                     }
-                    else
+                    else if (!isRestting)
                     {
-                        isRestting = false;
-                        Thread.Sleep(1000);
+                        isRestting = true;
                     }
                 }
-                else if (!isRestting)
-                {
-                        isRestting = true;
-                }
-                
+                catch(SocketException sex) { }
             }
             
         }

@@ -3,12 +3,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <OutputType>Library</OutputType>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <UseWindowsForms>false</UseWindowsForms>
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
     <Configurations>All;Debug;Release</Configurations>
-  </PropertyGroup>
-  <PropertyGroup>
-    <StartupObject />
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Resources\Default.yawglprofile" />
@@ -17,10 +13,10 @@
   <ItemGroup>
     <EmbeddedResource Include="Resources\Default.yawglprofile" />
     <EmbeddedResource Include="Resources\description.html" />
-    <EmbeddedResource Include="Resources\recent.png" />
+    <EmbeddedResource Include="Resources\logo.png" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\logo.png" />
+    <EmbeddedResource Include="Resources\recent.png" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\wide.png" />
@@ -28,12 +24,9 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="System.ComponentModel.Composition" Version="9.0.0" />
+    <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\YawGLAPI\YawGLAPI.csproj" />
   </ItemGroup>
-  <PropertyGroup>
-    <FileVersion>1.3.0.0</FileVersion>
-    <AssemblyVersion>1.3.0.0</AssemblyVersion>
-  </PropertyGroup>
 </Project>

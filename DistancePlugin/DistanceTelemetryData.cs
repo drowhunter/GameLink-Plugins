@@ -41,11 +41,11 @@ namespace YawVR_Game_Engine.Plugin
     }
 
     internal struct Quat
-    {
-        public float w;
+    {   
         public float x;
         public float y;
         public float z;
+        public float w;
     }
 
 }

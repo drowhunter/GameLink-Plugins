@@ -366,6 +366,7 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{5C463417-8B52-457C-A1AA-C43ED23296A3} = {0CE2DEE3-ACB5-45F6-B995-6496481B4875}
 		{A0988E26-18F3-4AE4-95DF-3BD3B0ABE37E} = {0CE2DEE3-ACB5-45F6-B995-6496481B4875}
 	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution

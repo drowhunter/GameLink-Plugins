@@ -1,5 +1,7 @@
 using Microsoft.VisualBasic;
 
+using SharedLib;
+
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Net;

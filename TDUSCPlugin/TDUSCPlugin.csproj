@@ -25,5 +25,6 @@
   <ItemGroup>
     <ProjectReference Include="..\YawGLAPI\YawGLAPI.csproj" />
   </ItemGroup>
+  <Import Project="..\SharedLib\SharedLib.projitems" Label="Shared" />
 
 </Project>

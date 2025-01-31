@@ -1,6 +1,9 @@
 ﻿using Microsoft.VisualBasic;
 
 using PluginHelper;
+
+using SharedLib;
+
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Numerics;
@@ -30,15 +33,15 @@ namespace GT7Plugin
 
         public string AUTHOR => "Trevor Jones";
 
-        public Stream Logo => GetStream("logo.png");
+        public Stream Logo => ResourceHelper.GetStream("logo.png");
 
-        public Stream SmallLogo => GetStream("recent.png");
+        public Stream SmallLogo => ResourceHelper.GetStream("recent.png");
 
-        public Stream Background => GetStream("wide.png");
+        public Stream Background => ResourceHelper.GetStream("wide.png");
 
-        public string Description => GetString("description.html");
+        public string Description => ResourceHelper.GetString("description.html");
 
-        private string defProfilejson => GetString("Default.yawglprofile");
+        private string defProfilejson => ResourceHelper.GetString("Default.yawglprofile");
 
         
 
@@ -168,46 +171,46 @@ namespace GT7Plugin
             this.dispacther = dispatcher;
         }
 
-        Stream GetStream(string resourceName)
-        {
-            var assembly = GetType().Assembly;
-            var rr = assembly.GetManifestResourceNames();
+        //Stream GetStream(string resourceName)
+        //{
+        //    var assembly = GetType().Assembly;
+        //    var rr = assembly.GetManifestResourceNames();
             
-            string fullResourceName = $"{assembly.GetName().Name}.Resources.{resourceName}";
+        //    string fullResourceName = $"{assembly.GetName().Name}.Resources.{resourceName}";
 
-            if (!rr.Contains(fullResourceName))
-            {
-                dispacther.ShowNotification(NotificationType.ERROR, "Resource not found - " + fullResourceName);
-            }
+        //    if (!rr.Contains(fullResourceName))
+        //    {
+        //        dispacther.ShowNotification(NotificationType.ERROR, "Resource not found - " + fullResourceName);
+        //    }
             
             
 
-            return assembly.GetManifestResourceStream(fullResourceName);
-        }
+        //    return assembly.GetManifestResourceStream(fullResourceName);
+        //}
 
-        private string GetString(string resourceName)
-        {
+        //private string GetString(string resourceName)
+        //{
 
-            var result = string.Empty;
-            try
-            {
-                using var stream = GetStream(resourceName);
+        //    var result = string.Empty;
+        //    try
+        //    {
+        //        using var stream = GetStream(resourceName);
 
-                if (stream != null)
-                {
-                    using var reader = new StreamReader(stream);
-                    result = reader.ReadToEnd();
-                }
-            }
-            catch(Exception e)
-            {
-                Debug.WriteLine(e.Message);
-                dispacther.ShowNotification(NotificationType.ERROR, "Error loading resource - " + e.Message);
-            }
+        //        if (stream != null)
+        //        {
+        //            using var reader = new StreamReader(stream);
+        //            result = reader.ReadToEnd();
+        //        }
+        //    }
+        //    catch(Exception e)
+        //    {
+        //        Debug.WriteLine(e.Message);
+        //        dispacther.ShowNotification(NotificationType.ERROR, "Error loading resource - " + e.Message);
+        //    }
 
 
-            return result;
-        }
+        //    return result;
+        //}
 
 
         public float CalculateCentripetalAcceleration(Vector3 velocity, Vector3 angularVelocity)

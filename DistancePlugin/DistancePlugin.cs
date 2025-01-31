@@ -36,11 +36,11 @@ namespace YawVR_Game_Engine.Plugin
 
         public bool PATCH_AVAILABLE => false;
 
-        public string Description => Resource.GetString("description.html");
-        public Stream Logo => Resource.GetStream("logo.png");
-        public Stream SmallLogo => Resource.GetStream("recent.png");
-        public Stream Background => Resource.GetStream("wide.png");
-        private string defProfile => Resource.GetString("Default.yawglprofile");
+        public string Description => ResourceHelper.GetString("description.html");
+        public Stream Logo => ResourceHelper.GetStream("logo.png");
+        public Stream SmallLogo => ResourceHelper.GetStream("recent.png");
+        public Stream Background => ResourceHelper.GetStream("wide.png");
+        private string defProfile => ResourceHelper.GetString("Default.yawglprofile");
 
 
 

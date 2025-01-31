@@ -5,7 +5,7 @@ using System.Text;
 
 namespace SharedLib
 {
-    internal class Resource
+    internal class ResourceHelper
     {
         /// <summary>
         /// Retrieves a stream for the specified embedded resource.

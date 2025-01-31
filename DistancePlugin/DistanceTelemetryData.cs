@@ -17,7 +17,7 @@ namespace YawVR_Game_Engine.Plugin
 
         public Vector3 AngularVelocity;
 
-        public float cForce;
+        public float sway;
 
         public Vector3 Velocity;
         public Vector3 Accel;

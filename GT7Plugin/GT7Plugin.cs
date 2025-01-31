@@ -171,47 +171,6 @@ namespace GT7Plugin
             this.dispacther = dispatcher;
         }
 
-        //Stream GetStream(string resourceName)
-        //{
-        //    var assembly = GetType().Assembly;
-        //    var rr = assembly.GetManifestResourceNames();
-            
-        //    string fullResourceName = $"{assembly.GetName().Name}.Resources.{resourceName}";
-
-        //    if (!rr.Contains(fullResourceName))
-        //    {
-        //        dispacther.ShowNotification(NotificationType.ERROR, "Resource not found - " + fullResourceName);
-        //    }
-            
-            
-
-        //    return assembly.GetManifestResourceStream(fullResourceName);
-        //}
-
-        //private string GetString(string resourceName)
-        //{
-
-        //    var result = string.Empty;
-        //    try
-        //    {
-        //        using var stream = GetStream(resourceName);
-
-        //        if (stream != null)
-        //        {
-        //            using var reader = new StreamReader(stream);
-        //            result = reader.ReadToEnd();
-        //        }
-        //    }
-        //    catch(Exception e)
-        //    {
-        //        Debug.WriteLine(e.Message);
-        //        dispacther.ShowNotification(NotificationType.ERROR, "Error loading resource - " + e.Message);
-        //    }
-
-
-        //    return result;
-        //}
-
 
         public float CalculateCentripetalAcceleration(Vector3 velocity, Vector3 angularVelocity)
         {

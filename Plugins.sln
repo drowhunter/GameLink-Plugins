@@ -125,11 +125,6 @@ Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "SharedLib", "SharedLib\Shar
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistancePlugin", "DistancePlugin\DistancePlugin.csproj", "{4D31DE79-3B0E-4CAF-91AB-F3ACFBBE5F9B}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{33C9C5B1-7C05-4202-9DBF-EE37B000C69B}"
-	ProjectSection(SolutionItems) = preProject
-		Directory.Build.targets = Directory.Build.targets
-	EndProjectSection
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -381,6 +376,7 @@ Global
 		{A0988E26-18F3-4AE4-95DF-3BD3B0ABE37E} = {0CE2DEE3-ACB5-45F6-B995-6496481B4875}
 	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		SharedLib\SharedLib.projitems*{4d31de79-3b0e-4caf-91ab-f3acfbbe5f9b}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{72d8c5ad-5439-4235-a355-a2546a509a05}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{88c6fdd2-9cd4-4015-bb6c-3389c29003be}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{9dd14943-3f95-45c8-aace-0eb2582e47ef}*SharedItemsImports = 5

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using SharedLib;
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
@@ -63,12 +65,12 @@ namespace YawVR_Game_Engine.Plugin
         public bool PATCH_AVAILABLE => true;
 
 
-        public string Description => GetString("description.html");
+        public string Description => ResourceHelper.GetString("description.html");
 
-        private string defProfile => GetString("Default.yawglprofile");
-        public Stream Logo => GetStream("logo.png");
-        public Stream SmallLogo => GetStream("recent.png");
-        public Stream Background => GetStream("wide.png");
+        private string defProfile => ResourceHelper.GetString("Default.yawglprofile");
+        public Stream Logo => ResourceHelper.GetStream("logo.png");
+        public Stream SmallLogo => ResourceHelper.GetStream("recent.png");
+        public Stream Background => ResourceHelper.GetStream("wide.png");
 
         private int N_MSG_GET_TELEMETRY = 5;
         //  private int N_MSG_TELEMETRY = 6;
@@ -403,29 +405,6 @@ namespace YawVR_Game_Engine.Plugin
             return (pitch, yaw, -roll);
         }
 
-        Stream GetStream(string resourceName)
-        {
-            var assembly = GetType().Assembly;
-            var rr = assembly.GetManifestResourceNames();
-            string fullResourceName = $"{assembly.GetName().Name}.Resources.{resourceName}";
-            return assembly.GetManifestResourceStream(fullResourceName);
-        }
-
-        string GetString(string resourceName)
-        {
-
-            var result = string.Empty;
-
-            using var stream = GetStream(resourceName);
-
-            if (stream != null)
-            {
-                using var reader = new StreamReader(stream);
-                result = reader.ReadToEnd();
-            }
-
-
-            return result;
-        }
+        
     }
 }

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace SharedLib
 {
-    internal class Helper
+    internal class InputHelper
     {
         internal static IEnumerable<(string key, float value)> GetInputs<T>(T data)
         {

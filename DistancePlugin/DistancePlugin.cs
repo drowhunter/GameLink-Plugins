@@ -56,7 +56,7 @@ namespace YawVR_Game_Engine.Plugin
         }
 
 
-        public string[] GetInputData() => Helper.GetInputs<DistanceTelemetryData>(default).Select(_ => _.key).ToArray();
+        public string[] GetInputData() => InputHelper.GetInputs<DistanceTelemetryData>(default).Select(_ => _.key).ToArray();
 
         public LedEffect DefaultLED() => new LedEffect(EFFECT_TYPE.KNIGHT_RIDER, 0, new[] { YawColor.WHITE }, 0); //dispatcher.JsonToLED(defProfile);
         public List<Profile_Component> DefaultProfile() => dispatcher.JsonToComponents(defProfile);
@@ -99,7 +99,7 @@ namespace YawVR_Game_Engine.Plugin
                     {
                         if (!isRestting)
                         {
-                            foreach (var (i, (key, value)) in Helper.GetInputs(data).WithIndex())
+                            foreach (var (i, (key, value)) in InputHelper.GetInputs(data).WithIndex())
                             {
                                 if (key == "Pitch" || key == "Roll")
                                 {

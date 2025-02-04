@@ -41,5 +41,12 @@ namespace SharedLib
 
             return result;
         }
+
+        public static string GetAssemblyVersion()
+        {
+            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+
+            return (assembly?.GetName().Version ?? new Version(0,0)).ToString();
+        }
     }
 }

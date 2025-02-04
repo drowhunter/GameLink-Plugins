@@ -8,6 +8,10 @@
     <Configurations>All;Debug;Release</Configurations>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="Resources\Default.yawglprofile" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Default.yawglprofile" />
     <EmbeddedResource Include="Resources\logo.png" />
   </ItemGroup>
   <ItemGroup>
@@ -24,4 +28,5 @@
   <ItemGroup>
     <ProjectReference Include="..\YawGLAPI\YawGLAPI.csproj" />
   </ItemGroup>
+  <Import Project="..\SharedLib\SharedLib.projitems" Label="Shared" />
 </Project>

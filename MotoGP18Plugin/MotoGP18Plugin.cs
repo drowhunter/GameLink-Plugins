@@ -1,15 +1,16 @@
-﻿using MotoGP18Plugin.Properties;
+﻿using SharedLib;
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
+
 using YawGLAPI;
-using MotoGP18Plugin.Properties;
-using System.IO;
 namespace YawVR_Game_Engine.Plugin
 {
     [Export(typeof(Game))]
@@ -171,13 +172,38 @@ namespace YawVR_Game_Engine.Plugin
         public int STEAM_ID => 775900;
         public bool PATCH_AVAILABLE => false;
 
-        public string Description => Resources.description;
+        
 
-        public Stream Logo => GetStream("logo.png");
-        public Stream SmallLogo => GetStream("recent.png");
-        public Stream Background => GetStream("wide.png");
+        public Stream Logo => ResourceHelper.GetStream("logo.png");
 
+        public Stream SmallLogo => ResourceHelper.GetStream("recent.png");
 
+        public Stream Background => ResourceHelper.GetStream("wide.png");
+
+        public string Description => "";// ResourceHelper.GetString("description.html");
+
+        private string defProfilejson => ResourceHelper.GetString("Default.yawglprofile");        
+
+        public List<Profile_Component> DefaultProfile() => dispatcher.JsonToComponents(defProfilejson);
+
+        //public LedEffect DefaultLED() => dispatcher.JsonToLED(defProfilejson);
+        public LedEffect DefaultLED()
+        {
+
+            return new LedEffect(
+
+           EFFECT_TYPE.KNIGHT_RIDER,
+           0,
+           [
+            new YawColor(255, 255, 255),
+            new YawColor(80, 80, 80),
+            new YawColor(255, 255, 0),
+            new YawColor(0, 0, 255),
+           ],
+           0.5f);
+        }
+
+        
 
         UdpClient udpClient;
         Thread readThread;
@@ -188,24 +214,7 @@ namespace YawVR_Game_Engine.Plugin
         private IMainFormDispatcher dispatcher;
         private IProfileManager controller;
         private volatile bool running = false;
-        public LedEffect DefaultLED() {
-
-            return new LedEffect(
-
-           EFFECT_TYPE.KNIGHT_RIDER,
-           0,
-           new YawColor[] {
-                    new YawColor(255, 255, 255),
-                    new YawColor(80, 80, 80),
-                    new YawColor(255, 255, 0),
-                    new YawColor(0, 0, 255),
-           },
-           0.5f);
-        }
-
-        public List<Profile_Component> DefaultProfile() {
-            return dispatcher.JsonToComponents(Resources.defProfile);
-        }
+        
 
         public void Exit() {
 
@@ -289,14 +298,7 @@ namespace YawVR_Game_Engine.Plugin
         {
             return null;
         }
-        Stream GetStream(string resourceName)
-        {
-            var assembly = GetType().Assembly;
-            var rr = assembly.GetManifestResourceNames();
-            string fullResourceName = $"{assembly.GetName().Name}.Resources.{resourceName}";
-            return assembly.GetManifestResourceStream(fullResourceName);
-        }
-
+        
     }
 
     }

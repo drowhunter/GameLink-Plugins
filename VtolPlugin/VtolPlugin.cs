@@ -15,7 +15,8 @@ namespace YawVR_Game_Engine
 {
     [Export(typeof(Game))]
     [ExportMetadata("Name", "VTOL VR")]
-    [ExportMetadata("Version", "1.0")]
+    [ExportMetadata("Version", "2.0")]
+    [ExportMetadata("Description", "Updated for VTOL VR Mod Loader that is now located in Steam. Patching is now done via a subscription to a mod within Mod Loader.")]
 
     public class VtolPlugin : Game {
 
@@ -116,33 +117,15 @@ namespace YawVR_Game_Engine
         }
 
         public void PatchGame() {
-            string name = "Vtol VR";
-            string installPath = dispatcher.GetInstallPath(name);
-            Console.WriteLine(installPath);
-            if (!Directory.Exists(installPath)) {
-                dispatcher.DialogShow("Cant find Vtol VR install directory\nOpen Plugin manager?", DIALOG_TYPE.QUESTION, delegate {
-                    dispatcher.OpenPluginManager();
-                });
-                return;
-            }
-
-            try {
-                string tempPath = Path.GetTempFileName();
-                     
-                using (WebClient wc = new WebClient()) {
-                    wc.DownloadFile("http://yaw.one/gameengine/Plugins/VTOL_VR/VTOLVR_ModLoader.zip", tempPath);
-                    Console.WriteLine(name , installPath);
-                    dispatcher.ExtractToDirectory(tempPath, installPath,true);
-                }
-            }
-            catch (Exception e) {
-
-                Console.WriteLine(e.Message);
-            }
-
-
-
-
+            this.dispatcher.DialogShow(
+                "VTOL VR Telemetry Mod is now managed through the VTOL VR Mod Loader Workshop.\n\nTo install the telemetry mod, subscribe to the telemetry mod via VTOL VR Mod Loader Workshop.\n\nIt will automatically be added to Mod Loader Content.",
+                DIALOG_TYPE.INFO,
+                null,
+                null,
+                false,
+                false,
+                ""
+            );
         }
         
      

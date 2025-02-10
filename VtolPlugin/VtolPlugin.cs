@@ -33,7 +33,7 @@ namespace YawVR_Game_Engine
 
         public string AUTHOR => "YawVR";
         public bool PATCH_AVAILABLE => true;
-        public int STEAM_ID => 667970;
+        public int STEAM_ID => 3018410;
         public string PROCESS_NAME => string.Empty;
 
 

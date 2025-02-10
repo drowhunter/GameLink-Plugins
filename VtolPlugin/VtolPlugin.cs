@@ -1,4 +1,7 @@
 ﻿using Newtonsoft.Json;
+
+using SharedLib;
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -8,7 +11,6 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
 using System.Threading;
-using VtolPlugin.Properties;
 using YawGLAPI;
 
 namespace YawVR_Game_Engine
@@ -35,19 +37,17 @@ namespace YawVR_Game_Engine
         public string PROCESS_NAME => string.Empty;
 
 
-        public string Description => Resources.description;
+        public string Description => ResourceHelper.GetString("description.html");
 
-        public Stream Logo => GetStream("logo.png");
-        public Stream SmallLogo => GetStream("recent.png");
-        public Stream Background => GetStream("wide.png");
+        public Stream Logo => ResourceHelper.GetStream("logo.png");
+        public Stream SmallLogo => ResourceHelper.GetStream("recent.png");
+        public Stream Background => ResourceHelper.GetStream("wide.png");
 
-        public LedEffect DefaultLED() {
-            return dispatcher.JsonToLED(Resources.defProfile);
-        }
+        private string defProfilejson => ResourceHelper.GetString("Default.yawglprofile");
 
-        public List<Profile_Component> DefaultProfile() {
-            return dispatcher.JsonToComponents(Resources.defProfile);
-        }
+        public LedEffect DefaultLED() => dispatcher.JsonToLED(defProfilejson);
+        public List<Profile_Component> DefaultProfile() => dispatcher.JsonToComponents(defProfilejson);
+        
 
         public void Exit() {
             receivingUdpClient.Close();
@@ -60,10 +60,7 @@ namespace YawVR_Game_Engine
                 "Yaw","Pitch","Roll","Xacceleration","Yacceleration","Zacceleration","AirSpeed","VerticalSpeed","AoA"
             };
         }
-        public string GetDescription()
-        {
-            return Resources.description;
-        }
+        
         public void SetReferences(IProfileManager controller, IMainFormDispatcher dispatcher)
         {
             this.controller = controller;
@@ -107,14 +104,6 @@ namespace YawVR_Game_Engine
             }
         }
 
-
-        Stream GetStream(string resourceName)
-        {
-            var assembly = GetType().Assembly;
-            var rr = assembly.GetManifestResourceNames();
-            string fullResourceName = $"{assembly.GetName().Name}.Resources.{resourceName}";
-            return assembly.GetManifestResourceStream(fullResourceName);
-        }
 
         public void PatchGame() {
             this.dispatcher.DialogShow(

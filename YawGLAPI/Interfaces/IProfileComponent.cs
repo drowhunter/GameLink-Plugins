@@ -19,11 +19,10 @@ namespace YawGLAPI
         SQRT = 6,
         LIMIT = 7,
         RECIPROCAL = 8
-
     }
     public enum ConditionOperator
     {
-        GREATERTHAN,LESSTHAN,EQUALS
+        GREATERTHAN,LESSTHAN,EQUALS,GREATERTHAN_EQ,LESSTHAN_EQ,
     }
     public enum ProfileComponentType
     {

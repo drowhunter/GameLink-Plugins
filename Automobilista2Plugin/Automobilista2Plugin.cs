@@ -13,7 +13,7 @@ namespace YawVR_Game_Engine.Plugin
 {
     [Export(typeof(Game))]
     [ExportMetadata("Name", "Automobilista2")]
-    [ExportMetadata("Version", "1.1")]
+    [ExportMetadata("Version", "1.3")]
     public class Automobilista2Plugin : Game {
 
 
@@ -74,6 +74,7 @@ namespace YawVR_Game_Engine.Plugin
         public void SetReferences(IProfileManager controller,IMainFormDispatcher dispatcher)
         {
             this.controller = controller;
+            this.dispatcher = dispatcher;
 
         }
         public void Init() {

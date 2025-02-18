@@ -983,6 +983,26 @@ namespace iRacingSDK
         public Single LFshockVel => ContainsKey("LFshockVel") ? (Single)this["LFshockVel"] : 0;
 
         /// <summary>
+        /// CR shock deflection
+        /// </summary>
+        public Single CRshockDefl => ContainsKey("CRshockDefl") ? (Single)this["CRshockDefl"] : 0;
+
+        /// <summary>
+        /// CR shock velocity
+        /// </summary>
+        public Single CRshockVel => ContainsKey("CRshockVel") ? (Single)this["CRshockVel"] : 0;
+
+        /// <summary>
+        /// CF shock deflection
+        /// </summary>
+        public Single CFshockDefl => ContainsKey("CFshockDefl") ? (Single)this["CFshockDefl"] : 0;
+
+        /// <summary>
+        /// CF shock velocity
+        /// </summary>
+        public Single CFshockVel => ContainsKey("CFshockVel") ? (Single)this["CFshockVel"] : 0;
+
+	    /// <summary>
         /// RRSH shock deflection
         /// </summary>
         public Single RRSHshockDefl => ContainsKey("RRSHshockDefl") ? (Single)this["RRSHshockDefl"] : 0;

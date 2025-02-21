@@ -57,6 +57,7 @@ namespace YawGLAPI
         /// <summary>
         /// Fetch ConfigBody of the plugin. Only struct is allowed, with primitive type fields ( and string )
         /// </summary>
+        /// <example>return typeof(Config)</example>
         /// <returns></returns>
         public abstract Type GetConfigBody();
 

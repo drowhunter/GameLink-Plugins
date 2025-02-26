@@ -1,20 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
-using System.Threading.Tasks;
+using System.Linq;
+using System.Net.Http;
+using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 
-using YawGLAPI;
-
+#nullable disable
 namespace SharedLib
 {
+
     internal class DownloadHelper
     {
-        public static async Task<string?> DownloadFileAsync(string url, CancellationToken cancellationToken = default)
+        public static async Task<string?> DownloadTempFileAsync(string url, CancellationToken cancellationToken = default)
         {
 
-            using var httpClient = new System.Net.Http.HttpClient();
+            using var httpClient = new HttpClient();
             string filename = Path.GetTempFileName();
             Console.WriteLine($"Downloading {url} to {filename}");
             try
@@ -39,10 +42,15 @@ namespace SharedLib
             }
             catch (Exception e)
             {
-                
+
             }
 
             return null;
         }
+        
     }
+
+    
+
+
 }

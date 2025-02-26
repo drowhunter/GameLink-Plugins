@@ -11,13 +11,11 @@
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Helpers\DownloadHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Helpers\GithubHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Helpers\IniHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Helpers\InputHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)MathsF.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Helpers\ResourceHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Validatior.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="$(MSBuildThisFileDirectory)Helpers\" />
   </ItemGroup>
 </Project>

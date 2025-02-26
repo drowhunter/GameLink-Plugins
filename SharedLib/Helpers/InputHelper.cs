@@ -7,7 +7,7 @@ namespace SharedLib
 {
     internal class InputHelper
     {
-        internal static IEnumerable<(string key, float value)> GetValues<T>(T data)
+        public static IEnumerable<(string key, float value)> GetValues<T>(T data)
         {
             foreach (var field in (data?.GetType() ?? typeof(T)).GetFields())
             {
@@ -32,7 +32,7 @@ namespace SharedLib
 
     internal static class InputHelperExtensions
     {
-        internal static string[] Keys(this IEnumerable<(string key, float value)> inputs)
+        public static string[] Keys(this IEnumerable<(string key, float value)> inputs)
         {
             return inputs.Select(i => i.key).ToArray();
         }

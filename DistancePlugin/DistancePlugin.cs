@@ -18,7 +18,7 @@ namespace YawVR_Game_Engine.Plugin
 {
     [Export(typeof(Game))]
     [ExportMetadata("Name", "Distance")]
-    [ExportMetadata("Version", "1.0")]
+    [ExportMetadata("Version", "1.5")]
 
     public class DistancePlugin : Game
     {
@@ -42,6 +42,7 @@ namespace YawVR_Game_Engine.Plugin
         public Stream Background => ResourceHelper.GetStream("wide.png");
         private string defProfile => ResourceHelper.GetString("Default.yawglprofile");
 
+        IDeviceParameters deviceParameters;
 
 
 
@@ -58,17 +59,20 @@ namespace YawVR_Game_Engine.Plugin
 
         public string[] GetInputData() => InputHelper.GetInputs<DistanceTelemetryData>(default).Select(_ => _.key).ToArray();
 
-        public LedEffect DefaultLED() => new LedEffect(EFFECT_TYPE.KNIGHT_RIDER, 0, new[] { YawColor.WHITE }, 0); 
+        public LedEffect DefaultLED() => new(EFFECT_TYPE.KNIGHT_RIDER, 0, [YawColor.WHITE], 0);
         public List<Profile_Component> DefaultProfile() => dispatcher.JsonToComponents(defProfile);
-            
+
+
         public void SetReferences(IProfileManager controller, IMainFormDispatcher dispatcher)
         {
             this.dispatcher = dispatcher;
             this.controller = controller;
         }
 
+
         public void Init()
         {
+            deviceParameters = dispatcher.GetDeviceParameters();
             running = true;
             readThread = new Thread(new ThreadStart(ReadThread));
             readThread.Start();
@@ -81,9 +85,9 @@ namespace YawVR_Game_Engine.Plugin
                 {
                     ReceiveAddress = new IPEndPoint(IPAddress.Any, 12345)
                 });
-            
+
             }
-            catch(Exception x)
+            catch (Exception x)
             {
                 dispatcher.ShowNotification(NotificationType.ERROR, x.Message);
                 Exit();
@@ -101,24 +105,22 @@ namespace YawVR_Game_Engine.Plugin
                         {
                             foreach (var (i, (key, value)) in InputHelper.GetInputs(data).WithIndex())
                             {
-                                if (key == "Pitch" || key == "Roll")
+                                var nv = 0f;
+
+                                switch (key)
                                 {
-                                    var v = 0f;
-                                    if (Math.Abs(value) <= 90)
-                                    {
-                                        v = value;
-                                    }
-                                    else
-                                    {
-                                        v = (180 - Math.Abs(value)) * (value < 0 ? -1 : 1);
-                                    }
-                                    var max = 90;
-                                    var nv = (float)EnsureMapRange(v, -90, 90, -max, max);
-                                    controller.SetInput(i, nv);
-                                    continue;
+                                    case nameof(DistanceTelemetryData.Pitch):
+                                        nv = MathsF.ScalePitchRoll(value, -90, 90, -deviceParameters.PitchLimitF, deviceParameters.PitchLimitB);
+                                        break;
+                                    case nameof(DistanceTelemetryData.Roll):
+                                        nv = MathsF.ScalePitchRoll(value, -90, 90, -deviceParameters.RollLimit, deviceParameters.RollLimit);
+                                        break;
+                                    default:
+                                        nv = value;
+                                        break;
                                 }
 
-                                controller.SetInput(i, value);
+                                controller.SetInput(i, nv);
                             }
                         }
                         else
@@ -132,9 +134,9 @@ namespace YawVR_Game_Engine.Plugin
                         isRestting = true;
                     }
                 }
-                catch(SocketException sex) { }
+                catch (SocketException) { }
             }
-            
+
         }
 
         bool isRestting = false;
@@ -143,20 +145,15 @@ namespace YawVR_Game_Engine.Plugin
 
         public Dictionary<string, ParameterInfo[]> GetFeatures() => null;
 
-        public static double MapRange(double x, double xMin, double xMax, double yMin, double yMax)
+        public Type GetConfigBody()
         {
-            return yMin + (yMax - yMin) * (x - xMin) / (xMax - xMin);
-        }
-
-        public static double EnsureMapRange(double x, double xMin, double xMax, double yMin, double yMax)
-        {
-            return Math.Max(Math.Min(MapRange(x, xMin, xMax, yMin, yMax), Math.Max(yMin, yMax)), Math.Min(yMin, yMax));
+            return null;
         }
     }
 
     static class Extensions
     {
-        
+
 
         public static IEnumerable<(int index, T value)> WithIndex<T>(this IEnumerable<T> source)
         {

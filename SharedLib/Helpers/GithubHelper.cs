@@ -1,18 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
-
+#nullable disable
 namespace SharedLib
 {
     internal class GithubHelper : IDisposable
     {
         private const string _baseUrl = "https://github.com";
-        public List<string> TempFiles { get; private set; } = new List<string>();
+        public HashSet<string> TempFiles { get; private set; }
 
         public string UsernameOrOrg { get; }
         public string Repo { get; }
@@ -23,12 +25,13 @@ namespace SharedLib
             UsernameOrOrg = usernameOrOrg;
             Repo = repo;
             Options = options ?? new GithubOptions();
+            TempFiles = new HashSet<string>();
         }
 
 
         public void Dispose()
         {
-            if (this.Options.CleanTempFiles)
+            if (this.Options.CachingEnabled)
                 CLeanTempFiles();
         }
 
@@ -47,25 +50,47 @@ namespace SharedLib
             }
         }
 
-        public async Task<List<GithubRelease>> GetLatestReleasesAsync(params string[] assets)
+        public Task<List<GithubAsset>> DownloadAssetsByTagAsync(string tag, string[] filter = null, CancellationToken cancellationToken = default)
+        {        
+            Uri uri = new Uri($"{_baseUrl}/{UsernameOrOrg}/{Repo}/releases/tag/" + tag);
+
+            return DownloadReleasesAsync(uri, filter, cancellationToken);
+        }
+
+        public Task<List<GithubAsset>> DownloadLatestAssetsAsync(string[] filter = null, CancellationToken cancellationToken = default)
         {
+            Uri uri = new Uri($"{_baseUrl}/{UsernameOrOrg}/{Repo}/releases/latest");
 
-            var retval = new List<GithubRelease>();
+            return DownloadReleasesAsync(uri, filter, cancellationToken);
+        }
 
-            var url = $"{_baseUrl}/{UsernameOrOrg}/{Repo}/releases/latest";
+        public Task<List<GithubAsset>> GetAssetsByReleaseAsync(string release, string[] filter = null, CancellationToken cancellationToken = default)
+        {
+            Uri uri = new Uri($"{_baseUrl}/{UsernameOrOrg}/{Repo}/releases/tag/" + release);
+            return DownloadReleasesAsync(uri, filter, cancellationToken);
+        }
 
-            using var _client = new HttpClient();
+        private async Task<List<GithubAsset>> DownloadReleasesAsync(Uri uri, string[] filter = null, CancellationToken cancellationToken = default)
+        {
+            filter ??= Array.Empty<string>();   
 
+            var assets = new List<GithubAsset>();
 
+            var folder = Path.GetTempPath();
+            
 
-            Uri u = new(url);
+            using var httpClient = new HttpClient();
 
-            var response = await _client.GetAsync(u);
+#if DEBUG
+            Debugger.Launch();
+#endif
+
+            var response = await httpClient.GetAsync(uri, cancellationToken);
 
 
             if (response.IsSuccessStatusCode)
             {
-                var html = await response.Content.ReadAsStringAsync();
+                var html = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 var m = Regex.Match(html, @$"include-fragment.+?src=""(?<assets>{_baseUrl}/{UsernameOrOrg}/{Repo}/releases/expanded_assets/(?<version>.+?))""", RegexOptions.Multiline | RegexOptions.IgnoreCase);
                 if (m.Success)
@@ -73,61 +98,60 @@ namespace SharedLib
                     var assetsurl = m.Groups["assets"].Value;
                     string version = m.Groups["version"].Value.Replace(',', '.');
 
-                    response = await _client.GetAsync(assetsurl);
+                    response = await httpClient.GetAsync(assetsurl);
 
                     if (response.IsSuccessStatusCode)
                     {
-                        var html2 = await response.Content.ReadAsStringAsync();
+                        var html2 = await response.Content.ReadAsStringAsync(cancellationToken);
 
-                        var a = Regex.Matches(html2, @$"href=""(?<dl>/{UsernameOrOrg}/{Repo}/releases/download/.+?)""", RegexOptions.Multiline | RegexOptions.IgnoreCase);
+                        var dlLinks = Regex.Matches(html2, @$"href=""(?<dl>/{UsernameOrOrg}/{Repo}/releases/download/.+?)""", RegexOptions.Multiline | RegexOptions.IgnoreCase);
 
-                        if (a.All(_ => _.Success))
+                        if (dlLinks.All(_ => _.Success))
                         {
-                            retval = a.Select(_ => new GithubRelease { Name = Path.GetFileName(_.Groups["dl"].Value), Version = version, Href = _baseUrl + _.Groups["dl"].Value }).ToList();
+                            assets = dlLinks.Select(_ => new GithubAsset { Name = Path.GetFileName(_.Groups["dl"].Value), Version = version, Href = _baseUrl + _.Groups["dl"].Value }).ToList();                            
 
-                            //var dlUrl = a.Groups["dl"].Value;
-
-                            //var dl = "https://github.com" + dlUrl;
-
-
-                            if (assets.Any())
+                            if (filter.Any())
                             {
-                                retval = retval.Where(r => assets.Any(a => r.Name.Contains(a))).ToList();
+                                assets = assets.Where(r => filter.Any(a => r.Name.Contains(a))).ToList();
                             }
 
-                            foreach (var filt in retval)
+                            foreach (var asset in assets)
                             {
-                                var tempFile = await DownloadHelper.DownloadTempFileAsync(filt.Href);
-                                if (tempFile != null)
-                                {
-                                    this.TempFiles.Add(tempFile);
-                                    filt.Href = tempFile;
-                                }
-                                else
-                                {
-                                    Console.WriteLine("Error downloading file " + filt.Href);
+                                var fullPath = Path.Combine(folder, Path.GetFileName(asset.Href));
 
-                                    break;
+                                if (!Options.CachingEnabled || !File.Exists(fullPath))
+                                {
+                                    var tempFile = await DownloadHelper.DownloadFileAsync(asset.Href, folder, cancellationToken);
+                                    if (tempFile != null)
+                                    {
+                                        
+                                        TempFiles.Add(tempFile);
+                                        asset.Href = tempFile;
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Error downloading file " + asset.Href);
+
+                                        break;
+                                    }
+                                }
+                                else if(Options.CachingEnabled)
+                                {
+                                    Console.WriteLine("Using cached file " + fullPath);
                                 }
                             }
                         }
                     }
                 }
             }
-
-
-            if (assets.Any())
-            {
-                retval = retval.Where(_ => assets.Any(a => _.Name.Contains(a))).ToList();
-            }
-
-            return retval;
+            
+            return assets;
         }
 
 
 
 
-        internal class GithubRelease
+        internal class GithubAsset
         {
             public string Name { get; set; }
 
@@ -137,7 +161,7 @@ namespace SharedLib
 
             public Task<string> DownloadTempFileAsync()
             {
-                return DownloadHelper.DownloadTempFileAsync(Href);
+                return DownloadHelper.DownloadFileAsync(Href);
             }
         }
 
@@ -146,7 +170,7 @@ namespace SharedLib
             /// <summary>
             /// if true, temp files will be deleted when the object is disposed
             /// </summary>
-            public bool CleanTempFiles { get; set; } = true;
+            public bool CachingEnabled { get; set; } 
         }
 
     }

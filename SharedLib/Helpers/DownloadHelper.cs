@@ -14,25 +14,47 @@ namespace SharedLib
 
     internal class DownloadHelper
     {
-        public static async Task<string?> DownloadTempFileAsync(string url, CancellationToken cancellationToken = default)
+        public static async Task<string> DownloadFileAsync(string url, string folder = null,  CancellationToken cancellationToken = default)
         {
 
             using var httpClient = new HttpClient();
-            string filename = Path.GetTempFileName();
-            Console.WriteLine($"Downloading {url} to {filename}");
+            
+
+            if(folder == null)
+            {
+                folder = Path.GetTempPath();
+            }
+            else if(!Directory.Exists(folder))
+            {
+                Directory.CreateDirectory(folder);
+            }
+            
+
+            
             try
             {
                 var response = await httpClient.GetAsync(url, cancellationToken);
                 if (response.IsSuccessStatusCode)
                 {
-                    var fileBytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+                    //var fileBytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
 
-                    var fn = response.Content.Headers?.ContentDisposition?.FileName;
-                    Console.WriteLine($"Downloaded {fn} {fileBytes.Length} bytes");
+                    
+                    var filename = response.Content.Headers?.ContentDisposition?.FileName ?? Path.GetFileName(Path.GetTempFileName());
+                    
+                    
+                    var fullPath = Path.Combine(folder, filename);
 
-                    await File.WriteAllBytesAsync(filename, fileBytes, cancellationToken);
+                    using FileStream fileStream = File.Create(fullPath);
 
-                    return filename;
+                    var s = await response.Content.ReadAsStreamAsync(cancellationToken);
+
+                    await s.CopyToAsync(fileStream, cancellationToken);
+
+                    //await File.WriteAllBytesAsync(fullPath, fileBytes, cancellationToken);
+
+                    Console.WriteLine($@"Downloaded {url} to ""{fullPath}"" ");//({fileBytes.Length / 1024}) kb
+
+                    return fullPath;
                 }
                 else
                 {

@@ -189,7 +189,7 @@ namespace YawVR_Game_Engine.Plugin
 
             //string url = "https://github.com/Unity-Telemetry-Mods/NewStarGP-TelemetryMod/releases/download/v1%2C0%2C0/NewStarGPTelemetryMod-1.0.0.zip";
 
-            //string tempPath = await DownloadHelper.DownloadTempFileAsync(url);
+            //string tempPath = await DownloadHelper.DownloadFileAsync(url);
 
             using var github = new GithubHelper("Unity-Telemetry-Mods", "NewStarGP-TelemetryMod");
 

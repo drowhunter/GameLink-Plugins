@@ -1,6 +1,6 @@
 {
   "GameName": "New Star GP",
-  "Name": "Default 2",
+  "Name": "Default Copy",
   "Components": [
     {
       "Constant": false,
@@ -69,8 +69,8 @@
       "Constant": false,
       "Input_index": 12,
       "Output_index": 1,
-      "MultiplierPos": 1.0,
-      "MultiplierNeg": 1.0,
+      "MultiplierPos": 0.8,
+      "MultiplierNeg": 0.8,
       "Offset": 0.0,
       "Inverse": true,
       "Limit": -1.0,
@@ -90,8 +90,8 @@
       "Constant": false,
       "Input_index": 6,
       "Output_index": 2,
-      "MultiplierPos": 2.0,
-      "MultiplierNeg": 2.0,
+      "MultiplierPos": 0.1,
+      "MultiplierNeg": 0.1,
       "Offset": 0.0,
       "Inverse": false,
       "Limit": -1.0,
@@ -111,8 +111,8 @@
       "Constant": false,
       "Input_index": 21,
       "Output_index": 1,
-      "MultiplierPos": 2.0,
-      "MultiplierNeg": 2.0,
+      "MultiplierPos": 1.5,
+      "MultiplierNeg": 1.5,
       "Offset": 0.0,
       "Inverse": true,
       "Limit": -1.0,
@@ -242,7 +242,7 @@
       "Offset": 0.0,
       "Inverse": true,
       "Limit": -1.0,
-      "Smoothing": 1.0,
+      "Smoothing": 0.90111244,
       "Enabled": true,
       "Spikeflatter": {
         "Enabled": false,
@@ -263,7 +263,7 @@
       "Offset": 0.0,
       "Inverse": true,
       "Limit": -1.0,
-      "Smoothing": 1.0,
+      "Smoothing": 0.90111244,
       "Enabled": true,
       "Spikeflatter": {
         "Enabled": false,
@@ -284,7 +284,7 @@
       "Offset": 0.0,
       "Inverse": false,
       "Limit": -1.0,
-      "Smoothing": 1.0,
+      "Smoothing": 0.90111244,
       "Enabled": true,
       "Spikeflatter": {
         "Enabled": false,
@@ -305,7 +305,7 @@
       "Offset": 0.0,
       "Inverse": false,
       "Limit": -1.0,
-      "Smoothing": 1.0,
+      "Smoothing": 0.90111244,
       "Enabled": true,
       "Spikeflatter": {
         "Enabled": false,

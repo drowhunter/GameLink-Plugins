@@ -6,13 +6,10 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using System.Threading;
-using System.Threading.Tasks;
 
 using YawGLAPI;
 
@@ -23,6 +20,8 @@ namespace YawVR_Game_Engine.Plugin
     [ExportMetadata("Version", "1.0")]
     public class NewStarGPPlugin : Game
     {
+        
+
         #region Standard Properties
         public int STEAM_ID => 2217580;
         public string PROCESS_NAME => "NSGP";
@@ -30,6 +29,7 @@ namespace YawVR_Game_Engine.Plugin
 
         public bool PATCH_AVAILABLE => true;
 
+        
         public string Description => ResourceHelper.Description;
         public Stream Logo => ResourceHelper.Logo;
         public Stream SmallLogo => ResourceHelper.SmallLogo;
@@ -40,23 +40,26 @@ namespace YawVR_Game_Engine.Plugin
 
         public LedEffect DefaultLED() => new LedEffect(EFFECT_TYPE.KNIGHT_RIDER, 0, [YawColor.WHITE], 0);
 
+        public Dictionary<string, ParameterInfo[]> GetFeatures() => null;
 
+        public Type GetConfigBody() => typeof(Config);
+        
+        
+        private Config settings;
         #endregion
 
-        
-
-        private Config settings;
 
         private volatile bool running = false;
-
         private UdpTelemetry<Telemetry> telem;
         private Thread readThread;
         private IMainFormDispatcher dispatcher;
         private IProfileManager controller;
+        CancellationTokenSource cts = new();
 
         public void Exit()
         {
             running = false;
+            cts.Cancel();
             telem?.Dispose();
         }
 
@@ -70,6 +73,7 @@ namespace YawVR_Game_Engine.Plugin
         public void Init()
         {
             this.settings = dispatcher.GetConfigObject<Config>();
+           
             running = true;
             readThread = new Thread(new ThreadStart(ReadThread));
             readThread.Start();
@@ -97,125 +101,31 @@ namespace YawVR_Game_Engine.Plugin
         }
 
        
-        public Dictionary<string, ParameterInfo[]> GetFeatures() => null;
-
-        public Type GetConfigBody() =>typeof(Config);
+        
 
         public async void PatchGame()
         {
 #if DEBUG
             Debugger.Launch();
 #endif
-            string name = "";
-            MemberInfo info = this.GetType();
-            foreach (object meta in info.GetCustomAttributes(true))
+
+            bool UseUUVR = false;
+            dispatcher.DialogShow("Use UUVR with RaiPal?", DIALOG_TYPE.QUESTION, (yes) => UseUUVR = true);
+
+            var patcher = UnityPatcher.Create<UnityPatcher>(this, dispatcher, options =>
             {
-                if (meta is ExportMetadataAttribute)
+                options.ModType = UseUUVR ? ModType.RaiPal : ModType.BepInEx5_x64;
+                options.PluginName = "NewStarGPTelemetryMod";
+                options.DoorStopPath = "release";
+                options.Repository = new GithubOptions
                 {
-                    if (((ExportMetadataAttribute)meta).Name == "Name")
-                    {
-                        name = (string)((ExportMetadataAttribute)meta).Value;
-                    }
-
-                }
-            }
+                    UsernameOrOrganization = "Unity-Telemetry-Mods",
+                    Repository = "NewStarGP-TelemetryMod"
+                };
+            });
 
 
-
-            string installPath = dispatcher.GetInstallPath(name);
-            if (!Directory.Exists(installPath))
-            {
-                dispatcher.DialogShow($"Cant find {name} install directory\nOpen Plugin manager?", DIALOG_TYPE.QUESTION, (yes) =>
-                {
-                    dispatcher.OpenPluginManager();
-
-                });
-                return;
-            }
-
-            var doorStop = Path.Combine(installPath, "release\\doorstop_config.ini");
-            if (!File.Exists(doorStop))
-            {
-                dispatcher.DialogShow("Please install UUVR or BepInEx first", DIALOG_TYPE.INFO);
-
-                return;
-            }
-
-            var doorStopIni = await IniHelper.LoadFileAsync(doorStop);
-
-            if (!doorStopIni.TryGetValue("targetAssembly", out var targetAssembly))
-            {
-                dispatcher.DialogShow("Can't find targetAssembly in doorstop_config.ini", DIALOG_TYPE.INFO);
-                return;
-            }
-
-            string modFolder = null;
-            var m = Regex.Match(targetAssembly, @"(.+?[\\/]BepInEx)");
-            if (m.Success)
-            {
-                modFolder = m.Groups[1].Value.Replace('\\', '/') + "/plugins/NewStarGPTelemetryMod";
-            }
-            else
-            {
-                dispatcher.DialogShow("Can't find BepInEx folder in targetAssembly", DIALOG_TYPE.INFO);
-                return;
-            }
-
-            bool quit = false;
-            if (Directory.Exists(modFolder))
-            {
-                dispatcher.DialogShow("Mod already installed. Reinstall?", DIALOG_TYPE.QUESTION, (yes) =>
-                {
-                    try
-                    {
-                        Directory.Delete(modFolder, true);
-                    }
-                    catch (Exception e)
-                    {
-                        dispatcher.ShowNotification(NotificationType.ERROR, "Error deleting existing mod: " + e.Message);
-                        quit = true;
-
-                    }
-                }, (no) =>
-                {
-                    quit = true;
-                });
-            }
-
-            if (quit)
-            {
-                return;
-            }
-
-            //string url = "https://github.com/Unity-Telemetry-Mods/NewStarGP-TelemetryMod/releases/download/v1%2C0%2C0/NewStarGPTelemetryMod-1.0.0.zip";
-
-            //string tempPath = await DownloadHelper.DownloadFileAsync(url);
-
-            using var github = new GithubHelper("Unity-Telemetry-Mods", "NewStarGP-TelemetryMod");
-
-
-            var dl = await github.GetLatestReleasesAsync();
-
-
-
-            Console.WriteLine("Metadata Name: " + name + ", Installpath:" + installPath);
-
-            try
-            {
-                var release = dl.FirstOrDefault();
-                if(dl == null || dl.Count == 0)
-                {
-                    dispatcher.DialogShow("No releases found", DIALOG_TYPE.INFO);
-                    return;
-                }
-
-                dispatcher.ExtractToDirectory(release.Href, modFolder, true);
-                dispatcher.DialogShow($"{release.Name} ({release.Version}) Installed!", DIALOG_TYPE.INFO, showChk: true);
-            }
-            catch (Exception e)
-            {
-                dispatcher.ShowNotification(NotificationType.ERROR, "Error extracting files: " + e.Message);
-            }
+            await patcher.PatchAsync(cts.Token);            
         }
 
     }

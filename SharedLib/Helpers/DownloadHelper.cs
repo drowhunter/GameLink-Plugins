@@ -14,13 +14,12 @@ namespace SharedLib
 
     internal class DownloadHelper
     {
+        public const string UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3";
         public static async Task<string> DownloadFileAsync(string url, string folder = null,  CancellationToken cancellationToken = default)
         {
 
-            using var httpClient = new HttpClient();
-            
-
-            if(folder == null)
+           
+            if (folder == null)
             {
                 folder = Path.GetTempPath();
             }
@@ -33,6 +32,9 @@ namespace SharedLib
             
             try
             {
+                using var httpClient = new HttpClient();
+                httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgent);
+
                 var response = await httpClient.GetAsync(url, cancellationToken);
                 if (response.IsSuccessStatusCode)
                 {
@@ -46,10 +48,11 @@ namespace SharedLib
 
                     using FileStream fileStream = File.Create(fullPath);
 
-                    var s = await response.Content.ReadAsStreamAsync(cancellationToken);
-
+                    using var s = await response.Content.ReadAsStreamAsync(cancellationToken);
+                    s.Seek(0, SeekOrigin.Begin);
                     await s.CopyToAsync(fileStream, cancellationToken);
 
+                    
                     //await File.WriteAllBytesAsync(fullPath, fileBytes, cancellationToken);
 
                     Console.WriteLine($@"Downloaded {url} to ""{fullPath}"" ");//({fileBytes.Length / 1024}) kb

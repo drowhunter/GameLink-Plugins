@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -7,32 +10,50 @@ using System.Threading.Tasks;
 
 namespace SharedLib
 {
+    #nullable disable
     internal class IniHelper
     {
-        public static async Task<Dictionary<string, string>> LoadFileAsync(string path, CancellationToken cancellationToken = default)
-            => Parse(await File.ReadAllTextAsync(path, cancellationToken));
+        readonly static Regex heading = new Regex(@"\[(.+?)\]");
+        readonly static Regex kvp = new Regex(@"(.+?)=(.*)");
 
-        public static Dictionary<string, string> Parse(string ini)
+       
+        public static async Task<Dictionary<string, Dictionary<string, string>>> LoadAsync(string path, CancellationToken cancellationToken = default)
         {
+             var dict = new Dictionary<string, Dictionary<string, string>>();
+            string k = null;
+            
+            if(!File.Exists(path))
+                throw new FileNotFoundException("File not found", path);
 
-            var matches = Regex.Matches(ini, @"^(\w+?)\s?=\s?(.+?)$", RegexOptions.Multiline);
-            var dict = matches.ToDictionary(x => x.Groups[1].Value.Trim(), x => x.Groups[2].Value.Trim());
+            int i = 0;
+            await foreach (var line in File.ReadLinesAsync(path))
+            {
+                i++;   
+                var hm = heading.Match(line);
+                if (hm.Success)
+                {
+                    k = hm.Groups[1].Value.Trim();
+                    dict[k] = [];
+                    continue;
+                }
 
-            //var dict = new Dictionary<string, string>();
-            //foreach (var line in ini.Split('\n'))
-            //{
-                
-
-                
-
-            //    //if (parts.Count > 0)
-            //    //{
-
-            //    //}
-            //    //    dict[parts[0].Trim()] = parts[1].Trim();
-            //}
+                var m = kvp.Match(line);
+                if (m.Success)
+                {
+                    if(k != null) { 
+                        dict[k][m.Groups[1].Value] = m.Groups[2].Value?.Trim();
+                    }
+                    else
+                    {
+                        throw new Exception(string.Format("Invalid INI file. Line {0} - {1}", i, line));
+                    }
+                }
+            }
+            
             return dict;
         }
+
+
 
     }
 }

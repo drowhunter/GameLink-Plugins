@@ -1,4 +1,6 @@
-﻿using SharedLib;
+﻿using DistancePlugin;
+
+using SharedLib;
 using SharedLib.TelemetryHelper;
 
 using System;
@@ -53,8 +55,8 @@ namespace YawVR_Game_Engine.Plugin
         private Thread readThread;
         private IMainFormDispatcher dispatcher;
         private IProfileManager controller;
-        
-        
+
+
         private volatile bool running = false;
 
 
@@ -152,31 +154,35 @@ namespace YawVR_Game_Engine.Plugin
             cts.Cancel();
             telemetry?.Dispose();
         }
+
+        private string GetInstallPath()
+        {
+            string name = GetType().GetCustomAttributes<ExportMetadataAttribute>(true)
+                .Where(meta => meta.Name == "Name").Select(m => (string) m.Value).First();
+            
+            string installPath = dispatcher.GetInstallPath("Distance");
+            if (!string.IsNullOrWhiteSpace(installPath) && !Directory.Exists(installPath))
+            {
+                dispatcher.DialogShow("Cant find Distance install directory\n\n" + installPath + "\n\nOpen Plugin manager to set it?", DIALOG_TYPE.QUESTION, (yes) =>
+                {
+                    dispatcher.OpenPluginManager();
+                });
+                return null;
+            }
+            return installPath;
+        }
+
         public async void PatchGame()
         {
 #if DEBUG
             Debugger.Launch();
 #endif
-            string name = "";
-            MemberInfo info = this.GetType();
-            foreach (object meta in info.GetCustomAttributes(true))
-            {
-                if (meta is ExportMetadataAttribute)
-                {
-                    if (((ExportMetadataAttribute)meta).Name == "Name")
-                    {
-                        name = (string)((ExportMetadataAttribute)meta).Value;
-                    }
+            
+            string installPath = GetInstallPath();
 
-                }
-            }
-
-
-
-            string installPath = dispatcher.GetInstallPath(name);
             if (!string.IsNullOrWhiteSpace(installPath) && !Directory.Exists(installPath))
             {
-                dispatcher.DialogShow($"Cant find {name} install directory\n\n{installPath}\n\nOpen Plugin manager to set it?", DIALOG_TYPE.QUESTION, (yes) =>
+                dispatcher.DialogShow($"Cant find game install directory\n\nOpen Plugin manager to set it?", DIALOG_TYPE.QUESTION, (yes) =>
                 {
                     dispatcher.OpenPluginManager();
 
@@ -184,134 +190,45 @@ namespace YawVR_Game_Engine.Plugin
                 return;
             }
 
-            var modType = "BepInEx";
-            var doorStopPath = "doorstop_config.ini";
-            var outputPath = "DistanceTelemetryMod";
-
-            var doorStop = Path.Combine(installPath, doorStopPath);
-            if (!File.Exists(doorStop))
+            var patcher = Patcher.Create<UnityPatcher>(options =>
             {
-                switch (modType)
+                options.GameInstallPath = installPath;
+                options.ModType = ModType.BepInEx5_x64;
+                options.PluginName = "DistanceTelemetryMod";
+                options.DoorStopPath = "";
+                options.Repository = new GithubOptions
                 {
-                    case "RaiPal":
-                        dispatcher.DialogShow("Please install UUVR or BepInEx first", DIALOG_TYPE.INFO);
-                        return;
-                    case "BepInEx":
-                        {
-                            //dispatcher.DialogShow("Please install BepInEx first", DIALOG_TYPE.INFO);
-                            using var github = new GithubHelper("BepInEx", "BepInEx");
+                    UsernameOrOrganization = "Unity-Telemetry-Mods",
+                    Repository = "Distance-TelemetryMod"
+                };                
+            });
 
-                            var dl = await github.DownloadAssetsByTagAsync("v5.4.23.2", ["win_x64"], cts.Token);
-
-                            foreach()
-
-                        }
-                        break;
-                }
-                 
-                return;
-            }
-
-            var doorStopIni = await IniHelper.LoadFileAsync(doorStop);
-
-            if (!doorStopIni.TryGetValue("target_assembly", out var targetAssembly)  &&
-                !doorStopIni.TryGetValue("targetAssembly", out targetAssembly)
-                )
+            patcher.OnFeedback += (sender, e) =>
             {
-                dispatcher.DialogShow("Can't find targetAssembly in doorstop_config.ini", DIALOG_TYPE.INFO);
-                return;
-            }
+                dispatcher.DialogShow(e.Message, DIALOG_TYPE.INFO);
+            };
 
-            string modFolder = null;
-            var m = Regex.Match(targetAssembly, @"(?<modFolder>.*?BepInEx)[\\/]");
-            
-            if (m.Success)
+            patcher.OnExtractFiles += (sender, e) =>
             {
-                modFolder = m.Groups["modFolder"].Value;
+                dispatcher.ExtractToDirectory(e.Source, e.Destination, e.OverWrite);
+            };
 
-
-                modFolder = Path.Combine(!Regex.IsMatch(modFolder, @"^[a-zA-Z]:[\\/]") ? installPath : "", modFolder, "plugins/"+ outputPath).Replace('\\', '/');
-               
-                
-            }
-            else
+            patcher.OnQuestion += (message) =>
             {
-                dispatcher.DialogShow($"Can't find BepInEx folder inside of \"{targetAssembly}\"", DIALOG_TYPE.INFO);
-                return;
-            }
-
-            
-            bool quit = false;
-            if (Directory.Exists(modFolder))
-            {
-                dispatcher.DialogShow("Mod already installed. Reinstall?", DIALOG_TYPE.QUESTION, (yes) =>
+                bool answer = false;
+                dispatcher.DialogShow(message, DIALOG_TYPE.QUESTION, (yes) =>
                 {
-                    try
-                    {
-                        Directory.Delete(modFolder, true);
-                    }
-                    catch (Exception e)
-                    {
-                        dispatcher.ShowNotification(NotificationType.ERROR, "Error deleting existing mod: " + e.Message);
-                        quit = true;
-
-                    }
-                }, (no) =>
-                {
-                    quit = true;
+                    answer = true;
                 });
-            }
 
-            if (quit)
-            {
-                return;
-            }
+                return answer;
+            };
 
-            //string url = "https://github.com/Unity-Telemetry-Mods/NewStarGP-TelemetryMod/releases/download/v1%2C0%2C0/NewStarGPTelemetryMod-1.0.0.zip";
-
-            //string tempPath = await DownloadHelper.DownloadFileAsync(url);
-
-            //using var github = new GithubHelper("Unity-Telemetry-Mods", "Distance-TelemetryMod");
             
+            await patcher.PatchAsync(cts.Token);
+            return;
 
-            //praydog/REFramework-nightly
-
-            //using var github = new GithubHelper("praydog", "REFramework-nightly");
-
-            //var dl = await github.GetAssetsByLatestAsync(["TDB"], cts.Token);
-
-            Console.WriteLine("Metadata Name: " + name + ", Installpath:" + installPath);
-
-            try
-            {
-                var release = dl.FirstOrDefault();
-                if (dl == null || dl.Count == 0)
-                {
-                    dispatcher.DialogShow("No releases found", DIALOG_TYPE.INFO);
-                    return;
-                }
-                if(File.Exists(release.Href))
-                {
-                    try
-                    {
-                        dispatcher.ExtractToDirectory(release.Href, modFolder, true);
-                        //dispatcher.DialogShow("File already downloaded", DIALOG_TYPE.INFO);
-                        dispatcher.DialogShow($"{release.Name} ({release.Version}) Installed!", DIALOG_TYPE.INFO, showChk: true);
-                    }
-                    catch (Exception e)
-                    {
-                        dispatcher.ShowNotification(NotificationType.ERROR, "Error extracting files: " + e.Message);
-                    }
-
-                    return;
-                }
-                
-               
-            }
-            catch (Exception e)
-            {
-                dispatcher.ShowNotification(NotificationType.ERROR, "Error extracting files: " + e.Message);
-            }
+           
         }
 
     }

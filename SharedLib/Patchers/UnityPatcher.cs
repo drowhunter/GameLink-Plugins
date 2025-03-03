@@ -23,13 +23,29 @@ namespace SharedLib
     {
         private string _doorStopIni => PathCombine(options.DoorStopPath, "doorstop_config.ini");
 
-        protected override TaskList taskList => new()
+        protected override TaskList Tasks
+        {
+            get
             {
-                { "Install BepIn Ex",InstallBepInExTask},
-                { "Find BepInEx Plugins Dir",FindBepInExPluginsDirTask},
-                { "Reinstall If Plugin Found Async",AskReinstallTask},
-                { "Install Mod",InstallModTask}
-            };
+                try
+                {
+                    return new()
+                    {
+                        { "Install BepIn Ex",InstallBepInExTask},
+                        { "Find BepInEx Plugins Dir",FindBepInExPluginsDirTask},
+                        { "Reinstall If Plugin Found Async",AskReinstallTask},
+                        { "Install Mod",InstallModTask}
+                    };
+                }
+                catch (Exception e)
+                {
+                    Log("Error: " + e.Message);
+                    return null;
+
+                }
+            }
+        }
+
 
         string modFolder = null;
 
@@ -40,7 +56,7 @@ namespace SharedLib
             { ModType.BepInEx5_x64 , ("v5.4.23.2", "win_x64")}
         };
 
-        public UnityPatcher(IMainFormDispatcher dispatcher, UnityPatcherOptions options) : base(dispatcher, options)
+        public UnityPatcher(string installPath, IMainFormDispatcher dispatcher, UnityPatcherOptions options) : base(installPath, dispatcher, options)
         {
         }
 
@@ -51,7 +67,7 @@ namespace SharedLib
             Log("Installing BepInEx...");
             try
             {
-                var doorStopIniFile = Path.Combine(options.GameInstallPath, _doorStopIni);
+                var doorStopIniFile = PathCombine(this.InstallPath, _doorStopIni);
 
                 if (!File.Exists(doorStopIniFile))
                 {
@@ -76,7 +92,7 @@ namespace SharedLib
 
                             foreach (var asset in assets)  
                             {
-                                ExtractFiles(asset.Location, options.GameInstallPath, true); 
+                                ExtractFiles(asset.Location, this.InstallPath, true); 
                             }
                             break;
                         }
@@ -99,9 +115,9 @@ namespace SharedLib
 
         private async Task<bool> FindBepInExPluginsDirTask(CancellationToken cancellationToken = default)
         {
-            var doorStopIni = await IniHelper.LoadAsync(PathCombine(options.GameInstallPath, this._doorStopIni));
+            var doorStopIni = await IniHelper.LoadAsync(PathCombine(this.InstallPath, this._doorStopIni));
 
-            string targetAssembly = doorStopIni["General"]["target_assembly"] ?? doorStopIni["General"]["targetAssembly"];
+            string targetAssembly = doorStopIni["General","target_assembly"] ?? doorStopIni["UnityDoorstop","targetAssembly"];
 
             if (string.IsNullOrWhiteSpace(targetAssembly))
             {
@@ -115,7 +131,7 @@ namespace SharedLib
             if (m.Success)
             {
                 modFolder = m.Groups["modFolder"].Value;
-                modFolder = Path.Combine(!Regex.IsMatch(modFolder, @"^[a-zA-Z]:[\\/]") ? options.GameInstallPath : "", modFolder, "plugins/" + options.PluginName).Replace('\\', '/');
+                modFolder = Path.Combine(!Regex.IsMatch(modFolder, @"^[a-zA-Z]:[\\/]") ? this.InstallPath : "", modFolder, "plugins/" + options.PluginName).Replace('\\', '/');
             }
             else
             {
@@ -158,8 +174,8 @@ namespace SharedLib
             {
                 using var github = GithubClient.Create(o =>
                 {
-                    o.UsernameOrOrganization = "Unity-Telemetry-Mods";
-                    o.Repository = "Distance-TelemetryMod";
+                    o.UsernameOrOrganization = options.Repository.UsernameOrOrganization;
+                    o.Repository = options.Repository.Repository;
                 });
 
                 downloads = await github.DownloadLatestAsync(cancellationToken: cancellationToken);

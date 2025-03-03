@@ -152,44 +152,17 @@ namespace YawVR_Game_Engine.Plugin
             telemetry?.Dispose();
         }
 
-        private string GetInstallPath()
-        {
-            string name = GetType().GetCustomAttributes<ExportMetadataAttribute>(true)
-                .Where(meta => meta.Name == "Name").Select(m => (string) m.Value).First();
-            
-            string installPath = dispatcher.GetInstallPath("Distance");
-            if (!string.IsNullOrWhiteSpace(installPath) && !Directory.Exists(installPath))
-            {
-                dispatcher.DialogShow("Cant find Distance install directory\n\n" + installPath + "\n\nOpen Plugin manager to set it?", DIALOG_TYPE.QUESTION, (yes) =>
-                {
-                    dispatcher.OpenPluginManager();
-                });
-                return null;
-            }
-            return installPath;
-        }
+       
 
         public async void PatchGame()
         {
 #if DEBUG
             Debugger.Launch();
 #endif
-            
-            string installPath = GetInstallPath();
 
-            if (!string.IsNullOrWhiteSpace(installPath) && !Directory.Exists(installPath))
+            await UnityPatcher.Create<UnityPatcher>(this, dispatcher, options =>
             {
-                dispatcher.DialogShow($"Cant find game install directory\n\nOpen Plugin manager to set it?", DIALOG_TYPE.QUESTION, (yes) =>
-                {
-                    dispatcher.OpenPluginManager();
-
-                });
-                return;
-            }
-
-            bool patched = await UnityPatcher.Create<UnityPatcher>(dispatcher, options =>
-            {
-                options.GameInstallPath = installPath;
+                //options.GameInstallPath = installPath;
                 options.ModType = ModType.BepInEx5_x64;
                 options.PluginName = "DistanceTelemetryMod";
                 options.DoorStopPath = "";
@@ -200,7 +173,7 @@ namespace YawVR_Game_Engine.Plugin
                 };                
             }).PatchAsync(cts.Token);
             
-
+            
            
         }
 

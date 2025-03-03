@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.Composition;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -21,7 +24,7 @@ namespace SharedLib
     {
         public ModType ModType { get; set; }
 
-        public string GameInstallPath { get; set; }
+        //public string GameInstallPath { get; set; }
 
         public string PluginName { get; set; }
 
@@ -35,7 +38,7 @@ namespace SharedLib
     {      
         public new TaskList Add(string name, PatcherTask task)
         {
-            Add(name, task);
+            base.Add(name, task);
             return this;
         }
     }
@@ -45,7 +48,7 @@ namespace SharedLib
         Task<bool> PatchAsync(CancellationToken cancellationToken = default);
     }
 
-    internal abstract class Patcher<TOptions> : IPatcher where TOptions:PatcherOptions,new()
+    internal abstract class Patcher<TOptions> : IPatcher where TOptions : PatcherOptions, new()
     {
         protected readonly IMainFormDispatcher dispatcher;
 
@@ -57,19 +60,32 @@ namespace SharedLib
         /// <summary>
         /// List if task functions to run in order. Returning false will stop the patching process.
         /// </summary>
-        protected abstract TaskList taskList { get; }
+        protected virtual TaskList Tasks => new();
 
-        public static IPatcher Create<T>(IMainFormDispatcher dispatcher, Action<TOptions> optionsAction) where T : Patcher<TOptions>
+        public string InstallPath { get; }
+
+        public static IPatcher Create<T>(Game plugin, IMainFormDispatcher dispatcher, Action<TOptions> optionsAction) where T : Patcher<TOptions>
         {
             var options = new TOptions();
+
             optionsAction?.Invoke(options);
 
-            return Activator.CreateInstance(typeof(T), dispatcher, options) as T;
+            string installPath = GetInstallPath(plugin, dispatcher);
+
+            return Activator.CreateInstance(typeof(T), installPath, dispatcher, options) as T;
         }
+
+        protected Patcher(string installPath, IMainFormDispatcher dispatcher, TOptions options)
+        {
+            InstallPath = installPath;
+            this.dispatcher = dispatcher;
+            this.options = options;
+        }
+
 
         protected void Feedback(bool success, string message)
         {
-            Log($"{ (success ? "" : "ERROR" )}: {message}");
+            Log($"{(success ? "" : "ERROR")}: {message}");
             dispatcher.DialogShow(message, DIALOG_TYPE.INFO);
         }
 
@@ -86,32 +102,31 @@ namespace SharedLib
             dispatcher.ExtractToDirectory(source, destination, overwrite);
         }
 
-        
 
-        protected Patcher(IMainFormDispatcher dispatcher, TOptions options)
-        {
-            this.dispatcher = dispatcher;
-            this.options = options;
-        }
 
-        async Task<bool> IPatcher.PatchAsync(CancellationToken cancellationToken = default)
+       
+
+        async Task<bool> IPatcher.PatchAsync(CancellationToken cancellationToken)
         {
             Log("Patching...");
 
-            bool success = await RunTasks(taskList, cancellationToken);
-            
-            if(success)
-                Feedback(success, "Patching complete.");
+            bool success = await this.RunTasks(cancellationToken);
+
+            if (success)
+                Feedback(true, "Patching complete.");
             else
-                Feedback(success, "Patching failed.");
+                Feedback(false, "Patching failed.");
 
             return success;
         }
 
-        private async Task<bool> RunTasks(Dictionary<string, PatcherTask> taskFunctions, CancellationToken cancellationToken = default)
+
+        //protected abstract Task<bool> RunTasks(CancellationToken cancellationToken = default);
+
+        private async Task<bool> RunTasks(CancellationToken cancellationToken = default)
         {
 
-            foreach (var (name, taskFunction) in taskFunctions)
+            foreach (var (name, taskFunction) in this.Tasks)
             {
                 Log($"Running task: [{name}]");
                 if (!await taskFunction(cancellationToken))
@@ -126,9 +141,27 @@ namespace SharedLib
             return true;
 
         }
-        protected string PathCombine(params string[] segments) 
+
+        private static string GetInstallPath(Game plugin, IMainFormDispatcher dispatcher) 
         {
-            return Path.Combine(segments).Replace("\\","/");
+            string name = plugin.GetType().GetCustomAttributes<ExportMetadataAttribute>(true)
+                .Where(meta => meta.Name == "Name").Select(m => (string)m.Value).First();
+
+            string installPath = dispatcher.GetInstallPath(name);
+            if (!string.IsNullOrWhiteSpace(installPath) && !Directory.Exists(installPath))
+            {
+                dispatcher.DialogShow("Cant find Distance install directory\n\n" + installPath + "\n\nOpen Plugin manager to set it?", DIALOG_TYPE.QUESTION, (yes) =>
+                {
+                    dispatcher.OpenPluginManager();
+                });
+                return null;
+            }
+            return installPath;
+        }
+
+        protected string PathCombine(params string[] segments)
+        {
+            return Path.Combine(segments).Replace("\\", "/");
         }
 
         protected void Log(string message)
@@ -136,6 +169,8 @@ namespace SharedLib
             Console.WriteLine(message);
         }
 
-        
     }
+    
+
+    
 }

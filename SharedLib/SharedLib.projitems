@@ -16,6 +16,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)Helpers\InputHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)MathsF.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Helpers\ResourceHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Patchers\Patcher.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Patchers\UnityPatcher.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Validatior.cs" />
   </ItemGroup>
 </Project>

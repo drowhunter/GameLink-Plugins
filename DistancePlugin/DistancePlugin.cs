@@ -1,6 +1,4 @@
-﻿using DistancePlugin;
-
-using SharedLib;
+﻿using SharedLib;
 using SharedLib.TelemetryHelper;
 
 using System;
@@ -12,7 +10,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using System.Threading;
 
 using YawGLAPI;
@@ -190,7 +187,7 @@ namespace YawVR_Game_Engine.Plugin
                 return;
             }
 
-            var patcher = Patcher.Create<UnityPatcher>(options =>
+            bool patched = await UnityPatcher.Create<UnityPatcher>(dispatcher, options =>
             {
                 options.GameInstallPath = installPath;
                 options.ModType = ModType.BepInEx5_x64;
@@ -201,32 +198,8 @@ namespace YawVR_Game_Engine.Plugin
                     UsernameOrOrganization = "Unity-Telemetry-Mods",
                     Repository = "Distance-TelemetryMod"
                 };                
-            });
-
-            patcher.OnFeedback += (sender, e) =>
-            {
-                dispatcher.DialogShow(e.Message, DIALOG_TYPE.INFO);
-            };
-
-            patcher.OnExtractFiles += (sender, e) =>
-            {
-                dispatcher.ExtractToDirectory(e.Source, e.Destination, e.OverWrite);
-            };
-
-            patcher.OnQuestion += (message) =>
-            {
-                bool answer = false;
-                dispatcher.DialogShow(message, DIALOG_TYPE.QUESTION, (yes) =>
-                {
-                    answer = true;
-                });
-
-                return answer;
-            };
-
+            }).PatchAsync(cts.Token);
             
-            await patcher.PatchAsync(cts.Token);
-            return;
 
            
         }

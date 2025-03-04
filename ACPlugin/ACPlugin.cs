@@ -16,7 +16,7 @@ namespace YawVR_Game_Engine.Plugin
 {
     [Export(typeof(Game))]
     [ExportMetadata("Name", "Assetto Corsa (PC)")]
-    [ExportMetadata("Version", "1.3")]
+    [ExportMetadata("Version", "1.4")]
     class ACPlugin : Game
     {
         private IProfileManager controller;

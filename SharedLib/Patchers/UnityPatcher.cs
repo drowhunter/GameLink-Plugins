@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,6 +12,9 @@ using YawGLAPI;
 
 namespace SharedLib
 {
+    /// <summary>
+    /// Patch options for Unity games
+    /// </summary>
     internal class UnityPatcherOptions: PatcherOptions
     {
         /// <summary>
@@ -19,6 +23,11 @@ namespace SharedLib
         public string DoorStopPath { get; set; } = "";
 
     }
+
+
+    /// <summary>
+    /// Patcher for Unity games
+    /// </summary>
     internal class UnityPatcher : Patcher<UnityPatcherOptions>
     {
         private string _doorStopIni => PathCombine(options.DoorStopPath, "doorstop_config.ini");
@@ -32,6 +41,7 @@ namespace SharedLib
                     return new()
                     {
                         { "Install BepIn Ex",InstallBepInExTask},
+                        { "Install Configuration Manager", InstallBepInConfigManagerTask },
                         { "Find BepInEx Plugins Dir",FindBepInExPluginsDirTask},
                         { "Reinstall If Plugin Found Async",AskReinstallTask},
                         { "Install Mod",InstallModTask}
@@ -74,13 +84,14 @@ namespace SharedLib
                     switch (options.ModType)
                     {
                         case ModType.RaiPal:
-                            Feedback( false, "Please install UUVR RaiPal first");
+                            Feedback( false, "Please install UUVR with RaiPal first");
                            
                             return false;
                         case ModType.BepInEx5_x64:
                         {
                             using var bepinex = GithubClient.Create(o =>
                             {
+                                o.CachingEnabled = true;
                                 o.UsernameOrOrganization = "BepInEx";
                                 o.Repository = "BepInEx";
                             });
@@ -92,7 +103,7 @@ namespace SharedLib
 
                             foreach (var asset in assets)  
                             {
-                                ExtractFiles(asset.Location, this.InstallPath, true); 
+                                await ExtractFiles(asset.Location, this.InstallPath, true); 
                             }
                             break;
                         }
@@ -111,7 +122,64 @@ namespace SharedLib
 
         }
 
+        private async Task<bool> InstallBepInConfigManagerTask(CancellationToken cancellationToken = default)
+        {
+            Log("Installing BepInEx...");
+            try
+            {
+                var doorStopIniFile = PathCombine(this.InstallPath, _doorStopIni);
 
+                if (File.Exists(doorStopIniFile))
+                {
+                    switch (options.ModType)
+                    {
+                        //case ModType.RaiPal:
+                        //    Install Configuration Manager through RaiPal
+
+                        //    return false;
+                        case ModType.BepInEx5_x64:
+                            {
+                                if (!Directory.Exists(PathCombine(this.InstallPath, "BepInEx/plugins/ConfigurationManager")))
+                                {
+                                    using var bepinex = GithubClient.Create(o =>
+                                    {
+                                        o.CachingEnabled = true;
+                                        o.UsernameOrOrganization = "BepInEx";
+                                        o.Repository = "BepInEx.ConfigurationManager";
+                                    });
+
+
+                                    var assets = await bepinex.DownloadLatestAsync(["BepInEx5"], cancellationToken);
+
+                                    if (assets.Count != 1)
+                                    {
+                                        throw new Exception("Unexpected number of assets found.");
+                                    }
+
+                                    await ExtractFiles(assets.Single().Location, this.InstallPath, true);
+                                }
+
+                                break;
+                            }
+
+                    }
+                }
+                else
+                {
+                    Log("BepInEx not found. Cancelling installation.");
+                    return false;
+                }
+            }
+            catch (Exception e)
+            {
+                Log("Error: " + e.Message);
+                return false;
+            }
+
+            return true;
+
+
+        }
 
         private async Task<bool> FindBepInExPluginsDirTask(CancellationToken cancellationToken = default)
         {
@@ -174,6 +242,7 @@ namespace SharedLib
             {
                 using var github = GithubClient.Create(o =>
                 {
+                    o.CachingEnabled = true;
                     o.UsernameOrOrganization = options.Repository.UsernameOrOrganization;
                     o.Repository = options.Repository.Repository;
                 });

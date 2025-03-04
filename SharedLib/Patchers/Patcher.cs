@@ -96,10 +96,12 @@ namespace SharedLib
             return result;
         }
 
-        protected void ExtractFiles(string source, string destination, bool overwrite = true)
+        protected Task ExtractFiles(string source, string destination, bool overwrite = true)
         {
             Log($"Extract {Path.GetFileName(source)} to {destination}");
             dispatcher.ExtractToDirectory(source, destination, overwrite);
+
+            return Task.CompletedTask;
         }
 
 

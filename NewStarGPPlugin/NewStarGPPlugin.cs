@@ -6,13 +6,10 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using System.Threading;
-using System.Threading.Tasks;
 
 using YawGLAPI;
 
@@ -23,6 +20,8 @@ namespace YawVR_Game_Engine.Plugin
     [ExportMetadata("Version", "1.0")]
     public class NewStarGPPlugin : Game
     {
+        
+
         #region Standard Properties
         public int STEAM_ID => 2217580;
         public string PROCESS_NAME => "NSGP";
@@ -30,6 +29,7 @@ namespace YawVR_Game_Engine.Plugin
 
         public bool PATCH_AVAILABLE => true;
 
+        
         public string Description => ResourceHelper.Description;
         public Stream Logo => ResourceHelper.Logo;
         public Stream SmallLogo => ResourceHelper.SmallLogo;
@@ -40,20 +40,21 @@ namespace YawVR_Game_Engine.Plugin
 
         public LedEffect DefaultLED() => new LedEffect(EFFECT_TYPE.KNIGHT_RIDER, 0, [YawColor.WHITE], 0);
 
+        public Dictionary<string, ParameterInfo[]> GetFeatures() => null;
 
+        public Type GetConfigBody() => typeof(Config);
+        
+        
+        private Config settings;
         #endregion
 
-        
-
-        private Config settings;
 
         private volatile bool running = false;
-
         private UdpTelemetry<Telemetry> telem;
         private Thread readThread;
         private IMainFormDispatcher dispatcher;
         private IProfileManager controller;
-        CancellationTokenSource cts = new CancellationTokenSource();
+        CancellationTokenSource cts = new();
 
         public void Exit()
         {
@@ -72,6 +73,7 @@ namespace YawVR_Game_Engine.Plugin
         public void Init()
         {
             this.settings = dispatcher.GetConfigObject<Config>();
+           
             running = true;
             readThread = new Thread(new ThreadStart(ReadThread));
             readThread.Start();
@@ -99,9 +101,7 @@ namespace YawVR_Game_Engine.Plugin
         }
 
        
-        public Dictionary<string, ParameterInfo[]> GetFeatures() => null;
-
-        public Type GetConfigBody() =>typeof(Config);
+        
 
         public async void PatchGame()
         {
@@ -111,7 +111,7 @@ namespace YawVR_Game_Engine.Plugin
 
             var patcher = UnityPatcher.Create<UnityPatcher>(this, dispatcher, options =>
             {
-                options.ModType = ModType.RaiPal;
+                options.ModType = this.settings.UseUUVR ? ModType.RaiPal : ModType.BepInEx5_x64;
                 options.PluginName = "NewStarGPTelemetryMod";
                 options.DoorStopPath = "release";
                 options.Repository = new GithubOptions

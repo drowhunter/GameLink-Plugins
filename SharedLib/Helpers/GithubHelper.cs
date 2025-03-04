@@ -155,6 +155,7 @@ namespace SharedLib
                 }
                 else if (Options.CachingEnabled)
                 {
+                    asset.Location = fullPath;
                     Console.WriteLine("Using cached file " + fullPath);
                 }
             }
@@ -207,6 +208,8 @@ namespace SharedLib
         public void CleanTempFiles()
         {
             var removed = new List<string>();
+            
+
             foreach (var file in TempFiles)
             {
                 try

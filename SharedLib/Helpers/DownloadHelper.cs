@@ -48,10 +48,11 @@ namespace SharedLib
 
                     using FileStream fileStream = File.Create(fullPath);
 
-                    var s = await response.Content.ReadAsStreamAsync(cancellationToken);
-
+                    using var s = await response.Content.ReadAsStreamAsync(cancellationToken);
+                    s.Seek(0, SeekOrigin.Begin);
                     await s.CopyToAsync(fileStream, cancellationToken);
 
+                    
                     //await File.WriteAllBytesAsync(fullPath, fileBytes, cancellationToken);
 
                     Console.WriteLine($@"Downloaded {url} to ""{fullPath}"" ");//({fileBytes.Length / 1024}) kb

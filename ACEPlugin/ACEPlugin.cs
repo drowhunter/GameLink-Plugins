@@ -17,7 +17,7 @@ namespace ACEPlugin
 {
     [Export(typeof(Game))]
     [ExportMetadata("Name", "Assetto Corsa Evo")]
-    [ExportMetadata("Version", "1.0")]
+    [ExportMetadata("Version", "1.1")]
 
     public class ACEPlugin : Game
     {

@@ -427,6 +427,30 @@
 }</value>
   </data>
   <data name="desc" xml:space="preserve">
-    <value />
+    <value>&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;Play Iron Rebellion with a YawVR Device&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Play Iron Rebellion with a YawVR device.&lt;/h1&gt;
+
+    &lt;h2&gt;Installation Steps&lt;/h2&gt;
+    &lt;ol&gt;
+        &lt;li&gt;Download &lt;a href="https://github.com/BepInEx/BepInEx/releases/tag/v5.4.23.2" target="_blank"&gt;BepInEx v5.4.23.2&lt;/a&gt; and extract it to the Games folder (&lt;code&gt;steamapps\common\Iron Rebellion Beta&lt;/code&gt;).&lt;/li&gt;
+        &lt;li&gt;Download the &lt;a href="https://github.com/McFredward/IronRebellionTelemetry/releases/tag/v0.1" target="_blank"&gt;IronRebellionTelemetry mod&lt;/a&gt; and put the .dll in &lt;code&gt;Iron Rebellion Beta\BepInEx\plugins\IronRebellionTelemetry.dll&lt;/code&gt;.&lt;/li&gt;
+    &lt;/ol&gt;
+
+    &lt;hr&gt;
+
+    &lt;p&gt;Made by McFredward&lt;/p&gt;
+    &lt;p&gt;&lt;a href="https://github.com/McFredward/GameLink-Plugins/tree/IronRebellion/IronRebellionPlugin" target="_blank"&gt;Profile Sourcecode&lt;/a&gt;&lt;/p&gt;
+    &lt;p&gt;&lt;a href="https://github.com/McFredward/IronRebellionTelemetry" target="_blank"&gt;Unity Sender mod Sourcecode&lt;/a&gt;&lt;/p&gt;
+
+    &lt;p&gt;Happy Yaw'ing!&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;</value>
   </data>
 </root>

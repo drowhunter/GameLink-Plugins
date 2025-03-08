@@ -88,7 +88,19 @@ namespace IronRebellion.Properties {
         }
         
         /// <summary>
-        ///   Sucht eine lokalisierte Zeichenfolge, die  ähnelt.
+        ///   Sucht eine lokalisierte Zeichenfolge, die &lt;!DOCTYPE html&gt;
+        ///&lt;html lang=&quot;en&quot;&gt;
+        ///&lt;head&gt;
+        ///    &lt;meta charset=&quot;UTF-8&quot;&gt;
+        ///    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
+        ///    &lt;title&gt;Play Iron Rebellion with a YawVR Device&lt;/title&gt;
+        ///&lt;/head&gt;
+        ///&lt;body&gt;
+        ///    &lt;h1&gt;Play Iron Rebellion with a YawVR device.&lt;/h1&gt;
+        ///
+        ///    &lt;h2&gt;Installation Steps&lt;/h2&gt;
+        ///    &lt;ol&gt;
+        ///        &lt;li&gt;Download &lt;a href=&quot;https://github.com/BepInEx/BepInEx/releases/tag/v5.4.23.2&quot; target=&quot;_blank&quot;&gt;BepInEx v5.4.23.2&lt;/a&gt; and extract it to the Games folder (&lt;code&gt;steamapps\common\Iron Rebellion [Rest der Zeichenfolge wurde abgeschnitten]&quot;; ähnelt.
         /// </summary>
         internal static string desc {
             get {

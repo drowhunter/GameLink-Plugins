@@ -19,5 +19,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Helpers\ResourceHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patchers\Patcher.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patchers\UnityPatcher.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Validator.cs" />
   </ItemGroup>
 </Project>

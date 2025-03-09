@@ -1,23 +1,27 @@
-﻿using GT7Plugin.Properties;
+﻿using Microsoft.VisualBasic;
+
 using PluginHelper;
+
+using SharedLib;
+
 using System.ComponentModel.Composition;
 using System.Diagnostics;
-using System.Net.Sockets;
 using System.Numerics;
 using System.Reflection;
+
 using YawGLAPI;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+
 using Quaternion = System.Numerics.Quaternion;
 
 namespace GT7Plugin
 {
     [Export(typeof(Game))]
     [ExportMetadata("Name", "Gran Turismo 7")]
-    [ExportMetadata("Version", "1.0")]
+    [ExportMetadata("Version", "1.3")]
     public class GT7Plugin : Game
     {
         private IProfileManager controller;
-        private IMainFormDispatcher dispacther;
+        private IMainFormDispatcher dispatcher;
 
 
         private Stopwatch suspStopwatch = new Stopwatch();
@@ -27,54 +31,46 @@ namespace GT7Plugin
 
         public bool PATCH_AVAILABLE => false;
 
-        public string AUTHOR => "YawVR";
+        public string AUTHOR => "Trevor Jones";
 
-        public Stream Logo => GetStream("logo.png");
+        public Stream Logo => ResourceHelper.GetStream("logo.png");
 
-        public Stream SmallLogo => GetStream("recent.png");
+        public Stream SmallLogo => ResourceHelper.GetStream("recent.png");
 
-        public Stream Background => GetStream("wide.png");
+        public Stream Background => ResourceHelper.GetStream("wide.png");
 
-        public string Description => "";
+        public string Description => ResourceHelper.GetString("description.html");
+
+        private string defProfilejson => ResourceHelper.GetString("Default.yawglprofile");
+
+        
+
+        public LedEffect DefaultLED() => dispatcher.JsonToLED(defProfilejson);
+
+        public List<Profile_Component> DefaultProfile() => dispatcher.JsonToComponents(defProfilejson);
 
         private UDPListener listener;
         private Cryptor cryptor;
-        private FieldInfo[] fields = typeof(SimulatorPacket).GetFields();
+        private FieldInfo[] fields = typeof(GT7Output).GetFields();
+        private bool _seenPacket = false;
+        private Vector3 _previous_local_velocity = new Vector3(0, 0, 0);
+        private const float _samplerate = 1 / 60f;
 
-        public LedEffect DefaultLED()
-        {
-            return dispacther.JsonToLED(Resources.defProfile);
-        }
 
-        public List<Profile_Component> DefaultProfile()
-        {
-            return dispacther.JsonToComponents(Resources.defProfile);
-        }
+        public void Exit() => listener?.Stop();
 
-        public void Exit()
-        {
-            listener.Stop();
-        }
+        public Dictionary<string, ParameterInfo[]> GetFeatures() => new();
 
-        public Dictionary<string, ParameterInfo[]> GetFeatures()
-        {
-            return new Dictionary<string, ParameterInfo[]>();
-        }
+        public string[] GetInputData() => fields.Select(f => f.Name).ToArray();
 
-        public string[] GetInputData()
-        {
-            string[] inputs = new string[fields.Length];
-
-            for (int i = 0; i < fields.Length; i++)
-            {
-                inputs[i] = fields[i].Name;
-            }
-            return inputs;
-        }
+        private int inputPort = 33740;
 
         public void Init()
         {
-            listener = new UDPListener();
+
+
+            inputPort = dispatcher.GetConfigObject<Config>().Port;
+            listener = new UDPListener(inputPort);
             cryptor = new Cryptor();
             listener.OnPacketReceived += Listener_OnPacketReceived;
             suspStopwatch.Restart();
@@ -83,55 +79,81 @@ namespace GT7Plugin
         private void Listener_OnPacketReceived(object sender, byte[] buffer)
         {
             cryptor.Decrypt(buffer);
-            SimulatorPacket sp = new SimulatorPacket();
+            var sp = new SimulatorPacket();
             sp.Read(buffer);
 
+            if (sp.Flags.HasFlag(SimulatorFlags.CarOnTrack) && !sp.Flags.HasFlag(SimulatorFlags.Paused) && !sp.Flags.HasFlag(SimulatorFlags.LoadingOrProcessing))
+            {
+                ReadFunction(sp);
 
-            Vector3 carRotation = new Vector3(sp.RotationX, sp.RotationY, sp.RotationZ);
-            Vector3 worldVelocity = new Vector3(sp.VelocityX, sp.VelocityY, sp.VelocityZ);
+            }
+
+            _seenPacket = _seenPacket || true;
+
+        }
+
+        private void ReadFunction(SimulatorPacket sp)
+        {
+            var Q = new Quaternion(new Vector3(sp.RotationX, sp.RotationY, sp.RotationZ), sp.RelativeOrientationToNorth);
+            var local_velocity = Maths.WorldtoLocal(Q, new Vector3(sp.VelocityX, sp.VelocityY, sp.VelocityZ));
 
 
-            var Q = new Quaternion(carRotation, sp.RelativeOrientationToNorth);
-            var local_velocity = Maths.WorldtoLocal(Q, worldVelocity);
+            var sway = CalculateCentripetalAcceleration(local_velocity, new Vector3(sp.AngularVelocityX, sp.AngularVelocityY, sp.AngularVelocityZ));
+            var surge = 0f;
+            var heave = 0f;
 
-            var (pitch, yaw, roll) = Maths.ToEuler(Q, true);
+            if (_seenPacket)
+            {
+                var delta_velocity = local_velocity - _previous_local_velocity;
 
-            sp.RotationX = pitch;
-            sp.RotationY = yaw;
-            sp.RotationZ = roll;
+                surge = delta_velocity.Z / _samplerate / 9.81f;
+                heave = delta_velocity.Y / _samplerate / 9.81f;
+            }
 
-            sp.VelocityX = local_velocity.X;
-            sp.VelocityY = local_velocity.Y;
-            sp.VelocityZ = local_velocity.Z;
+
+
+            _previous_local_velocity = local_velocity;
+
+
+            var (pitch, yaw, roll) = Q.ToPitchYawRoll(); // Q.ToEuler(true);
 
 
             bool updateSusp = false;
+
             if (suspStopwatch.ElapsedMilliseconds > 100)
             {
                 updateSusp = true;
                 suspStopwatch.Restart();
             }
 
-            for (int i = 0; i < fields.Length; i++)
+            var output = new GT7Output()
             {
+                Yaw = yaw,
+                Pitch = pitch,
+                Roll = roll,
+                Sway = sway,
+                Surge = surge,
+                Heave = heave,
+                Kph = sp.MetersPerSecond * 3.6f,
+                MaxKph = sp.CalculatedMaxSpeed * 3.6f,
+                RPM = sp.EngineRPM,                
+                OnTrack = sp.Flags.HasFlag(SimulatorFlags.CarOnTrack) ? 1 : 0,
+                IsPaused = sp.Flags.HasFlag(SimulatorFlags.Paused) ? 1 : 0,
+                Loading = sp.Flags.HasFlag(SimulatorFlags.LoadingOrProcessing) ? 1 : 0
+            };
 
-              
-                //52,53,54,55
-                if (i >= 52 && i <= 55)
-                {
-
-                    if (updateSusp)
-                    {
-                        controller.SetInput(i, Convert.ToSingle(fields[i].GetValue(sp)));
-                    }
-                
-                }
-                else
-                {
-                    controller.SetInput(i, Convert.ToSingle(fields[i].GetValue(sp)));
-                }
+            if (updateSusp)
+            {
+                output.TireFL_SusHeight = sp.TireFL_SusHeight;
+                output.TireFR_SusHeight = sp.TireFR_SusHeight;
+                output.TireRL_SusHeight = sp.TireRL_SusHeight;
+                output.TireRR_SusHeight = sp.TireRR_SusHeight;
             }
 
+            for (int i = 0; i < fields.Length; i++)
+            {
+                controller.SetInput(i, Convert.ToSingle(fields[i].GetValue(output)));
+            }
         }
 
         public void PatchGame()
@@ -141,16 +163,21 @@ namespace GT7Plugin
         public void SetReferences(IProfileManager controller, IMainFormDispatcher dispatcher)
         {
             this.controller = controller;
-            this.dispacther = dispatcher;
+            this.dispatcher = dispatcher;
         }
 
-        Stream GetStream(string resourceName)
+
+        public float CalculateCentripetalAcceleration(Vector3 velocity, Vector3 angularVelocity)
         {
-            var assembly = GetType().Assembly;
-            var rr = assembly.GetManifestResourceNames();
-            string fullResourceName = $"{assembly.GetName().Name}.Resources.{resourceName}";
-            return assembly.GetManifestResourceStream(fullResourceName);
+            var Fc = velocity.Length() * angularVelocity.Length();
+
+            return Fc * (angularVelocity.Y >= 0 ? -1 : 1);
+
         }
 
+        public Type GetConfigBody()
+        {
+            return typeof(Config);
+        }
     }
 }

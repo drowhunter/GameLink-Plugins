@@ -1,16 +1,15 @@
-﻿using System.Diagnostics;
-using System.Linq.Expressions;
-using System.Net;
+﻿using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Timers;
+
 using Timer = System.Timers.Timer;
 namespace GT7Plugin
 {
     public class UDPListener
     {
         public delegate void PacketReceived(object sender, byte[] buffer);
-        private int targetPort = 33739;
+        private int heartBeatPort = 33739;
 
         private UdpClient udpClient;
         private IPEndPoint remoteEndPoint;
@@ -23,12 +22,18 @@ namespace GT7Plugin
         Timer hbTimer;
         public UDPListener(int port = 33740)
         {
-            udpClient = new UdpClient(port);
-            remoteEndPoint = new IPEndPoint(IPAddress.Broadcast, targetPort);
             cancellationTokenSource = new CancellationTokenSource();
-            hbTimer = new Timer(TimeSpan.FromSeconds(1));
-            hbTimer.Elapsed += SendHeartbeat;
-            hbTimer.Enabled = true;
+            udpClient = new UdpClient(port);
+
+            if (port == 33740) {
+                // only send heartbeats if we are listening on the default port,
+                // otherwise the data is coming from localhost which is NOT the playstation.
+                remoteEndPoint = new IPEndPoint(IPAddress.Broadcast, heartBeatPort);
+
+                hbTimer = new Timer(TimeSpan.FromSeconds(1));
+                hbTimer.Elapsed += SendHeartbeat;
+                hbTimer.Enabled = true;
+            }
 
             receiveTask = Receive(cancellationTokenSource.Token);
         }
@@ -42,7 +47,8 @@ namespace GT7Plugin
 
                     OnPacketReceived.Invoke(this,res.Buffer);
                 }
-            } catch(OperationCanceledException)
+            } 
+            catch(OperationCanceledException)
             {
             }
         }

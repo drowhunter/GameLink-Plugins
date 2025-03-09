@@ -1,7 +1,9 @@
-using IronRebellion.Properties;
+using IronRebellion;
+
+using SharedLib;
+
 using System.ComponentModel.Composition;
 using System.Diagnostics;
-using System.Diagnostics.Tracing;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
@@ -12,32 +14,42 @@ namespace YawVR_Game_Engine.Plugin
 {
 	[Export(typeof(Game))]
 	[ExportMetadata("Name", "Iron Rebellion")]
-	[ExportMetadata("Version", "1.0")]
+	[ExportMetadata("Version", "0.1")]
 	public class Plugin : Game
 	{
-		private Random random = new Random();
-		public int STEAM_ID => 1192900; // Game's SteamID. App will lauch game based on this
+
+        #region Standard Properties
+        public int STEAM_ID => 1192900; // Game's SteamID. App will lauch game based on this
         public string PROCESS_NAME => "Iron Rebellion"; // The gameprocess name. App will wait/monitor this process for different features like autostart.
 
-		public bool PATCH_AVAILABLE => false; // Tell app if patch is needed. "Patch" Button will appear -> Needed manually
+		public bool PATCH_AVAILABLE => true; // Tell app if patch is needed. "Patch" Button will appear -> Needed manually
 
 		public string AUTHOR => "McFredward"; // Creator, will show this on plugin manager
 
-		public Stream Logo => GetStream("logo.png"); // Logo for the main Library list
+        public string Description => ResourceHelper.Description;
+        public Stream Logo => ResourceHelper.Logo;
+        public Stream SmallLogo => ResourceHelper.SmallLogo;
+        public Stream Background => ResourceHelper.Background;
+        public List<Profile_Component> DefaultProfile() => dispatcher.JsonToComponents(ResourceHelper.DefaultProfile);
 
-		public Stream SmallLogo => GetStream("recent.png"); // Logo for Library->Recent list
+        public LedEffect DefaultLED() => dispatcher.JsonToLED(ResourceHelper.DefaultProfile);  
 
-		public Stream Background => GetStream("wide.png"); // Wide logo for Description
-
-		public string Description => Resources.desc;
-
-
-		private IMainFormDispatcher dispatcher; // this is our reference to the app. Features like showing dialog/notification can be used
+        private IMainFormDispatcher dispatcher; // this is our reference to the app. Features like showing dialog/notification can be used
 		private IProfileManager controller; // this is our reference to profile manager. input values need to be passed to this
 
+        /// <summary>
+        /// The app will give us these references. We need to save them
+        /// </summary>
+        public void SetReferences(IProfileManager controller, IMainFormDispatcher dispatcher)
+        {
+            this.controller = controller;
+            this.dispatcher = dispatcher;
+        }
 
-		//We'll provide these inputs to the app.. This can even be marshalled from a struct for example
-		private string[] inputNames = new string[]
+        #endregion
+
+        //We'll provide these inputs to the app.. This can even be marshalled from a struct for example
+        private string[] inputNames = new string[]
 		{
             "VELOCITY_X", "VELOCITY_Y", "VELOCITY_Z",
             "ANGULAR_X", "ANGULAR_Y", "ANGULAR_Z",
@@ -47,28 +59,14 @@ namespace YawVR_Game_Engine.Plugin
         };
 
 
-		private CancellationTokenSource tokenSource;
-		/// <summary>
-		/// Default LED profile
-		/// </summary>
-		public LedEffect DefaultLED()
-		{
-			// ask the dispatcher to convert our string to a LedEffect
-			return dispatcher.JsonToLED(Resources.defaultProfile);
-		}
-		/// <summary>
-		/// Default axis profile
-		/// </summary>
-		public List<Profile_Component> DefaultProfile()
-		{
-			// ask the dispatcher to convert our string to a axis profile
-			return dispatcher.JsonToComponents(Resources.defaultProfile);
-		}
+		private CancellationTokenSource tokenSource = new();
 
-		/// <summary>
-		/// Will be called at plugin stop request
-		/// </summary>
-		public void Exit()
+        private Config settings;
+
+        /// <summary>
+        /// Will be called at plugin stop request
+        /// </summary>
+        public void Exit()
 		{
 			tokenSource?.Cancel();
 		}
@@ -93,19 +91,23 @@ namespace YawVR_Game_Engine.Plugin
 			};
 		}
 
-		/// <summary>
-		/// Will be called when app starts this plugin
-		/// </summary>
-		public void Init()
-		{
-			tokenSource = new CancellationTokenSource();
-			new Thread(() =>
-			{
-				int port = 6969; // The UDP port to listen on
+        public Type GetConfigBody() => typeof(Config);
 
+        /// <summary>
+        /// Will be called when app starts this plugin
+        /// </summary>
+        public void Init()
+		{
+			
+
+            this.settings = dispatcher.GetConfigObject<Config>();
+
+            new Thread(() =>
+			{
+				
 				Socket udpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp); // Create a socket with SO_REUSEADDR option set
 				udpSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-				udpSocket.Bind(new IPEndPoint(IPAddress.Any, port));
+				udpSocket.Bind(new IPEndPoint(IPAddress.Any, settings.Port));
 
 				// Create a UdpClient from the existing socket
 				UdpClient udpClient = new UdpClient
@@ -113,9 +115,9 @@ namespace YawVR_Game_Engine.Plugin
 					Client = udpSocket
 				};
 
-				IPEndPoint remoteEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), port);
+				IPEndPoint remoteEndPoint = new IPEndPoint(IPAddress.Parse(settings.RemoteIP), settings.Port);
 
-				Console.WriteLine($"Listening for UDP packets on port {port}...");
+				Console.WriteLine($"Listening for UDP packets on port {settings.RemoteIP}:{settings.Port}...");
 
 				while (!tokenSource.IsCancellationRequested)
 				{
@@ -198,32 +200,36 @@ namespace YawVR_Game_Engine.Plugin
 			}).Start();
 		}
 
-		public void PatchGame()
-		{
-			//Pass
-		}
-
-
-		/// <summary>
-		/// The app will give us these references. We need to save them
-		/// </summary>
-		public void SetReferences(IProfileManager controller, IMainFormDispatcher dispatcher)
-		{
-			this.controller = controller;
-			this.dispatcher = dispatcher;
-		}
-
-		Stream GetStream(string resourceName)
-		{
-			var assembly = GetType().Assembly;
-			var rr = assembly.GetManifestResourceNames();
-			string fullResourceName = $"{assembly.GetName().Name}.Resources.{resourceName}";
-			return assembly.GetManifestResourceStream(fullResourceName);
-		}
-
-        public Type GetConfigBody()
+        public async void PatchGame()
         {
-            return null;
+#if DEBUG
+            Debugger.Launch();
+#endif
+
+			var patcher = UnityPatcher.Create<UnityPatcher>(this, dispatcher, options =>
+			{
+				options.ModType = ModType.BepInEx5_x64;
+				options.PluginName = "IronRebellionTelemetry";
+				options.DoorStopPath = "";
+				options.Repository = new GithubOptions
+				{
+					UsernameOrOrganization = "McFredward",
+					Repository = "IronRebellionTelemetry"
+				};
+			});
+
+
+
+            await patcher.PatchAsync(tokenSource.Token);
+
+
+
         }
+
+
+        
+		
+
+        
     }
 }

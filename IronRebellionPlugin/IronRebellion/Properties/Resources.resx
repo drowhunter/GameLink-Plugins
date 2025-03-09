@@ -192,9 +192,9 @@
             "MultiplierPos": 0.2,
             "MultiplierNeg": 0.2,
             "Offset": 0.0,
-            "Inverse": false,
+            "Inverse": true,
             "Limit": -1.0,
-            "Smoothing": 0.4963057,
+            "Smoothing": 1.0,
             "Enabled": true,
             "Spikeflatter": {
                 "Enabled": false,
@@ -215,7 +215,7 @@
             "Offset": 0.0,
             "Inverse": false,
             "Limit": -1.0,
-            "Smoothing": 0.4963057,
+            "Smoothing": 1.0,
             "Enabled": true,
             "Spikeflatter": {
                 "Enabled": false,

@@ -1,10 +1,16 @@
 using IronRebellion.Properties;
+using Microsoft.Win32;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
+using System.IO;
+using System.IO.Compression;
 using System.Net;
+using System.Net.Http;
+using System.Net.Mail;
 using System.Net.Sockets;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using YawGLAPI;
 
 
@@ -15,7 +21,21 @@ namespace YawVR_Game_Engine.Plugin
 	[ExportMetadata("Version", "1.0")]
 	public class Plugin : Game
 	{
-		private Random random = new Random();
+        private const string BepInExUrl = "https://github.com/BepInEx/BepInEx/releases/download/v5.4.23.2/BepInEx_win_x64_5.4.23.2.zip";
+        private const string ModRepoUrl = "https://api.github.com/repos/McFredward/IronRebellionTelemetry/releases/latest";
+        private static readonly HttpClient httpClient = new HttpClient();
+        private const string GameName = "Iron Rebellion Beta";
+        private static Process logProcess = new Process()
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                Arguments = "/K echo Patching Game...",
+                UseShellExecute = true
+            }
+        };
+
+        private Random random = new Random();
 		public int STEAM_ID => 1192900; // Game's SteamID. App will lauch game based on this
         public string PROCESS_NAME => "Iron Rebellion"; // The gameprocess name. App will wait/monitor this process for different features like autostart.
 
@@ -198,16 +218,110 @@ namespace YawVR_Game_Engine.Plugin
 			}).Start();
 		}
 
-		public void PatchGame()
-		{
-			//Pass
-		}
+        // Automatic Patching: Downloads BepInEx and the telemtry mod and moves the files in the games folder.
+
+        private string GetGamePath()
+        {
+            using (var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\Valve\Steam"))
+            {
+                if (key != null && key.GetValue("InstallPath") is string steamPath)
+                {
+                    string libraryFile = Path.Combine(steamPath, "steamapps", "libraryfolders.vdf");
+                    if (File.Exists(libraryFile))
+                    {
+                        string[] libraryPaths = ParseLibraryFolders(libraryFile);
+                        foreach (var path in libraryPaths)
+                        {
+                            string gamePath = Path.Combine(path, "steamapps", "common", GameName);
+                            if (Directory.Exists(gamePath))
+                            {
+                                return gamePath;
+                            }
+                        }
+                    }
+                }
+            }
+            logProcess.StartInfo.Arguments = "/K Game installation not found. Aborting patching. You have to pach the game manually.";
+            return "";
+        }
+
+        private string[] ParseLibraryFolders(string libraryFile)
+        {
+            string content = File.ReadAllText(libraryFile);
+            MatchCollection matches = Regex.Matches(content, "\\\"path\\\"\\s+\\\"(.*?)\\\"");
+            string[] paths = new string[matches.Count + 1];
+            paths[0] = Path.GetDirectoryName(Path.GetDirectoryName(libraryFile)); // Default Steam folder
+            for (int i = 0; i < matches.Count; i++)
+            {
+                paths[i + 1] = matches[i].Groups[1].Value.Replace("\\\\", "\\");
+            }
+            return paths;
+        }
+
+        public void PatchGame()
+        {
+            logProcess.Start();
+            string gamePath = GetGamePath();
+            if (gamePath == "")
+                return;
+
+            try
+            {
+                DownloadAndExtractBepInEx(gamePath);
+                DownloadAndMoveMod(gamePath);
+
+                File.AppendAllText(Path.Combine(gamePath, "patch_log.txt"), "Game patched successfully!\n");
+                logProcess.StartInfo.Arguments = "/K echo Game patched successfully!";
+            }
+            catch (Exception ex)
+            {
+                File.AppendAllText(Path.Combine(gamePath, "patch_log.txt"), $"Error: {ex.Message}\n");
+                logProcess.StartInfo.Arguments = $"/K echo Error: {ex.Message}";
+            }
+        }
+
+        private void DownloadAndExtractBepInEx(string gamePath)
+        {
+            logProcess.StartInfo.Arguments = "/K Download & install BepInEx ..";
+            string zipPath = Path.Combine(gamePath, "BepInEx.zip");
+
+            using (var response = httpClient.GetAsync(BepInExUrl).Result)
+            {
+                response.EnsureSuccessStatusCode();
+                File.WriteAllBytes(zipPath, response.Content.ReadAsByteArrayAsync().Result);
+            }
+
+            ZipFile.ExtractToDirectory(zipPath, gamePath, true);
+            File.Delete(zipPath);
+            logProcess.StartInfo.Arguments = "/K Sucessfully installed BepInEx.";
+        }
+
+        private void DownloadAndMoveMod(string gamePath)
+        {
+            logProcess.StartInfo.Arguments = "/K Download and install IronRebellionTelemetry Mod by McFredward ..";
+            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("request");
+            var response = httpClient.GetStringAsync(ModRepoUrl).Result;
+            string downloadUrl = ExtractDownloadUrl(response);
+
+            string modPath = Path.Combine(gamePath, "BepInEx", "plugins", "IronRebellionTelemetry.dll");
+            byte[] modBytes = httpClient.GetByteArrayAsync(downloadUrl).Result;
+            File.WriteAllBytes(modPath, modBytes);
+            logProcess.StartInfo.Arguments = "/K IronRebellionTelemetry Mod successfully installed.";
+        }
+
+        private string ExtractDownloadUrl(string jsonResponse)
+        {
+            int index = jsonResponse.IndexOf("browser_download_url");
+            int start = jsonResponse.IndexOf("https", index);
+            int end = jsonResponse.IndexOf("\"", start);
+            return jsonResponse.Substring(start, end - start);
+        }
 
 
-		/// <summary>
-		/// The app will give us these references. We need to save them
-		/// </summary>
-		public void SetReferences(IProfileManager controller, IMainFormDispatcher dispatcher)
+        /// <summary>
+        /// The app will give us these references. We need to save them
+        /// </summary>
+        public void SetReferences(IProfileManager controller, IMainFormDispatcher dispatcher)
 		{
 			this.controller = controller;
 			this.dispatcher = dispatcher;

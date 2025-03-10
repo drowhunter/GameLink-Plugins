@@ -14,7 +14,7 @@ namespace YawVR_Game_Engine.Plugin
 {
 	[Export(typeof(Game))]
 	[ExportMetadata("Name", "Iron Rebellion")]
-	[ExportMetadata("Version", "0.1")]
+	[ExportMetadata("Version", "0.1.2")]
 	public class Plugin : Game
 	{
 
@@ -209,7 +209,7 @@ namespace YawVR_Game_Engine.Plugin
 			var patcher = UnityPatcher.Create<UnityPatcher>(this, dispatcher, options =>
 			{
 				options.ModType = ModType.BepInEx5_x64;
-				options.PluginName = "IronRebellionTelemetry";
+                options.PluginName = "IronRebellionTelemetry";
 				options.DoorStopPath = "";
 				options.Repository = new GithubOptions
 				{

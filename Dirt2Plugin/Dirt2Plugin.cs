@@ -64,7 +64,32 @@ namespace Dirt2Plugin
             udpClient = null;
         }
 
-        public string[] GetInputData() => InputHelper.GetValues<TelemetryOut>(default).Keys();
+        public string[] GetInputData()
+        {
+            return new string[19]
+            {
+                "Speed",
+                "RPM",
+                "Steer",
+                "Force_long",
+                "Force_lat",
+                "Pitch",
+                "Roll",
+                "Yaw",
+                "suspen_pos_bl",
+                "suspen_pos_br",
+                "suspen_pos_fl",
+                "suspen_pos_fr",
+                "suspen_vel_bl",
+                "suspen_vel_br",
+                "suspen_vel_fl",
+                "suspen_vel_fr",
+                "VelocityX",
+                "VelocityY",
+                "VelocityZ"
+            };
+        }
+
 
 
         public void SetReferences(IProfileManager controller, IMainFormDispatcher dispatcher)
@@ -83,80 +108,81 @@ namespace Dirt2Plugin
             running = true;
 
 
-#if DEBUG
-            Debugger.Launch();
-#endif
             readThread = new Thread(new ThreadStart(ReadFunction));
             readThread.Start();
         }
 
-        
 
-        private void ReadFunction() {
+        private void ReadFunction()
+        {
+            try
+            {
+                while (running)
+                {
+                    try
+                    {
+                        byte[] data = udpClient.Receive(ref remoteIP);
+                        float speed = BitConverter.ToSingle(data, 28);
+                        float rpm = BitConverter.ToSingle(data, 148) / 30f;
+                        float velocityX = (float)(Math.Asin(BitConverter.ToSingle(data, 32)) * 57.3);
+                        float velocityY = (float)(Math.Asin(BitConverter.ToSingle(data, 36)) * 57.3);
+                        float velocityZ = (float)(Math.Asin(BitConverter.ToSingle(data, 40)) * 57.3);
+                        float steer = BitConverter.ToSingle(data, 120);
+                        float Gforce_lon = BitConverter.ToSingle(data, 140);
+                        float Gforce_lat = BitConverter.ToSingle(data, 136);
+                        float pitchX = BitConverter.ToSingle(data, 56);
+                        float pitchY = BitConverter.ToSingle(data, 60);
+                        float pitchZ = BitConverter.ToSingle(data, 64);
+                        float rollX = BitConverter.ToSingle(data, 44);
+                        float rollY = BitConverter.ToSingle(data, 48);
+                        float rollZ = BitConverter.ToSingle(data, 52);
+                        float Susp_pos_bl = BitConverter.ToSingle(data, 68);
+                        float Susp_pos_br = BitConverter.ToSingle(data, 72);
+                        float Susp_pos_fl = BitConverter.ToSingle(data, 76);
+                        float Susp_pos_fr = BitConverter.ToSingle(data, 80);
+                        float Susp_vel_bl = BitConverter.ToSingle(data, 84);
+                        float Susp_vel_br = BitConverter.ToSingle(data, 88);
+                        float Susp_vel_fl = BitConverter.ToSingle(data, 92);
+                        float Susp_vel_fr = BitConverter.ToSingle(data, 96);
+                        float Wheel_speed_bl = BitConverter.ToSingle(data, 100);
+                        float Wheel_speed_br = BitConverter.ToSingle(data, 104);
+                        float pitch = (float)(Math.Asin(0f - pitchY) * 57.3);
+                        float roll = 0f - (float)(Math.Asin(0f - rollY) * 57.3);
+                        float yaw = (float)Math.Atan2(pitchY + pitchX, pitchZ) * 57.3f;
 
-            
+                        
 
-            try {
-                while (running) {
-
-                    var t = new TelemetryOut();
-
-                    byte[] rawData = udpClient.Receive(ref remoteIP);
-
-                    t.Speed = ReadSingle(rawData, 28, true);
-                    t.RPM = ReadSingle(rawData, 148, true) / 30;
-                    t.Steer = ReadSingle(rawData, 120, true);
-                    t.Force_long = ReadSingle(rawData, 140, true);  // *-5
-                    t.Force_lat = ReadSingle(rawData, 136, true); // *-3
-
-                    t.Velocity = new Vector3(
-                        ReadSingle(rawData, 32, true),
-                        ReadSingle(rawData, 36, true),
-                        ReadSingle(rawData, 40, true)
-                    );
-
-                    Vector3 right = new Vector3(
-                        ReadSingle(rawData, 44, true),
-                        ReadSingle(rawData, 48, true),
-                        ReadSingle(rawData, 52, true)
-                    );
-
-
-                    Vector3 forward = new Vector3(
-                        ReadSingle(rawData, 56, true),
-                        ReadSingle(rawData, 60, true),
-                        ReadSingle(rawData, 64, true)
-                    );
-
-                    
-
-                    t.suspen_pos_bl = ReadSingle(rawData, 68, true);
-                    t.suspen_pos_br = ReadSingle(rawData, 72, true);
-                    t.suspen_pos_fl = ReadSingle(rawData, 76, true);
-                    t.suspen_pos_fr = ReadSingle(rawData, 80, true);
-
-                    t.suspen_vel_bl = ReadSingle(rawData, 84, true);
-                    t.suspen_vel_br = ReadSingle(rawData, 88, true);
-                    t.suspen_vel_fl = ReadSingle(rawData, 92, true);
-                    t.suspen_vel_fr = ReadSingle(rawData, 96, true);
-
-                    
-
-
-                    t.Pitch = MathF.Asin(-forward.Y) * 57.3f;
-                    t.Roll = -MathF.Asin(-right.Y) * 57.3f;
-                    t.Yaw = MathF.Atan2(forward.Y + forward.X, forward.Z) * 57.3f;
-
-                    foreach (var (i, key, value) in InputHelper.GetValues(t).WithIndex())
-                        controller.SetInput(i, value);
-
+                        controller.SetInput(0, speed);
+                        controller.SetInput(1, rpm);
+                        controller.SetInput(2, steer);
+                        controller.SetInput(3, Gforce_lon);
+                        controller.SetInput(4, Gforce_lat);
+                        controller.SetInput(5, pitch);
+                        controller.SetInput(6, roll);
+                        controller.SetInput(7, yaw);
+                        controller.SetInput(8, Susp_pos_bl);
+                        controller.SetInput(9, Susp_pos_br);
+                        controller.SetInput(10, Susp_pos_fl);
+                        controller.SetInput(11, Susp_pos_fr);
+                        controller.SetInput(12, Susp_vel_bl);
+                        controller.SetInput(13, Susp_vel_br);
+                        controller.SetInput(14, Susp_vel_fl);
+                        controller.SetInput(15, Susp_vel_fr);
+                        controller.SetInput(16, velocityX);
+                        controller.SetInput(17, velocityY);
+                        controller.SetInput(18, velocityZ);
+                    }
+                    catch (Exception)
+                    {
+                    }
                 }
-
             }
-            catch (SocketException) {
+            catch (ThreadAbortException)
+            {
             }
-            catch (ThreadAbortException) { }
         }
+
+        
 
 
         public void PatchGame()

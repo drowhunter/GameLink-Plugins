@@ -1,12 +1,15 @@
 ﻿
 using SharedLib;
+using SharedLib.TelemetryHelper;
 
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Numerics;
 using System.Reflection;
 using System.Threading;
 using System.Xml;
@@ -18,7 +21,7 @@ namespace Dirt2Plugin
     [Export(typeof(Game))]
     [ExportMetadata("Name", "Dirt 2")]
     [ExportMetadata("Version", "1.0")]
-    class Dirt4Plugin : Game {
+    class Dirt2Plugin : Game {
         
         
 
@@ -41,12 +44,13 @@ namespace Dirt2Plugin
         public LedEffect DefaultLED() => new LedEffect(EFFECT_TYPE.KNIGHT_RIDER, 0, [YawColor.WHITE], 0);
         public Dictionary<string, ParameterInfo[]> GetFeatures() => null;
 
+        private Config settings;
         public Type GetConfigBody() => typeof(Config);
 
         #endregion
 
-        UdpClient udpClient;
-
+        private UdpClient udpClient;
+        CancellationTokenSource cts = new();
 
         Thread readThread;
         private IPEndPoint remoteIP;
@@ -54,12 +58,13 @@ namespace Dirt2Plugin
         private bool running = false;
 
         public void Exit() {
+            running = false;
+            cts.Cancel();
             udpClient.Close();
             udpClient = null;
-            running = false;
         }
 
-        public string[] GetInputData() => InputHelper.GetValues<DirtTelemetry>(default).Keys();
+        public string[] GetInputData() => InputHelper.GetValues<TelemetryOut>(default).Keys();
 
 
         public void SetReferences(IProfileManager controller, IMainFormDispatcher dispatcher)
@@ -67,80 +72,83 @@ namespace Dirt2Plugin
             this.controller = controller;
             this.dispatcher = dispatcher;
         }
-        public void Init() {
+        public void Init()
+        {
+            this.settings = dispatcher.GetConfigObject<Config>();
 
-            var pConfig = dispatcher.GetConfigObject<Config>();
-            dispatcher.DialogShow($"Using port {pConfig.Port}",DIALOG_TYPE.INFO);
-            udpClient = new UdpClient(pConfig.Port);
-            readThread = new Thread(new ThreadStart(ReadFunction));
+
+            udpClient = new UdpClient(settings.Port);
+            udpClient.Client.ReceiveTimeout = 2000;
+
             running = true;
-            readThread.Start();
 
+
+#if DEBUG
+            Debugger.Launch();
+#endif
+            readThread = new Thread(new ThreadStart(ReadFunction));
+            readThread.Start();
         }
-       
+
+        
+
         private void ReadFunction() {
+
+            
+
             try {
                 while (running) {
+
+                    var t = new TelemetryOut();
+
                     byte[] rawData = udpClient.Receive(ref remoteIP);
-                    float speed = ReadSingle(rawData, 28, true);
-                    float rpm = ReadSingle(rawData, 148, true) / 30;
 
-                    float VelocityX = (float)(ReadSingle(rawData, 32, true));
-                    float VelocityY = (float)(ReadSingle(rawData, 36, true));
-                    float VelocityZ = (float)(ReadSingle(rawData, 40, true));
+                    t.Speed = ReadSingle(rawData, 28, true);
+                    t.RPM = ReadSingle(rawData, 148, true) / 30;
+                    t.Steer = ReadSingle(rawData, 120, true);
+                    t.Force_long = ReadSingle(rawData, 140, true);  // *-5
+                    t.Force_lat = ReadSingle(rawData, 136, true); // *-3
 
+                    t.Velocity = new Vector3(
+                        ReadSingle(rawData, 32, true),
+                        ReadSingle(rawData, 36, true),
+                        ReadSingle(rawData, 40, true)
+                    );
 
-
-                    float steer = ReadSingle(rawData, 120, true);
-                    float g_long = ReadSingle(rawData, 140, true);  // *-5
-                    float g_lat = ReadSingle(rawData, 136, true); // *-3
-                    float forwardX = ReadSingle(rawData, 56, true);
-                    float forwardY = (float)(ReadSingle(rawData, 60, true));
-                    float forwardZ = (float)(ReadSingle(rawData, 64, true));
-
-                    float rollX = ReadSingle(rawData, 44, true);
-                    float rollY = (float)(ReadSingle(rawData, 48, true));
-                    float rollZ = (float)(ReadSingle(rawData, 52, true));
-
-                    float susp_pos_bl = (float)ReadSingle(rawData, 68, true);
-                    float susp_pos_br = (float)ReadSingle(rawData, 72, true);
-                    float susp_pos_fl = (float)ReadSingle(rawData, 76, true);
-                    float susp_pos_fr = (float)ReadSingle(rawData, 80, true);
-                    float susp_velo_bl = (float)ReadSingle(rawData, 84, true);
-                    float susp_velo_br = (float)ReadSingle(rawData, 88, true);
-                    float susp_velo_fl = (float)ReadSingle(rawData, 92, true);
-                    float susp_velo_fr = (float)ReadSingle(rawData, 96, true);
-
-                    float wheel_speed_rl = (float)ReadSingle(rawData, 100, true);
-                    float wheel_speed_rr = (float)ReadSingle(rawData, 104, true);
+                    Vector3 right = new Vector3(
+                        ReadSingle(rawData, 44, true),
+                        ReadSingle(rawData, 48, true),
+                        ReadSingle(rawData, 52, true)
+                    );
 
 
-                    float pitch = (float)(Math.Asin(-forwardY) * 57.3);
-                    float roll = -(float)(Math.Asin(-rollY) * 57.3);
-                    float yaw = (float)Math.Atan2(forwardY + forwardX, forwardZ) * 57.3f;
+                    Vector3 forward = new Vector3(
+                        ReadSingle(rawData, 56, true),
+                        ReadSingle(rawData, 60, true),
+                        ReadSingle(rawData, 64, true)
+                    );
+
+                    
+
+                    t.suspen_pos_bl = ReadSingle(rawData, 68, true);
+                    t.suspen_pos_br = ReadSingle(rawData, 72, true);
+                    t.suspen_pos_fl = ReadSingle(rawData, 76, true);
+                    t.suspen_pos_fr = ReadSingle(rawData, 80, true);
+
+                    t.suspen_vel_bl = ReadSingle(rawData, 84, true);
+                    t.suspen_vel_br = ReadSingle(rawData, 88, true);
+                    t.suspen_vel_fl = ReadSingle(rawData, 92, true);
+                    t.suspen_vel_fr = ReadSingle(rawData, 96, true);
+
+                    
 
 
-                    controller.SetInput(0, speed);
-                    controller.SetInput(1, rpm);
-                    controller.SetInput(2, steer);
+                    t.Pitch = MathF.Asin(-forward.Y) * 57.3f;
+                    t.Roll = -MathF.Asin(-right.Y) * 57.3f;
+                    t.Yaw = MathF.Atan2(forward.Y + forward.X, forward.Z) * 57.3f;
 
-                    controller.SetInput(3, g_long);
-                    controller.SetInput(4, g_lat);
-
-                    controller.SetInput(5, pitch);
-                    controller.SetInput(6, roll);
-                    controller.SetInput(7, yaw);
-                    controller.SetInput(8, susp_pos_bl);
-                    controller.SetInput(9, susp_pos_br);
-                    controller.SetInput(10, susp_pos_fl);
-                    controller.SetInput(11, susp_pos_fr);
-                    controller.SetInput(12, susp_velo_bl);
-                    controller.SetInput(13, susp_velo_br);
-                    controller.SetInput(14, susp_velo_fl);
-                    controller.SetInput(15, susp_velo_fr);
-                    controller.SetInput(16, VelocityX);
-                    controller.SetInput(17, VelocityY);
-                    controller.SetInput(18, VelocityZ);
+                    foreach (var (i, key, value) in InputHelper.GetValues(t).WithIndex())
+                        controller.SetInput(i, value);
 
                 }
 
@@ -150,39 +158,34 @@ namespace Dirt2Plugin
             catch (ThreadAbortException) { }
         }
 
-      
-        public void PatchGame() {
-            byte filePatched = 0;
-            string[] path = new string[] {
-            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/My Games/DiRT 4/hardwaresettings/hardware_settings_config.xml",
-             Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/My Games/DiRT 4/hardwaresettings/hardware_settings_config_vr.xml",
-        };
 
-            for (int i = 0; i < path.Length; i++) {
+        public void PatchGame()
+        {
+            
+            bool patched = false;
 
-                if (File.Exists(path[i])) {
-                    XmlDocument doc = new XmlDocument();
-                    doc.Load(path[1]);
-                    XmlNode root = doc.DocumentElement;
-                    XmlNode node = root.SelectSingleNode("motion_platform");
-                    node.SelectSingleNode("dbox").Attributes["enabled"].Value = "true";
-                    node.SelectSingleNode("udp").Attributes["enabled"].Value = "true";
-                    node.SelectSingleNode("udp").Attributes["ip"].Value = "127.0.0.1";
-                    node.SelectSingleNode("udp").Attributes["extradata"].Value = "1";
-                    node.SelectSingleNode("udp").Attributes["port"].Value = "20777";
-                    node.SelectSingleNode("udp").Attributes["delay"].Value = "1";
+            var file = Environment.GetFolderPath(Environment.SpecialFolder.Personal) + "/My Games/DiRT2/hardwaresettings/hardware_settings_config.xml";
 
-
-                    doc.Save(path[i]);
-                    filePatched++;
-                    dispatcher.ShowNotification(NotificationType.INFO,path[i] + " patched!");
-                }
+            if (File.Exists(file))
+            {
+                XmlDocument xmlDocument = new XmlDocument();
+                xmlDocument.Load(file);
+                XmlNode documentElement = xmlDocument.DocumentElement;
+                XmlNode motionNode = documentElement.SelectSingleNode("motion");
+                motionNode.Attributes["enabled"].Value = "true";
+                motionNode.Attributes["ip"].Value = "127.0.0.1";
+                motionNode.Attributes["extradata"].Value = "1";
+                motionNode.Attributes["port"].Value = "20777";
+                motionNode.Attributes["delay"].Value = "1";
+                xmlDocument.Save(file);
+                patched = true;
+                dispatcher.ShowNotification(NotificationType.INFO, file + " patched!");
             }
 
-            if (filePatched == 0) {
-                dispatcher.DialogShow("Could not patch dirt rally 4. Make sure to start the game at least once before patching!",DIALOG_TYPE.INFO);
+            if (!patched)
+            {
+                dispatcher.DialogShow("Could not patch dirt 2. Make sure to start the game at least once before patching!", DIALOG_TYPE.INFO);
             }
-
         }
 
         float ReadSingle(byte[] data, int offset, bool littleEndian)

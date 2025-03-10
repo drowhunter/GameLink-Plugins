@@ -397,5 +397,6 @@ Global
 		SharedLib\SharedLib.projitems*{9dd14943-3f95-45c8-aace-0eb2582e47ef}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{a0988e26-18f3-4ae4-95df-3bd3b0abe37e}*SharedItemsImports = 13
 		SharedLib\SharedLib.projitems*{b1a7d5e1-4f6b-4d3a-9f8d-2c8a1e6b5a3f}*SharedItemsImports = 5
+		SharedLib\SharedLib.projitems*{cd718ed5-8051-4ff2-816a-58f4cee81f61}*SharedItemsImports = 5
 	EndGlobalSection
 EndGlobal

@@ -36,8 +36,7 @@ namespace YawVR_Game_Engine.Plugin
         public Stream Background => ResourceHelper.Background;
         public List<Profile_Component> DefaultProfile() => dispatcher.JsonToComponents(ResourceHelper.DefaultProfile);
 
-        public string[] GetInputData() => InputHelper.GetValues<Telemetry>(default).Keys();
-
+        
         public LedEffect DefaultLED() => new LedEffect(EFFECT_TYPE.KNIGHT_RIDER, 0, [YawColor.WHITE], 0);
 
         public Dictionary<string, ParameterInfo[]> GetFeatures() => null;
@@ -47,6 +46,8 @@ namespace YawVR_Game_Engine.Plugin
         
         private Config settings;
         #endregion
+
+        public string[] GetInputData() => InputHelper.GetValues<Telemetry>(default).Keys();
 
 
         private volatile bool running = false;

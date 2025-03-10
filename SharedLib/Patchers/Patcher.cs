@@ -1,4 +1,6 @@
-﻿using System;
+﻿using SharedLib.GameFinders;
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
@@ -104,20 +106,35 @@ namespace SharedLib
             return Task.CompletedTask;
         }
 
+        protected void FileCopy(string source, string destination, bool overwrite = true)
+        {
+            if(!Directory.Exists(Path.GetDirectoryName(destination)))
+                Directory.CreateDirectory(Path.GetDirectoryName(destination));
+            
+            Log($"Copy {Path.GetFileName(source)} to {destination}");
+            File.Copy(source, destination, overwrite);
+            
+        }
 
 
-       
+
 
         async Task<bool> IPatcher.PatchAsync(CancellationToken cancellationToken)
         {
             Log("Patching...");
 
-            bool success = await this.RunTasks(cancellationToken);
-
+            bool success = false;
+            if (this.InstallPath != null)
+            {
+                success = await this.RunTasks(cancellationToken);
+            }
             if (success)
                 Feedback(true, "Patching complete.");
             else
-                Feedback(false, "Patching Aborted.");
+            {
+                if(this.InstallPath != null)
+                    Feedback(false, "Patching Aborted.");
+            }
 
             return success;
         }
@@ -146,19 +163,18 @@ namespace SharedLib
 
         private static string GetInstallPath(Game plugin, IMainFormDispatcher dispatcher) 
         {
-            string name = plugin.GetType().GetCustomAttributes<ExportMetadataAttribute>(true)
-                .Where(meta => meta.Name == "Name").Select(m => (string)m.Value).First();
+            IGameFinder[] gamefinders = [new YawGameFinder()];
 
-            string installPath = dispatcher.GetInstallPath(name);
-            if (!string.IsNullOrWhiteSpace(installPath) && !Directory.Exists(installPath))
+            foreach (var finder in gamefinders)
             {
-                dispatcher.DialogShow("Cant find Distance install directory\n\n" + installPath + "\n\nOpen Plugin manager to set it?", DIALOG_TYPE.QUESTION, (yes) =>
+                string path = finder.FindGame(plugin, dispatcher);
+                if (path != null)
                 {
-                    dispatcher.OpenPluginManager();
-                });
-                return null;
+                    return path;
+                }
             }
-            return installPath;
+
+            return null;
         }
 
         protected string PathCombine(params string[] segments)

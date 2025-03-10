@@ -22,6 +22,8 @@ namespace SharedLib
         /// </summary>
         public string DoorStopPath { get; set; } = "";
 
+        public bool InstallConfigurationManager { get; set; }
+
     }
 
 
@@ -38,10 +40,21 @@ namespace SharedLib
             {
                 try
                 {
+                    if(options.InstallConfigurationManager)
+                    {
+                        return new()
+                        {
+                            { "Install BepIn Ex",InstallBepInExTask},
+                            { "Install Configuration Manager", InstallBepInConfigManagerTask},
+                            { "Find BepInEx Plugins Dir",FindBepInExPluginsDirTask},
+                            { "Reinstall If Plugin Found Async",AskReinstallTask},
+                            { "Install Mod",InstallModTask}
+                        };
+                    }
+                    
                     return new()
                     {
-                        { "Install BepIn Ex",InstallBepInExTask},
-                        { "Install Configuration Manager", InstallBepInConfigManagerTask },
+                        { "Install BepIn Ex",InstallBepInExTask},                    
                         { "Find BepInEx Plugins Dir",FindBepInExPluginsDirTask},
                         { "Reinstall If Plugin Found Async",AskReinstallTask},
                         { "Install Mod",InstallModTask}
@@ -278,14 +291,28 @@ namespace SharedLib
                 
                 foreach (var asset in downloads)
                 {
-                    ExtractFiles(asset.Location, modFolder, true);                    
+                    var ext = Path.GetExtension(asset.Name);
+                    switch(ext)
+                    {
+                        case ".zip":
+                            ExtractFiles(asset.Location, modFolder, true);
+                            break;
+                        case ".dll":
+                            FileCopy(asset.Location, PathCombine(modFolder, asset.Name), true);
+                            break;
+                        default:
+                            Feedback(false, $"Unsupported file type: {asset.Name}");
+                            return Task.FromResult(false);
+                           
+                    }
+                                     
                 }
                 Log($"{downloads.Count} Plugins installed.");
                 return Task.FromResult(true);
             }
             catch (Exception e)
             {
-               Feedback(false, "Error extracting files: " + e.Message);
+               Feedback(false, "Error installing mod files: " + e.Message);
             }
             return Task.FromResult(false);
         }

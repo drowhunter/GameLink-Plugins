@@ -50,23 +50,13 @@ namespace YawVR_Game_Engine.Plugin
 
         #endregion
 
-        //We'll provide these inputs to the app.. This can even be marshalled from a struct for example
-        private string[] inputNames = new string[]
-        {
-            "VELOCITY_X", "VELOCITY_Y", "VELOCITY_Z",
-            "ANGULAR_X", "ANGULAR_Y", "ANGULAR_Z",
-            "ROTATION_X", "ROTATION_Y", "ROTATION_Z",
-            "TILT", "LEAN",
-            "IS_FLYING", "IS_RUNNING", "IS_HIT", "WEAPON_FIRED", "STOMPED", "LANDED", "JUMPED"
-        };
-
         UdpClient udpClient;
 
         IPEndPoint remoteEndPoint;
 
         private bool running = false;
 
-        private CancellationTokenSource tokenSource;
+        private CancellationTokenSource tokenSource = new();
 
         private Config settings;
 
@@ -175,7 +165,9 @@ namespace YawVR_Game_Engine.Plugin
 
         public async void PatchGame()
         {
-
+#if DEBUG
+            Debugger.Launch();
+#endif
 
             var patcher = UnityPatcher.Create<UnityPatcher>(this, dispatcher, options =>
             {

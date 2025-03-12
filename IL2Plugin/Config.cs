@@ -12,6 +12,9 @@ namespace IL2Plugin
         [Info(Description = "UDP port the game is using")]
         public int Port = 4321;
 
+        [Info(Description = "UDP port the game is using")]
+        public int TelemetryPort = 4322;
+
         public Config()
         {
         }

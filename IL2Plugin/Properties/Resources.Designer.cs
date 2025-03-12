@@ -65,11 +65,18 @@ namespace IL2Plugin.Properties {
         ///&lt;br&gt;
         ///Edit the file data/startup.cfg located within the Il2 Sturmovik game folder and add the following:
         ///&lt;ul&gt;
-        ///&lt;li&gt;[KEY = motiondevice]
-        ///&lt;li&gt;addr = &quot;127.0.0.1&quot;
-        ///&lt;li&gt;decimation = 1
-        ///&lt;li&gt;enable = true
-        ///&lt;li&gt;port = 4321
+        ///&lt;li&gt;[KEY = motiondevice] 
+        ///&lt;li&gt;	addr = &quot;127.0.0.1&quot;
+        ///&lt;li&gt;	decimation = 1
+        ///&lt;li&gt;	enable = true
+        ///&lt;li&gt;	port = 4321
+        ///&lt;li&gt;[END]
+        ///&lt;li&gt;
+        ///&lt;li&gt;[KEY = telemetrydevice]
+        ///&lt;li&gt;	addr = &quot;127.0.0.1&quot;
+        ///&lt;li&gt;	decimation = 1
+        ///&lt;li&gt;	enable = true
+        ///&lt;li&gt;	port = 4322
         ///&lt;li&gt;[END]
         ///&lt;/ul&gt;.
         /// </summary>

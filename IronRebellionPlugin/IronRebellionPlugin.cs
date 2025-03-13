@@ -14,7 +14,7 @@ namespace YawVR_Game_Engine.Plugin
 {
 	[Export(typeof(Game))]
 	[ExportMetadata("Name", "Iron Rebellion")]
-	[ExportMetadata("Version", "0.1.2")]
+	[ExportMetadata("Version", "0.12")]
 	public class Plugin : Game
 	{
 

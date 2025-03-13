@@ -23,7 +23,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)TelemetryHelper\MmfTelemetry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TelemetryHelper\TelemetryBase.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TelemetryHelper\UdpTelemetry.cs" />
-
     <Compile Include="$(MSBuildThisFileDirectory)Validator.cs" />
   </ItemGroup>
 </Project>

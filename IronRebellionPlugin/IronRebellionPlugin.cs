@@ -16,7 +16,7 @@ namespace YawVR_Game_Engine.Plugin
 {
     [Export(typeof(Game))]
     [ExportMetadata("Name", "Iron Rebellion")]
-    [ExportMetadata("Version", "0.1")]
+    [ExportMetadata("Version", "0.13")]
     public class Plugin : Game
     {
 
@@ -50,16 +50,7 @@ namespace YawVR_Game_Engine.Plugin
 
         #endregion
 
-        //We'll provide these inputs to the app.. This can even be marshalled from a struct for example
-        private string[] inputNames = new string[]
-        {
-            "VELOCITY_X", "VELOCITY_Y", "VELOCITY_Z",
-            "ANGULAR_X", "ANGULAR_Y", "ANGULAR_Z",
-            "ROTATION_X", "ROTATION_Y", "ROTATION_Z",
-            "TILT", "LEAN",
-            "IS_FLYING", "IS_RUNNING", "IS_HIT", "WEAPON_FIRED", "STOMPED", "LANDED", "JUMPED"
-        };
-
+        
         UdpClient udpClient;
 
         IPEndPoint remoteEndPoint;

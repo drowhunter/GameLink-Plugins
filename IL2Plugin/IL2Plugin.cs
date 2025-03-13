@@ -10,7 +10,9 @@ using System.Net.Sockets;
 using System.Numerics;
 using System.Reflection;
 using System.Threading;
+using System.Xml.Linq;
 using YawGLAPI;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace YawVR_Game_Engine.Plugin {
     [Export(typeof(Game))]
@@ -89,7 +91,7 @@ namespace YawVR_Game_Engine.Plugin {
 
         public string AUTHOR => "YawVR";
         public string PROCESS_NAME => string.Empty;
-        public bool PATCH_AVAILABLE => false;
+        public bool PATCH_AVAILABLE => true;
 
         public string Description => Resources.description;
 
@@ -172,7 +174,8 @@ namespace YawVR_Game_Engine.Plugin {
         
         private void ReadFunction() {
 
-            while (!stop) {
+            while (!stop) 
+            {
 
                 try
                 {
@@ -217,6 +220,7 @@ namespace YawVR_Game_Engine.Plugin {
         {
             while (!stop)
             {
+
                 try
                 {
                     int nId = 9;
@@ -506,8 +510,65 @@ namespace YawVR_Game_Engine.Plugin {
 
         public void PatchGame()
         {
+            string name = "IL-2 Sturmovik Battle of Stalingrad";
+
+            string installPath = dispatcher.GetInstallPath(name);
+            if (!Directory.Exists(installPath))
+            {
+                dispatcher.DialogShow("Cant find 'IL-2 Sturmovik Battle of Stalingrad' install directory\nOpen Plugin manager?", DIALOG_TYPE.QUESTION, delegate {
+                    dispatcher.OpenPluginManager();
+                });
+
+                return;
+            }
+
+            string strFilename = installPath + "/data/startup.cfg";
+
+            if (true == File.Exists(strFilename)) 
+            {
+                // Fájl beolvasása
+                string fileContent = File.ReadAllText(strFilename);
+
+                bool bIsUpdated = false;
+
+                // 1. motiondevice szekció hozzáadása, ha nem létezik
+                if (!fileContent.Contains("[KEY = motiondevice]"))
+                {
+                    string motionDeviceSection = "[KEY = motiondevice]\n" +
+                                                 "  addr = \"127.0.0.1\"\n" +
+                                                 "  decimation = 1\n" +
+                                                 "  enable = true\n" +
+                                                 "  port = 4321\n" +
+                                                 "[END]\n\n";
+                    fileContent += motionDeviceSection; // hozzáadjuk a fájl végére
+
+                    bIsUpdated = true;
+                }
+
+                // 2. telemetrydevice szekció hozzáadása, ha nem létezik
+                if (!fileContent.Contains("[KEY = telemetrydevice]"))
+                {
+                    string telemetryDeviceSection = "[KEY = telemetrydevice]\n" +
+                                                    "   addr = \"127.0.0.1\"\n" +
+                                                    "   decimation = 1\n" +
+                                                    "   enable = true\n" +
+                                                    "   port = 4322\n" +
+                                                    "[END]\n\n";
+                    fileContent += telemetryDeviceSection; // hozzáadjuk a fájl végére
+
+                    bIsUpdated = true;
+                }
+
+                if (true == bIsUpdated)
+                {
+                    // A fájl újra mentése
+                    File.WriteAllText(strFilename, fileContent);
+                }
+            }
+
             return;
         }
+
         public Dictionary<string, ParameterInfo[]> GetFeatures()
         {
             return null;

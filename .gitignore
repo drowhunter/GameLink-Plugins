@@ -356,5 +356,4 @@ MigrationBackup/
 /Directory.Build.targets
 .vscode
 /_build
-/SharedLib/*.bak
 *.bak

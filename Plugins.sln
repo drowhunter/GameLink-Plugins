@@ -125,6 +125,10 @@ Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "SharedLib", "SharedLib\Shar
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistancePlugin", "DistancePlugin\DistancePlugin.csproj", "{4D31DE79-3B0E-4CAF-91AB-F3ACFBBE5F9B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NewStarGPPlugin", "NewStarGPPlugin\NewStarGPPlugin.csproj", "{247A212C-EA3C-46D9-82B1-2D7A8DD839E1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dirt2Plugin", "Dirt2Plugin\Dirt2Plugin.csproj", "{69BACC0C-5FB0-43F3-83A2-3A3E29398EDE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -367,6 +371,14 @@ Global
 		{4D31DE79-3B0E-4CAF-91AB-F3ACFBBE5F9B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4D31DE79-3B0E-4CAF-91AB-F3ACFBBE5F9B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4D31DE79-3B0E-4CAF-91AB-F3ACFBBE5F9B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{247A212C-EA3C-46D9-82B1-2D7A8DD839E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{247A212C-EA3C-46D9-82B1-2D7A8DD839E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{247A212C-EA3C-46D9-82B1-2D7A8DD839E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{247A212C-EA3C-46D9-82B1-2D7A8DD839E1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{69BACC0C-5FB0-43F3-83A2-3A3E29398EDE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{69BACC0C-5FB0-43F3-83A2-3A3E29398EDE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{69BACC0C-5FB0-43F3-83A2-3A3E29398EDE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{69BACC0C-5FB0-43F3-83A2-3A3E29398EDE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -376,7 +388,9 @@ Global
 		{A0988E26-18F3-4AE4-95DF-3BD3B0ABE37E} = {0CE2DEE3-ACB5-45F6-B995-6496481B4875}
 	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		SharedLib\SharedLib.projitems*{247a212c-ea3c-46d9-82b1-2d7a8dd839e1}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{4d31de79-3b0e-4caf-91ab-f3acfbbe5f9b}*SharedItemsImports = 5
+		SharedLib\SharedLib.projitems*{69bacc0c-5fb0-43f3-83a2-3a3e29398ede}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{72d8c5ad-5439-4235-a355-a2546a509a05}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{75a5ac51-c340-4fbc-b93e-cc70b9771ff2}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{88c6fdd2-9cd4-4015-bb6c-3389c29003be}*SharedItemsImports = 5

@@ -96,12 +96,26 @@ namespace YawVR_Game_Engine.Plugin {
             return null;
         }
 
+        /*
+         * controller.SetInput(8, (float)_data.Player.SuspensionDeflection.FrontLeft);
+                controller.SetInput(9, (float)_data.Player.SuspensionDeflection.FrontRight);
+                controller.SetInput(10, (float)_data.Player.SuspensionDeflection.RearLeft);
+                controller.SetInput(11, (float)_data.Player.SuspensionDeflection.RearRight);
+
+                controller.SetInput(12, (float)_data.Player.SuspensionVelocity.FrontLeft);
+                controller.SetInput(13, (float)_data.Player.SuspensionVelocity.FrontRight);
+                controller.SetInput(14, (float)_data.Player.SuspensionVelocity.RearLeft);
+                controller.SetInput(15, (float)_data.Player.SuspensionVelocity.RearRight);
+         */
+
         public string[] GetInputData()
         {
             return new string[] 
             { 
                 "Yaw", "Pitch", "Roll",
-                "CarSpeed", "Acceleration", "Throttle", "Brake", "SteeringForcePercentage"
+                "CarSpeed", "Acceleration", "Throttle", "Brake", "SteeringForcePercentage",
+                "SuspensionDeflection_FrontLeft","SuspensionDeflection_FrontRight","SuspensionDeflection_RearLeft","SuspensionDeflection_RearRight",
+                "SuspensionVelocity_FrontLeft","SuspensionVelocity_FrontRight","SuspensionVelocity_RearLeft","SuspensionVelocity_RearRight"
             };
         }
 
@@ -197,11 +211,22 @@ namespace YawVR_Game_Engine.Plugin {
                 controller.SetInput(0, ToDegrees(_data.CarOrientation.Yaw));
                 controller.SetInput(1, ToDegrees(_data.CarOrientation.Pitch));
                 controller.SetInput(2, ToDegrees(_data.CarOrientation.Roll));
+
                 controller.SetInput(3, (_data.CarSpeed < 0.0f) ? 0.0f : _data.CarSpeed);
                 controller.SetInput(4, Vector3_Length(_data.LocalAcceleration));
                 controller.SetInput(5, (_data.Throttle == -1.0f) ? 0.0f : _data.Throttle);
                 controller.SetInput(6, (_data.Brake == -1.0f) ? 0.0f : _data.Brake);
                 controller.SetInput(7, (float)_data.Player.SteeringForcePercentage);
+
+                controller.SetInput(8, (float)_data.Player.SuspensionDeflection.FrontLeft);
+                controller.SetInput(9, (float)_data.Player.SuspensionDeflection.FrontRight);
+                controller.SetInput(10, (float)_data.Player.SuspensionDeflection.RearLeft);
+                controller.SetInput(11, (float)_data.Player.SuspensionDeflection.RearRight);
+
+                controller.SetInput(12, (float)_data.Player.SuspensionVelocity.FrontLeft);
+                controller.SetInput(13, (float)_data.Player.SuspensionVelocity.FrontRight);
+                controller.SetInput(14, (float)_data.Player.SuspensionVelocity.RearLeft);
+                controller.SetInput(15, (float)_data.Player.SuspensionVelocity.RearRight);
             }
         }
 

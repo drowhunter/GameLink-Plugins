@@ -125,6 +125,8 @@ Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "SharedLib", "SharedLib\Shar
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistancePlugin", "DistancePlugin\DistancePlugin.csproj", "{4D31DE79-3B0E-4CAF-91AB-F3ACFBBE5F9B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RaceRoomPlugin", "RaceRoomPlugin\RaceRoomPlugin.csproj", "{C7E1B331-2F79-4820-9AE4-52B0B3B45766}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -367,6 +369,10 @@ Global
 		{4D31DE79-3B0E-4CAF-91AB-F3ACFBBE5F9B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4D31DE79-3B0E-4CAF-91AB-F3ACFBBE5F9B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4D31DE79-3B0E-4CAF-91AB-F3ACFBBE5F9B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C7E1B331-2F79-4820-9AE4-52B0B3B45766}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C7E1B331-2F79-4820-9AE4-52B0B3B45766}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C7E1B331-2F79-4820-9AE4-52B0B3B45766}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C7E1B331-2F79-4820-9AE4-52B0B3B45766}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -17,6 +17,7 @@ using R3E.Data;
 using System.Runtime.InteropServices;
 using static System.Net.WebRequestMethods;
 using System.IO.MemoryMappedFiles;
+using System.Diagnostics;
 
 namespace YawVR_Game_Engine.Plugin {
     [Export(typeof(Game))]
@@ -99,7 +100,8 @@ namespace YawVR_Game_Engine.Plugin {
         {
             return new string[] 
             { 
-                "Yaw", "Pitch", "Roll" 
+                "Yaw", "Pitch", "Roll",
+                "CarSpeed", "Acceleration", "Throttle", "Brake", "SteeringForcePercentage"
             };
         }
 
@@ -195,12 +197,22 @@ namespace YawVR_Game_Engine.Plugin {
                 controller.SetInput(0, ToDegrees(_data.CarOrientation.Yaw));
                 controller.SetInput(1, ToDegrees(_data.CarOrientation.Pitch));
                 controller.SetInput(2, ToDegrees(_data.CarOrientation.Roll));
+                controller.SetInput(3, (_data.CarSpeed < 0.0f) ? 0.0f : _data.CarSpeed);
+                controller.SetInput(4, Vector3_Length(_data.LocalAcceleration));
+                controller.SetInput(5, (_data.Throttle == -1.0f) ? 0.0f : _data.Throttle);
+                controller.SetInput(6, (_data.Brake == -1.0f) ? 0.0f : _data.Brake);
+                controller.SetInput(7, (float)_data.Player.SteeringForcePercentage);
             }
         }
 
         float ToDegrees(float radians)
         {
             return (radians * (180.0f / (float)Math.PI));
+        }
+
+        float Vector3_Length(Vector3<float> a) 
+        {
+            return MathF.Sqrt(a.X * a.X + a.Y * a.Y + a.Z * a.Z);
         }
 
         public void Dispose()

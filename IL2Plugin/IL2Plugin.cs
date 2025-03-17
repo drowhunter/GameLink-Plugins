@@ -9,6 +9,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Numerics;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Xml.Linq;
 using YawGLAPI;
@@ -136,18 +137,20 @@ namespace YawVR_Game_Engine.Plugin {
 
         public string[] GetInputData() {
             return new string[] {
-"Yaw","Pitch","Roll","Velocity_X","Velocity_Y","Velocity_Z","Acceleration_X","Acceleration_Y","Acceleration_Z",
+"Yaw","Pitch","Roll","Velocity","Acceleration",/*"Velocity_X","Velocity_Y","Velocity_Z","Acceleration_X","Acceleration_Y","Acceleration_Z",*/
 
-"ENG_RPM", "ENG_MP", "ENG_SHAKE_FRQ", "ENG_SHAKE_AMP", "LGEARS_STATE", "LGEARS_PRESS", "EAS", "AOA", "ACCELERATION", "COCKPIT_SHAKE", "AGL", "FLAPS", "AIR_BRAKES",
+//"ENG_RPM", "ENG_MP", "ENG_SHAKE_FRQ", "ENG_SHAKE_AMP", "LGEARS_STATE", "LGEARS_PRESS", "EAS", "AOA", "ACCELERATION", "COCKPIT_SHAKE", "AGL", "FLAPS", "AIR_BRAKES",
 
-"SETUP_ENG_PosX","SETUP_ENG_PosY","SETUP_ENG_PosZ","SETUP_ENG_MaxRPM",
-"SETUP_GUN_PosX","SETUP_GUN_PosY","SETUP_GUN_PosZ","SETUP_GUN_ProjectileMass","SETUP_GUN_ShootVelocity",
-"SETUP_LGEAR_PosX","SETUP_LGEAR_PosY","SETUP_LGEAR_PosZ","SETUP_LGEAR_Distance",
-"DROP_BOMB_PosX","DROP_BOMB_PosY","DROP_BOMB_PosZ","DROP_BOMB_Mass","DROP_BOMB_Distance",
-"ROCKET_LAUNCH_PosX","ROCKET_LAUNCH_PosY","ROCKET_LAUNCH_PosZ","ROCKET_LAUNCH_Mass","ROCKET_LAUNCH_Distance",
-"HIT_PosX","HIT_PosY","HIT_PosZ","HIT_ForceX","HIT_ForceY","HIT_ForceZ", "HIT_ForceLength",
-"DAMAGE_PosX","DAMAGE_PosY","DAMAGE_PosZ","DAMAGE_ForceX","DAMAGE_ForceY","DAMAGE_ForceZ", "DAMAGE_ForceLength",
-"EXPLOSION_PosX","EXPLOSION_PosY","EXPLOSION_PosZ","EXPLOSION_Radius","EXPLOSION_Distance",
+//"SETUP_ENG_PosX","SETUP_ENG_PosY","SETUP_ENG_PosZ","SETUP_ENG_MaxRPM",
+//"SETUP_GUN_PosX","SETUP_GUN_PosY","SETUP_GUN_PosZ","SETUP_GUN_ProjectileMass","SETUP_GUN_ShootVelocity",
+//"SETUP_LGEAR_PosX","SETUP_LGEAR_PosY","SETUP_LGEAR_PosZ","SETUP_LGEAR_Distance",
+
+"DROP_BOMB_Event",/*"DROP_BOMB_PosX","DROP_BOMB_PosY","DROP_BOMB_PosZ","DROP_BOMB_Mass",*/"DROP_BOMB_Distance",
+"ROCKET_LAUNCH_Event",/*"ROCKET_LAUNCH_PosX","ROCKET_LAUNCH_PosY","ROCKET_LAUNCH_PosZ","ROCKET_LAUNCH_Mass",*/"ROCKET_LAUNCH_Distance",
+"HIT_Event",/*"HIT_PosX","HIT_PosY","HIT_PosZ","HIT_ForceX","HIT_ForceY","HIT_ForceZ",*/ "HIT_Force",
+"DAMAGE_Event",/*"DAMAGE_PosX","DAMAGE_PosY","DAMAGE_PosZ","DAMAGE_ForceX","DAMAGE_ForceY","DAMAGE_ForceZ",*/ "DAMAGE_Force",
+"EXPLOSION_Event",/*"EXPLOSION_PosX","EXPLOSION_PosY","EXPLOSION_PosZ","EXPLOSION_Radius",*/"EXPLOSION_Distance",
+"Gun_Event"/*,"GunIndex"*/
 
             };
         }
@@ -157,10 +160,12 @@ namespace YawVR_Game_Engine.Plugin {
             this.dispatcher = dispatcher;
             this.controller = controller;
         }
+
+        Config pConfig;
         public void Init() {
             Console.WriteLine("IL2 INIT");
             stop = false;
-            var pConfig = dispatcher.GetConfigObject<Config>();
+            pConfig = dispatcher.GetConfigObject<Config>();
             udpClient = new UdpClient(pConfig.Port);
             readThread = new Thread(new ThreadStart(ReadFunction));
             readThread.Start();
@@ -171,10 +176,11 @@ namespace YawVR_Game_Engine.Plugin {
         }
 
 
-        
-        private void ReadFunction() {
 
-            while (!stop) 
+        private void ReadFunction()
+        {
+
+            while (!stop)
             {
 
                 try
@@ -193,20 +199,24 @@ namespace YawVR_Game_Engine.Plugin {
                     float accX = ReadSingle(rawData, 32, true);
                     float accY = ReadSingle(rawData, 36, true);
                     float accZ = ReadSingle(rawData, 40, true);
-                
-                    if (true == mtx.WaitOne(100)) 
+
+                    if (true == mtx.WaitOne(100))
                     {
                         controller.SetInput(0, yaw);
                         controller.SetInput(1, pitch);
                         controller.SetInput(2, roll);
 
-                        controller.SetInput(3, velocityX);
+                        /*controller.SetInput(3, velocityX);
                         controller.SetInput(4, velocityY);
                         controller.SetInput(5, velocityZ);
 
                         controller.SetInput(6, accX);
                         controller.SetInput(7, accY);
-                        controller.SetInput(8, accZ);
+                        controller.SetInput(8, accZ);*/
+
+                        controller.SetInput(3, new Vector3(velocityX, velocityY, velocityZ).Length());
+                        controller.SetInput(4, new Vector3(accX, accY, accZ).Length());
+                        
 
                         mtx.ReleaseMutex();
                     }
@@ -216,20 +226,45 @@ namespace YawVR_Game_Engine.Plugin {
             }
         }
 
+        DateTime startDropData;
+        STEDropData dropData;
+
+        DateTime startRocketLaunchData;
+        STERocketLaunch rocketLaunchData;
+
+        DateTime startHitData;
+        STEHit hitData;
+
+        DateTime startDamageData;
+        STEDamage damageData;
+
+        DateTime startExplosionData;
+        STEExplosion explosionData;
+
+        DateTime startGunIndex;
+        byte gunIndex;
+
         public void ReadTelemetryData()
         {
+            startDropData = new DateTime(1970, 1, 1);
+            startRocketLaunchData = new DateTime(1970, 1, 1);
+            startHitData = new DateTime(1970, 1, 1);
+            startDamageData = new DateTime(1970, 1, 1);
+            startExplosionData = new DateTime(1970, 1, 1);
+            startGunIndex = new DateTime(1970, 1, 1);
+
             while (!stop)
             {
 
                 try
                 {
-                    int nId = 9;
+                    int nId = 5;
 
                     byte[] rawData = telemetryUdpClient.Receive(ref telemetryRemote);
                     int indicatorsCount = rawData[10];
                     int offset = 11;
 
-                    mtx.WaitOne(100);
+                    //mtx.WaitOne(100);
                     for (int i = 0; i < indicatorsCount; i++)
                     {
                         int indicatorId = BitConverter.ToUInt16(rawData, offset);
@@ -241,15 +276,15 @@ namespace YawVR_Game_Engine.Plugin {
                             float value = ReadSingle(rawData, offset, true);
                             offset += 4;
 
-                            if (true == mtx.WaitOne(100))
+                            /*if (true == mtx.WaitOne(100))
                             {
                                 controller.SetInput(nId++, value);
 
                                 mtx.ReleaseMutex();
-                            }
+                            }*/
                         }
                     }
-                    mtx.ReleaseMutex();
+                    //mtx.ReleaseMutex();
 
                     int eventsCount = rawData[offset];
                     offset += 1;
@@ -263,7 +298,7 @@ namespace YawVR_Game_Engine.Plugin {
                         switch (eventId)
                         {
                             case 1: // SETUP_ENG
-                                STEEngineSetup engineSetup = new STEEngineSetup
+                                /*STEEngineSetup engineSetup = new STEEngineSetup
                                 {
                                     nIndex = BitConverter.ToInt16(rawData, offset),
                                     nID = BitConverter.ToInt16(rawData, offset + 2),
@@ -283,11 +318,11 @@ namespace YawVR_Game_Engine.Plugin {
                                     controller.SetInput(nId++, engineSetup.fMaxRPM);
 
                                     mtx.ReleaseMutex();
-                                }
+                                }*/
                                     
                                 break;
                             case 2: // SETUP_GUN
-                                STEGunSetup gunSetup = new STEGunSetup
+                                /*STEGunSetup gunSetup = new STEGunSetup
                                 {
                                     nIndex = BitConverter.ToInt16(rawData, offset),
                                     afPos = new float[] {
@@ -308,11 +343,11 @@ namespace YawVR_Game_Engine.Plugin {
                                     controller.SetInput(nId++, gunSetup.fShootVelocity);
 
                                     mtx.ReleaseMutex();
-                                }
+                                }*/
 
                                 break;
                             case 3: // SETUP_LGEAR
-                                STELandingGearSetup landingGearSetup = new STELandingGearSetup
+                                /*STELandingGearSetup landingGearSetup = new STELandingGearSetup
                                 {
                                     nIndex = BitConverter.ToInt16(rawData, offset),
                                     nID = BitConverter.ToInt16(rawData, offset + 2),
@@ -333,11 +368,11 @@ namespace YawVR_Game_Engine.Plugin {
                                     controller.SetInput(nId++, new Vector3(landingGearSetup.afPos[0], landingGearSetup.afPos[1], landingGearSetup.afPos[2]).Length());
 
                                     mtx.ReleaseMutex();
-                                }
+                                }*/
 
                                 break;
                             case 4: // DROP_BOMB
-                                STEDropData dropData = new STEDropData
+                                dropData = new STEDropData
                                 {
                                     afPos = new float[] {
                                         ReadSingle(rawData, offset, true),
@@ -348,21 +383,11 @@ namespace YawVR_Game_Engine.Plugin {
                                     uFlags = BitConverter.ToUInt16(rawData, offset + 16)
                                 };
 
-                                if (true == mtx.WaitOne(100))
-                                {
-                                    controller.SetInput(nId++, dropData.afPos[0]);
-                                    controller.SetInput(nId++, dropData.afPos[1]);
-                                    controller.SetInput(nId++, dropData.afPos[2]);
-                                    controller.SetInput(nId++, dropData.fMass);
+                                startDropData = DateTime.Now;
 
-                                    // saját
-                                    controller.SetInput(nId++, new Vector3(dropData.afPos[0], dropData.afPos[1], dropData.afPos[2]).Length());
-
-                                    mtx.ReleaseMutex();
-                                }
                                 break;
                             case 5: // ROCKET_LAUNCH
-                                STERocketLaunch rocketLaunchData = new STERocketLaunch
+                                rocketLaunchData = new STERocketLaunch
                                 {
                                     afPos = new float[] {
                                         ReadSingle(rawData, offset, true),
@@ -373,22 +398,11 @@ namespace YawVR_Game_Engine.Plugin {
                                     uFlags = BitConverter.ToUInt16(rawData, offset + 16)
                                 };
 
-                                if (true == mtx.WaitOne(100))
-                                {
-                                    controller.SetInput(nId++, rocketLaunchData.afPos[0]);
-                                    controller.SetInput(nId++, rocketLaunchData.afPos[1]);
-                                    controller.SetInput(nId++, rocketLaunchData.afPos[2]);
-                                    controller.SetInput(nId++, rocketLaunchData.fMass);
-
-                                    // saját
-                                    controller.SetInput(nId++, new Vector3(rocketLaunchData.afPos[0], rocketLaunchData.afPos[1], rocketLaunchData.afPos[2]).Length());
-
-                                    mtx.ReleaseMutex();
-                                }
+                                startRocketLaunchData = DateTime.Now;
 
                                 break;
                             case 6: // HIT
-                                STEHit hitData = new STEHit
+                                hitData = new STEHit
                                 {
                                     afPos = new float[] {
                                         ReadSingle(rawData, offset, true),
@@ -402,24 +416,11 @@ namespace YawVR_Game_Engine.Plugin {
                                     }
                                 };
 
-                                if (true == mtx.WaitOne(100))
-                                {
-                                    controller.SetInput(nId++, hitData.afPos[0]);
-                                    controller.SetInput(nId++, hitData.afPos[1]);
-                                    controller.SetInput(nId++, hitData.afPos[2]);
-                                    controller.SetInput(nId++, hitData.afHitF[0]);
-                                    controller.SetInput(nId++, hitData.afHitF[1]);
-                                    controller.SetInput(nId++, hitData.afHitF[2]);
-
-                                    // saját
-                                    controller.SetInput(nId++, new Vector3(hitData.afHitF[0], hitData.afHitF[1], hitData.afHitF[2]).Length());
-
-                                    mtx.ReleaseMutex();
-                                }
+                                startHitData = DateTime.Now;
 
                                 break;
                             case 7: // DAMAGE
-                                STEDamage damageData = new STEDamage
+                                damageData = new STEDamage
                                 {
                                     afPos = new float[] {
                                         ReadSingle(rawData, offset, true),
@@ -433,24 +434,11 @@ namespace YawVR_Game_Engine.Plugin {
                                     }
                                 };
 
-                                if (true == mtx.WaitOne(100))
-                                {
-                                    controller.SetInput(nId++, damageData.afPos[0]);
-                                    controller.SetInput(nId++, damageData.afPos[1]);
-                                    controller.SetInput(nId++, damageData.afPos[2]);
-                                    controller.SetInput(nId++, damageData.afHitF[0]);
-                                    controller.SetInput(nId++, damageData.afHitF[1]);
-                                    controller.SetInput(nId++, damageData.afHitF[2]);
-
-                                    // saját
-                                    controller.SetInput(nId++, new Vector3(damageData.afHitF[0], damageData.afHitF[1], damageData.afHitF[2]).Length());
-
-                                    mtx.ReleaseMutex();
-                                }
+                                startDamageData = DateTime.Now;
 
                                 break;
                             case 8: // EXPLOSION
-                                STEExplosion explosionData = new STEExplosion
+                                explosionData = new STEExplosion
                                 {
                                     afPos = new float[] {
                                         ReadSingle(rawData, offset, true),
@@ -460,34 +448,248 @@ namespace YawVR_Game_Engine.Plugin {
                                     fExpRad = ReadSingle(rawData, offset + 12, true)
                                 };
 
-                                if (true == mtx.WaitOne(100))
-                                {
-                                    controller.SetInput(nId++, explosionData.afPos[0]);
-                                    controller.SetInput(nId++, explosionData.afPos[0]);
-                                    controller.SetInput(nId++, explosionData.afPos[0]);
-                                    controller.SetInput(nId++, explosionData.fExpRad);
-
-                                    // saját
-                                    controller.SetInput(nId++, new Vector3(explosionData.afPos[0], explosionData.afPos[1], explosionData.afPos[2]).Length());
-
-                                    mtx.ReleaseMutex();
-                                }
+                                startExplosionData = DateTime.Now;
 
                                 break;
                             case 9: // GUN_FIRE
-                                byte gunIndex = rawData[offset];
+                                gunIndex = rawData[offset];
 
-                                if (true == mtx.WaitOne(100))
+                                startGunIndex = DateTime.Now;
+
+                                /*if (true == mtx.WaitOne(100))
                                 {
                                     controller.SetInput(nId++, (float)gunIndex);
 
                                     mtx.ReleaseMutex();
-                                }
+                                }*/
 
                                 break;
                         }
                         offset += eventSize;
                     }
+
+                    ;
+
+                    UInt64 nDropDataMilliseconds = (UInt64)(DateTime.Now - startDropData).TotalMilliseconds;
+                    UInt64 nRocketLaunchDataMilliseconds = (UInt64)(DateTime.Now - startRocketLaunchData).TotalMilliseconds;
+                    UInt64 nHitDataMilliseconds = (UInt64)(DateTime.Now - startHitData).TotalMilliseconds;
+                    UInt64 nDamageDataMilliseconds = (UInt64)(DateTime.Now - startDamageData).TotalMilliseconds;
+                    UInt64 nExplosionDataMilliseconds = (UInt64)(DateTime.Now - startExplosionData).TotalMilliseconds;
+                    UInt64 nGunIndexMilliseconds = (UInt64)(DateTime.Now - startGunIndex).TotalMilliseconds;
+
+                    // DropDataMilliseconds
+                    if (nDropDataMilliseconds <= (UInt64)pConfig.EventMilliseconds)
+                    {
+                        if (true == mtx.WaitOne(100))
+                        {
+                            controller.SetInput(nId++, 1.0f);
+
+                            //controller.SetInput(nId++, dropData.afPos[0]);
+                            //controller.SetInput(nId++, dropData.afPos[1]);
+                            //controller.SetInput(nId++, dropData.afPos[2]);
+                            //controller.SetInput(nId++, dropData.fMass);
+
+                            // saját
+                            controller.SetInput(nId++, new Vector3(dropData.afPos[0], dropData.afPos[1], dropData.afPos[2]).Length());
+
+                            mtx.ReleaseMutex();
+                        }
+                    }
+                    else
+                    {
+                        if (true == mtx.WaitOne(100))
+                        {
+                            controller.SetInput(nId++, 0.0f);
+
+                            //controller.SetInput(nId++, 0.0f);
+                            //controller.SetInput(nId++, 0.0f);
+                            //controller.SetInput(nId++, 0.0f);
+                            //controller.SetInput(nId++, 0.0f);
+
+                            // saját
+                            controller.SetInput(nId++, 0.0f);
+
+                            mtx.ReleaseMutex();
+                        }
+                    }
+
+                    // RocketLaunchData
+                    if (nRocketLaunchDataMilliseconds <= (UInt64)pConfig.EventMilliseconds)
+                    {
+                        if (true == mtx.WaitOne(100))
+                        {
+                            controller.SetInput(nId++, 1.0f);
+
+                            //controller.SetInput(nId++, rocketLaunchData.afPos[0]);
+                            //controller.SetInput(nId++, rocketLaunchData.afPos[1]);
+                            //controller.SetInput(nId++, rocketLaunchData.afPos[2]);
+                            //controller.SetInput(nId++, rocketLaunchData.fMass);
+
+                            // saját
+                            controller.SetInput(nId++, new Vector3(rocketLaunchData.afPos[0], rocketLaunchData.afPos[1], rocketLaunchData.afPos[2]).Length());
+
+                            mtx.ReleaseMutex();
+                        }
+                    }
+                    else
+                    {
+                        if (true == mtx.WaitOne(100))
+                        {
+                            controller.SetInput(nId++, 0.0f);
+
+                            //controller.SetInput(nId++, 0.0f);
+                            //controller.SetInput(nId++, 0.0f);
+                            //controller.SetInput(nId++, 0.0f);
+                            //controller.SetInput(nId++, 0.0f);
+
+                            // saját
+                            controller.SetInput(nId++, 0.0f);
+
+                            mtx.ReleaseMutex();
+                        }
+                    }
+
+                    // HitDataMilliseconds
+                    if (nHitDataMilliseconds <= (UInt64)pConfig.EventMilliseconds)
+                    {
+                        if (true == mtx.WaitOne(100))
+                        {
+                            controller.SetInput(nId++, 1.0f);
+
+                            //controller.SetInput(nId++, hitData.afPos[0]);
+                            //controller.SetInput(nId++, hitData.afPos[1]);
+                            //controller.SetInput(nId++, hitData.afPos[2]);
+                            //controller.SetInput(nId++, hitData.afHitF[0]);
+                            //controller.SetInput(nId++, hitData.afHitF[1]);
+                            //controller.SetInput(nId++, hitData.afHitF[2]);
+
+                            // saját
+                            controller.SetInput(nId++, new Vector3(hitData.afHitF[0], hitData.afHitF[1], hitData.afHitF[2]).Length());
+
+                            mtx.ReleaseMutex();
+                        }
+                    }
+                    else
+                    {
+                        if (true == mtx.WaitOne(100))
+                        {
+                            controller.SetInput(nId++, 0.0f);
+
+                            //controller.SetInput(nId++, 0.0f);
+                            //controller.SetInput(nId++, 0.0f);
+                            //controller.SetInput(nId++, 0.0f);
+                            //controller.SetInput(nId++, 0.0f);
+                            //controller.SetInput(nId++, 0.0f);
+                            //controller.SetInput(nId++, 0.0f);
+
+                            // saját
+                            controller.SetInput(nId++, 0.0f);
+
+                            mtx.ReleaseMutex();
+                        }
+                    }
+
+                    // DamageDataMilliseconds
+                    if (nDamageDataMilliseconds <= (UInt64)pConfig.EventMilliseconds)
+                    {
+                        if (true == mtx.WaitOne(100))
+                        {
+                            controller.SetInput(nId++, 1.0f);
+
+                            //controller.SetInput(nId++, damageData.afPos[0]);
+                            //controller.SetInput(nId++, damageData.afPos[1]);
+                            //controller.SetInput(nId++, damageData.afPos[2]);
+                            //controller.SetInput(nId++, damageData.afHitF[0]);
+                            //controller.SetInput(nId++, damageData.afHitF[1]);
+                            //controller.SetInput(nId++, damageData.afHitF[2]);
+
+                            // saját
+                            controller.SetInput(nId++, new Vector3(damageData.afHitF[0], damageData.afHitF[1], damageData.afHitF[2]).Length());
+
+                            mtx.ReleaseMutex();
+                        }
+                    }
+                    else
+                    {
+                        if (true == mtx.WaitOne(100))
+                        {
+                            controller.SetInput(nId++, 0.0f);
+
+                            //controller.SetInput(nId++, 0.0f);
+                            //controller.SetInput(nId++, 0.0f);
+                            //controller.SetInput(nId++, 0.0f);
+                            //controller.SetInput(nId++, 0.0f);
+                            //controller.SetInput(nId++, 0.0f);
+                            //controller.SetInput(nId++, 0.0f);
+
+                            // saját
+                            controller.SetInput(nId++, 0.0f);
+
+                            mtx.ReleaseMutex();
+                        }
+                    }
+
+                    // ExplosionDataMilliseconds
+                    if (nExplosionDataMilliseconds <= (UInt64)pConfig.EventMilliseconds)
+                    {
+                        if (true == mtx.WaitOne(100))
+                        {
+                            controller.SetInput(nId++, 1.0f);
+
+                            //controller.SetInput(nId++, explosionData.afPos[0]);
+                            //controller.SetInput(nId++, explosionData.afPos[1]);
+                            //controller.SetInput(nId++, explosionData.afPos[2]);
+                            //controller.SetInput(nId++, explosionData.fExpRad);
+
+                            // saját
+                            controller.SetInput(nId++, new Vector3(explosionData.afPos[0], explosionData.afPos[1], explosionData.afPos[2]).Length());
+
+                            mtx.ReleaseMutex();
+                        }
+                    }
+                    else
+                    {
+                        if (true == mtx.WaitOne(100))
+                        {
+                            controller.SetInput(nId++, 0.0f);
+
+                            //controller.SetInput(nId++, 0.0f);
+                            //controller.SetInput(nId++, 0.0f);
+                            //controller.SetInput(nId++, 0.0f);
+                            //controller.SetInput(nId++, 0.0f);
+
+                            // saját
+                            controller.SetInput(nId++, 0.0f);
+
+                            mtx.ReleaseMutex();
+                        }
+                    }
+
+                    // GunIndexMilliseconds
+                    if (nGunIndexMilliseconds <= (UInt64)pConfig.EventMilliseconds)
+                    {
+                        if (true == mtx.WaitOne(100))
+                        {
+                            controller.SetInput(nId++, 1.0f);
+
+                            //controller.SetInput(nId++, (float)gunIndex);
+
+                            mtx.ReleaseMutex();
+                        }
+                    }
+                    else
+                    {
+                        if (true == mtx.WaitOne(100))
+                        {
+                            controller.SetInput(nId++, 0.0f);
+
+                            //controller.SetInput(nId++, 0.0f);
+
+                            mtx.ReleaseMutex();
+                        }
+                    }
+
+
                 }
                 catch (SocketException) { }
             }

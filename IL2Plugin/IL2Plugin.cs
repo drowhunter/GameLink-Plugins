@@ -120,9 +120,6 @@ namespace YawVR_Game_Engine.Plugin {
                 new Profile_Component(0,0, 1,1,0f,false,false,-1,1f), //yaw
                 new Profile_Component(1,1, 1,1,0f,false,false,-1,1f), //pitch
                 new Profile_Component(2,2, 1,1,0f,false,true,-1,1f), // roll
-
-                new Profile_Component(3,2, 1,1,0f,false,true,-1,1f), // roll
-                new Profile_Component(4,1, 1,1,0f,false,true,-1,1f), // pitch
             };
         }
 
@@ -145,8 +142,9 @@ namespace YawVR_Game_Engine.Plugin {
 
         public string[] GetInputData() {
             return new string[] {
-"Yaw","Pitch","Roll","Velocity_X","Velocity_Y","Velocity_Z","Acceleration_X","Acceleration_Y","Acceleration_Z",
+"Yaw","Pitch","Roll","PlayerRotateVelocity_X","PlayerRotateVelocity_Y","PlayerRotateVelocity_Z","PlayerAcceleration_X","PlayerAcceleration_Y","PlayerAcceleration_Z",
 
+"ACCELERATION",
 //"ENG_RPM", "ENG_MP", "ENG_SHAKE_FRQ", "ENG_SHAKE_AMP", "LGEARS_STATE", "LGEARS_PRESS", "EAS", "AOA", "ACCELERATION", "COCKPIT_SHAKE", "AGL", "FLAPS", "AIR_BRAKES",
 
 //"SETUP_ENG_PosX","SETUP_ENG_PosY","SETUP_ENG_PosZ","SETUP_ENG_MaxRPM",
@@ -201,10 +199,11 @@ namespace YawVR_Game_Engine.Plugin {
                     float pitch = ReadSingle(rawData, 12, true) * 57.3f;
                     float roll = ReadSingle(rawData, 16, true) * 57.3f;
 
+                    yaw *= -1.0f;
+
                     float velocityX = ReadSingle(rawData, 20, true) * 57.3f;
                     float velocityY = ReadSingle(rawData, 24, true) * 57.3f;
                     float velocityZ = ReadSingle(rawData, 28, true) * 57.3f;
-
 
                     float accX = ReadSingle(rawData, 32, true);
                     float accY = ReadSingle(rawData, 36, true);
@@ -278,9 +277,11 @@ namespace YawVR_Game_Engine.Plugin {
                     for (int i = 0; i < indicatorsCount; i++)
                     {
                         int indicatorId = BitConverter.ToUInt16(rawData, offset);
+
                         int valuesCount = rawData[offset + 2];
                         offset += 3;
 
+                        Vector3 v3Acceleration = new Vector3(0, 0, 0);
                         for (int j = 0; j < valuesCount; j++)
                         {
                             float value = ReadSingle(rawData, offset, true);
@@ -292,7 +293,29 @@ namespace YawVR_Game_Engine.Plugin {
 
                                 mtx.ReleaseMutex();
                             }*/
+
+                            // ACCELERATION
+                            if (8 == indicatorId) 
+                            {
+                                if (0 == j) { v3Acceleration.X = value; }
+                                if (1 == j) { v3Acceleration.Y = value; }
+                                if (2 == j) { v3Acceleration.Z = value; }
+                            }
                         }
+
+                        // ACCELERATION
+                        if (8 == indicatorId) 
+                        {
+                            v3Acceleration.Y -= 9.81f;
+                            float fAcceleration = v3Acceleration.Length();
+                            if (true == mtx.WaitOne(100)) 
+                            {
+                                controller.SetInput(nId++, fAcceleration);
+
+                                mtx.ReleaseMutex();
+                            }
+                        }
+
                     }
                     //mtx.ReleaseMutex();
 

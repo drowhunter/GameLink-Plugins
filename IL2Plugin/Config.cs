@@ -15,8 +15,8 @@ namespace IL2Plugin
         [Info(Description = "UDP port the game is using")]
         public int TelemetryPort = 4322;
 
-        [Info(Description = "UDP port the game is using")]
-        public int EventMilliseconds = 500;
+        [Info(Description = "(ms)")]
+        public int EventTime = 500;
 
         public Config()
         {

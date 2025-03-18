@@ -84,6 +84,9 @@ namespace YawVR_Game_Engine.Plugin {
         public void Exit()
         {
             stop = true;
+
+            readThread?.Join();
+            readThread = null;
         }
 
         public Type GetConfigBody()
@@ -242,7 +245,13 @@ namespace YawVR_Game_Engine.Plugin {
 
         public void Dispose()
         {
-            _file.Dispose();
+            try
+            {
+                _file?.Dispose();
+            }
+            catch (Exception ex) 
+            {
+            }
         }
 
         public void PatchGame()

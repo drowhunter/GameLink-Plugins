@@ -126,18 +126,26 @@ namespace YawVR_Game_Engine.Plugin {
             };
         }
 
-        public void Exit() {
-            udpClient.Close();
+        public void Exit() 
+        {
+            stop = true;
+
+            readThread?.Join();
+            readThread = null;
+            telemetryThread?.Join();
+            telemetryThread = null;
+
+            udpClient?.Close();
+            udpClient?.Dispose();
             udpClient = null;
             telemetryUdpClient?.Close();
+            telemetryUdpClient?.Dispose();
             telemetryUdpClient = null;
-            stop = true;
-          //  readThread.Abort();
         }
 
         public string[] GetInputData() {
             return new string[] {
-"Yaw","Pitch","Roll","Velocity","Acceleration",/*"Velocity_X","Velocity_Y","Velocity_Z","Acceleration_X","Acceleration_Y","Acceleration_Z",*/
+"Yaw","Pitch","Roll","Velocity_X","Velocity_Y","Velocity_Z","Acceleration_X","Acceleration_Y","Acceleration_Z",
 
 //"ENG_RPM", "ENG_MP", "ENG_SHAKE_FRQ", "ENG_SHAKE_AMP", "LGEARS_STATE", "LGEARS_PRESS", "EAS", "AOA", "ACCELERATION", "COCKPIT_SHAKE", "AGL", "FLAPS", "AIR_BRAKES",
 
@@ -150,8 +158,8 @@ namespace YawVR_Game_Engine.Plugin {
 "HIT_Event",/*"HIT_PosX","HIT_PosY","HIT_PosZ","HIT_ForceX","HIT_ForceY","HIT_ForceZ",*/ "HIT_Force",
 "DAMAGE_Event",/*"DAMAGE_PosX","DAMAGE_PosY","DAMAGE_PosZ","DAMAGE_ForceX","DAMAGE_ForceY","DAMAGE_ForceZ",*/ "DAMAGE_Force",
 "EXPLOSION_Event",/*"EXPLOSION_PosX","EXPLOSION_PosY","EXPLOSION_PosZ","EXPLOSION_Radius",*/"EXPLOSION_Distance",
-"Gun_Event"/*,"GunIndex"*/
-
+"Gun_Event",/*"GunIndex"*/
+"SETUP_GUN_PosX","SETUP_GUN_PosY","SETUP_GUN_PosZ"
             };
         }
 
@@ -167,10 +175,12 @@ namespace YawVR_Game_Engine.Plugin {
             stop = false;
             pConfig = dispatcher.GetConfigObject<Config>();
             udpClient = new UdpClient(pConfig.Port);
+            udpClient.Client.ReceiveTimeout = 500;
             readThread = new Thread(new ThreadStart(ReadFunction));
             readThread.Start();
 
             telemetryUdpClient = new UdpClient(pConfig.TelemetryPort);
+            telemetryUdpClient.Client.ReceiveTimeout = 500;
             telemetryThread = new Thread(ReadTelemetryData);
             telemetryThread.Start();
         }
@@ -206,22 +216,18 @@ namespace YawVR_Game_Engine.Plugin {
                         controller.SetInput(1, pitch);
                         controller.SetInput(2, roll);
 
-                        /*controller.SetInput(3, velocityX);
+                        controller.SetInput(3, velocityX);
                         controller.SetInput(4, velocityY);
                         controller.SetInput(5, velocityZ);
 
                         controller.SetInput(6, accX);
                         controller.SetInput(7, accY);
-                        controller.SetInput(8, accZ);*/
-
-                        controller.SetInput(3, new Vector3(velocityX, velocityY, velocityZ).Length());
-                        controller.SetInput(4, new Vector3(accX, accY, accZ).Length());
-                        
+                        controller.SetInput(8, accZ);
 
                         mtx.ReleaseMutex();
                     }
                 }
-                catch (SocketException) { }
+                catch (Exception ex) { }
 
             }
         }
@@ -244,6 +250,9 @@ namespace YawVR_Game_Engine.Plugin {
         DateTime startGunIndex;
         byte gunIndex;
 
+        DateTime startGunPos;
+        Vector3 v3GunPos = new Vector3();
+
         public void ReadTelemetryData()
         {
             startDropData = new DateTime(1970, 1, 1);
@@ -252,13 +261,14 @@ namespace YawVR_Game_Engine.Plugin {
             startDamageData = new DateTime(1970, 1, 1);
             startExplosionData = new DateTime(1970, 1, 1);
             startGunIndex = new DateTime(1970, 1, 1);
+            startGunPos = new DateTime(1970, 1, 1);
 
             while (!stop)
             {
 
                 try
                 {
-                    int nId = 5;
+                    int nId = 9;
 
                     byte[] rawData = telemetryUdpClient.Receive(ref telemetryRemote);
                     int indicatorsCount = rawData[10];
@@ -322,7 +332,7 @@ namespace YawVR_Game_Engine.Plugin {
                                     
                                 break;
                             case 2: // SETUP_GUN
-                                /*STEGunSetup gunSetup = new STEGunSetup
+                                STEGunSetup gunSetup = new STEGunSetup
                                 {
                                     nIndex = BitConverter.ToInt16(rawData, offset),
                                     afPos = new float[] {
@@ -334,7 +344,11 @@ namespace YawVR_Game_Engine.Plugin {
                                     fShootVelocity = ReadSingle(rawData, offset + 18, true)
                                 };
 
-                                if (true == mtx.WaitOne(100))
+                                v3GunPos = new Vector3(gunSetup.afPos[0], gunSetup.afPos[1], gunSetup.afPos[2]);
+
+                                startGunPos = DateTime.Now;
+
+                                /*if (true == mtx.WaitOne(100))
                                 {
                                     controller.SetInput(nId++, gunSetup.afPos[0]);
                                     controller.SetInput(nId++, gunSetup.afPos[1]);
@@ -476,9 +490,10 @@ namespace YawVR_Game_Engine.Plugin {
                     UInt64 nDamageDataMilliseconds = (UInt64)(DateTime.Now - startDamageData).TotalMilliseconds;
                     UInt64 nExplosionDataMilliseconds = (UInt64)(DateTime.Now - startExplosionData).TotalMilliseconds;
                     UInt64 nGunIndexMilliseconds = (UInt64)(DateTime.Now - startGunIndex).TotalMilliseconds;
+                    UInt64 nGunPosMilliseconds = (UInt64)(DateTime.Now - startGunPos).TotalMilliseconds;
 
                     // DropDataMilliseconds
-                    if (nDropDataMilliseconds <= (UInt64)pConfig.EventMilliseconds)
+                    if (nDropDataMilliseconds <= (UInt64)pConfig.EventTime)
                     {
                         if (true == mtx.WaitOne(100))
                         {
@@ -514,7 +529,7 @@ namespace YawVR_Game_Engine.Plugin {
                     }
 
                     // RocketLaunchData
-                    if (nRocketLaunchDataMilliseconds <= (UInt64)pConfig.EventMilliseconds)
+                    if (nRocketLaunchDataMilliseconds <= (UInt64)pConfig.EventTime)
                     {
                         if (true == mtx.WaitOne(100))
                         {
@@ -550,7 +565,7 @@ namespace YawVR_Game_Engine.Plugin {
                     }
 
                     // HitDataMilliseconds
-                    if (nHitDataMilliseconds <= (UInt64)pConfig.EventMilliseconds)
+                    if (nHitDataMilliseconds <= (UInt64)pConfig.EventTime)
                     {
                         if (true == mtx.WaitOne(100))
                         {
@@ -590,7 +605,7 @@ namespace YawVR_Game_Engine.Plugin {
                     }
 
                     // DamageDataMilliseconds
-                    if (nDamageDataMilliseconds <= (UInt64)pConfig.EventMilliseconds)
+                    if (nDamageDataMilliseconds <= (UInt64)pConfig.EventTime)
                     {
                         if (true == mtx.WaitOne(100))
                         {
@@ -630,7 +645,7 @@ namespace YawVR_Game_Engine.Plugin {
                     }
 
                     // ExplosionDataMilliseconds
-                    if (nExplosionDataMilliseconds <= (UInt64)pConfig.EventMilliseconds)
+                    if (nExplosionDataMilliseconds <= (UInt64)pConfig.EventTime)
                     {
                         if (true == mtx.WaitOne(100))
                         {
@@ -666,7 +681,7 @@ namespace YawVR_Game_Engine.Plugin {
                     }
 
                     // GunIndexMilliseconds
-                    if (nGunIndexMilliseconds <= (UInt64)pConfig.EventMilliseconds)
+                    if (nGunIndexMilliseconds <= (UInt64)pConfig.EventTime)
                     {
                         if (true == mtx.WaitOne(100))
                         {
@@ -689,9 +704,32 @@ namespace YawVR_Game_Engine.Plugin {
                         }
                     }
 
+                    // GunPosMilliseconds
+                    if (nGunPosMilliseconds <= (UInt64)pConfig.EventTime)
+                    {
+                        if (true == mtx.WaitOne(100))
+                        {
+                            controller.SetInput(nId++, v3GunPos.X);
+                            controller.SetInput(nId++, v3GunPos.Y);
+                            controller.SetInput(nId++, v3GunPos.Z);
+
+                            mtx.ReleaseMutex();
+                        }
+                    }
+                    else
+                    {
+                        if (true == mtx.WaitOne(100))
+                        {
+                            controller.SetInput(nId++, v3GunPos.X);
+                            controller.SetInput(nId++, v3GunPos.Y);
+                            controller.SetInput(nId++, v3GunPos.Z);
+
+                            mtx.ReleaseMutex();
+                        }
+                    }
 
                 }
-                catch (SocketException) { }
+                catch (Exception ex) { }
             }
         }
 

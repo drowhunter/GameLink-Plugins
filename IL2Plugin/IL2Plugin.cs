@@ -144,7 +144,19 @@ namespace YawVR_Game_Engine.Plugin {
             return new string[] {
 "Yaw","Pitch","Roll","PlayerRotateVelocity_X","PlayerRotateVelocity_Y","PlayerRotateVelocity_Z","PlayerAcceleration_X","PlayerAcceleration_Y","PlayerAcceleration_Z",
 
+"ENG_RPM_1","ENG_RPM_2","ENG_RPM_3","ENG_RPM_4",
+"ENG_MP_1","ENG_MP_2","ENG_MP_3","ENG_MP_4",
+"ENG_SHAKE_FRQ_1","ENG_SHAKE_FRQ_2","ENG_SHAKE_FRQ_3","ENG_SHAKE_FRQ_4",
+"ENG_SHAKE_AMP_1","ENG_SHAKE_AMP_2","ENG_SHAKE_AMP_3","ENG_SHAKE_AMP_4",
+"LGEARS_STATE_1","LGEARS_STATE_2","LGEARS_STATE_3","LGEARS_STATE_4",
+"LGEARS_PRESS_1","LGEARS_PRESS_2","LGEARS_PRESS_3","LGEARS_PRESS_4",
+"EAS",
+"AOA",
 "ACCELERATION",
+"COCKPIT_SHAKE_Hz","COCKPIT_SHAKE_Amplitude",
+"AGL",
+"FLAPS",
+"AIR_BRAKES",
 //"ENG_RPM", "ENG_MP", "ENG_SHAKE_FRQ", "ENG_SHAKE_AMP", "LGEARS_STATE", "LGEARS_PRESS", "EAS", "AOA", "ACCELERATION", "COCKPIT_SHAKE", "AGL", "FLAPS", "AIR_BRAKES",
 
 //"SETUP_ENG_PosX","SETUP_ENG_PosY","SETUP_ENG_PosZ","SETUP_ENG_MaxRPM",
@@ -274,6 +286,21 @@ namespace YawVR_Game_Engine.Plugin {
                     int offset = 11;
 
                     //mtx.WaitOne(100);
+
+                    Vector4 v4ENG_RPM = new Vector4(0, 0, 0, 0);
+                    Vector4 v4ENG_MP = new Vector4(0, 0, 0, 0);
+                    Vector4 v4ENG_SHAKE_FRQ = new Vector4(0, 0, 0, 0);
+                    Vector4 v4ENG_SHAKE_AMP = new Vector4(0, 0, 0, 0);
+                    Vector4 v4LGEARS_STATE = new Vector4(0, 0, 0, 0);
+                    Vector4 v4LGEARS_PRESS = new Vector4(0, 0, 0, 0);
+                    float fEAS = 0.0f;
+                    float fAOA = 0.0f;
+                    Vector3 v3Acceleration = new Vector3(0, 0, 0);
+                    Vector2 v2CockpitShake = new Vector2(0, 0);
+                    float fAGL = 0.0f;
+                    float fFLAPS = 0.0f;
+                    float fAIR_BRAKES = 0.0f;
+
                     for (int i = 0; i < indicatorsCount; i++)
                     {
                         int indicatorId = BitConverter.ToUInt16(rawData, offset);
@@ -281,7 +308,7 @@ namespace YawVR_Game_Engine.Plugin {
                         int valuesCount = rawData[offset + 2];
                         offset += 3;
 
-                        Vector3 v3Acceleration = new Vector3(0, 0, 0);
+                        
                         for (int j = 0; j < valuesCount; j++)
                         {
                             float value = ReadSingle(rawData, offset, true);
@@ -294,30 +321,233 @@ namespace YawVR_Game_Engine.Plugin {
                                 mtx.ReleaseMutex();
                             }*/
 
+                            // ENG_RPM
+                            if (0 == indicatorId)
+                            {
+                                if (0 == j) { v4ENG_RPM.X = value; }
+                                if (1 == j) { v4ENG_RPM.Y = value; }
+                                if (2 == j) { v4ENG_RPM.Z = value; }
+                                if (3 == j) { v4ENG_RPM.W = value; }
+                            }
+
+                            // ENG_MP
+                            if (1 == indicatorId)
+                            {
+                                if (0 == j) { v4ENG_MP.X = value; }
+                                if (1 == j) { v4ENG_MP.Y = value; }
+                                if (2 == j) { v4ENG_MP.Z = value; }
+                                if (3 == j) { v4ENG_MP.W = value; }
+                            }
+
+                            // ENG_SHAKE_FRQ
+                            if (2 == indicatorId)
+                            {
+                                if (0 == j) { v4ENG_SHAKE_FRQ.X = value; }
+                                if (1 == j) { v4ENG_SHAKE_FRQ.Y = value; }
+                                if (2 == j) { v4ENG_SHAKE_FRQ.Z = value; }
+                                if (3 == j) { v4ENG_SHAKE_FRQ.W = value; }
+                            }
+
+                            // ENG_SHAKE_AMP
+                            if (3 == indicatorId)
+                            {
+                                if (0 == j) { v4ENG_SHAKE_AMP.X = value; }
+                                if (1 == j) { v4ENG_SHAKE_AMP.Y = value; }
+                                if (2 == j) { v4ENG_SHAKE_AMP.Z = value; }
+                                if (3 == j) { v4ENG_SHAKE_AMP.W = value; }
+                            }
+
+                            // LGEARS_STATE
+                            if (4 == indicatorId)
+                            {
+                                if (0 == j) { v4LGEARS_STATE.X = value; }
+                                if (1 == j) { v4LGEARS_STATE.Y = value; }
+                                if (2 == j) { v4LGEARS_STATE.Z = value; }
+                                if (3 == j) { v4LGEARS_STATE.W = value; }
+                            }
+
+                            // LGEARS_PRESS
+                            if (5 == indicatorId)
+                            {
+                                if (0 == j) { v4LGEARS_PRESS.X = value; }
+                                if (1 == j) { v4LGEARS_PRESS.Y = value; }
+                                if (2 == j) { v4LGEARS_PRESS.Z = value; }
+                                if (3 == j) { v4LGEARS_PRESS.W = value; }
+                            }
+
+                            // EAS
+                            if (6 == indicatorId) 
+                            {
+                                if (0 == j) { fEAS = value; }
+                            }
+
+                            // AOA
+                            if (7 == indicatorId)
+                            {
+                                if (0 == j) { fAOA = value; }
+                            }
+
                             // ACCELERATION
                             if (8 == indicatorId) 
                             {
                                 if (0 == j) { v3Acceleration.X = value; }
-                                if (1 == j) { v3Acceleration.Y = value; }
+                                if (1 == j) { v3Acceleration.Y = value; v3Acceleration.Y -= 9.81f; }
                                 if (2 == j) { v3Acceleration.Z = value; }
                             }
-                        }
 
-                        // ACCELERATION
-                        if (8 == indicatorId) 
-                        {
-                            v3Acceleration.Y -= 9.81f;
-                            float fAcceleration = v3Acceleration.Length();
-                            if (true == mtx.WaitOne(100)) 
+                            // COCKPIT SHAKE
+                            if (9 == indicatorId) 
                             {
-                                controller.SetInput(nId++, fAcceleration);
+                                if (0 == j) { v2CockpitShake.X = value; }
+                                if (1 == j) { v2CockpitShake.Y = value; }
+                            }
 
-                                mtx.ReleaseMutex();
+                            // AGL
+                            if (10 == indicatorId)
+                            {
+                                if (0 == j) { fAGL = value; }
+                            }
+
+                            // FLAPS
+                            if (11 == indicatorId)
+                            {
+                                if (0 == j) { fFLAPS = value; }
+                            }
+
+                            // AIR_BRAKES
+                            if (12 == indicatorId)
+                            {
+                                if (0 == j) { fAIR_BRAKES = value; }
                             }
                         }
-
                     }
                     //mtx.ReleaseMutex();
+
+                    // ENG_RPM
+                    if (true == mtx.WaitOne(100))
+                    {
+                        controller.SetInput(nId++, v4ENG_RPM.X);
+                        controller.SetInput(nId++, v4ENG_RPM.Y);
+                        controller.SetInput(nId++, v4ENG_RPM.Z);
+                        controller.SetInput(nId++, v4ENG_RPM.W);
+
+                        mtx.ReleaseMutex();
+                    }
+
+                    // ENG_MP
+                    if (true == mtx.WaitOne(100))
+                    {
+                        controller.SetInput(nId++, v4ENG_MP.X);
+                        controller.SetInput(nId++, v4ENG_MP.Y);
+                        controller.SetInput(nId++, v4ENG_MP.Z);
+                        controller.SetInput(nId++, v4ENG_MP.W);
+
+                        mtx.ReleaseMutex();
+                    }
+
+                    // ENG_SHAKE_FRQ
+                    if (true == mtx.WaitOne(100))
+                    {
+                        controller.SetInput(nId++, v4ENG_SHAKE_FRQ.X);
+                        controller.SetInput(nId++, v4ENG_SHAKE_FRQ.Y);
+                        controller.SetInput(nId++, v4ENG_SHAKE_FRQ.Z);
+                        controller.SetInput(nId++, v4ENG_SHAKE_FRQ.W);
+
+                        mtx.ReleaseMutex();
+                    }
+
+                    // ENG_SHAKE_AMP
+                    if (true == mtx.WaitOne(100))
+                    {
+                        controller.SetInput(nId++, v4ENG_SHAKE_AMP.X);
+                        controller.SetInput(nId++, v4ENG_SHAKE_AMP.Y);
+                        controller.SetInput(nId++, v4ENG_SHAKE_AMP.Z);
+                        controller.SetInput(nId++, v4ENG_SHAKE_AMP.W);
+
+                        mtx.ReleaseMutex();
+                    }
+
+                    // LGEARS_STATE
+                    if (true == mtx.WaitOne(100))
+                    {
+                        controller.SetInput(nId++, v4LGEARS_STATE.X);
+                        controller.SetInput(nId++, v4LGEARS_STATE.Y);
+                        controller.SetInput(nId++, v4LGEARS_STATE.Z);
+                        controller.SetInput(nId++, v4LGEARS_STATE.W);
+
+                        mtx.ReleaseMutex();
+                    }
+
+                    // LGEARS_PRESS
+                    if (true == mtx.WaitOne(100))
+                    {
+                        controller.SetInput(nId++, v4LGEARS_PRESS.X);
+                        controller.SetInput(nId++, v4LGEARS_PRESS.Y);
+                        controller.SetInput(nId++, v4LGEARS_PRESS.Z);
+                        controller.SetInput(nId++, v4LGEARS_PRESS.W);
+
+                        mtx.ReleaseMutex();
+                    }
+
+                    // EAS
+                    if (true == mtx.WaitOne(100))
+                    {
+                        controller.SetInput(nId++, fEAS);
+
+                        mtx.ReleaseMutex();
+                    }
+
+                    // AOA
+                    if (true == mtx.WaitOne(100))
+                    {
+                        controller.SetInput(nId++, fAOA);
+
+                        mtx.ReleaseMutex();
+                    }
+
+                    // ACCELERATION
+                    {
+                        float fAcceleration = v3Acceleration.Length();
+                        if (true == mtx.WaitOne(100))
+                        {
+                            controller.SetInput(nId++, fAcceleration);
+
+                            mtx.ReleaseMutex();
+                        }
+                    }
+
+                    // COCKPIT SHAKE
+                    if (true == mtx.WaitOne(100))
+                    {
+                        controller.SetInput(nId++, v2CockpitShake.X);
+                        controller.SetInput(nId++, v2CockpitShake.Y);
+
+                        mtx.ReleaseMutex();
+                    }
+
+                    // AGL
+                    if (true == mtx.WaitOne(100))
+                    {
+                        controller.SetInput(nId++, fAGL);
+
+                        mtx.ReleaseMutex();
+                    }
+
+                    // FLAPS
+                    if (true == mtx.WaitOne(100))
+                    {
+                        controller.SetInput(nId++, fFLAPS);
+
+                        mtx.ReleaseMutex();
+                    }
+
+                    // AIR_BRAKES
+                    if (true == mtx.WaitOne(100))
+                    {
+                        controller.SetInput(nId++, fAIR_BRAKES);
+
+                        mtx.ReleaseMutex();
+                    }
 
                     int eventsCount = rawData[offset];
                     offset += 1;

@@ -157,19 +157,13 @@ namespace YawVR_Game_Engine.Plugin {
 "AGL",
 "FLAPS",
 "AIR_BRAKES",
-//"ENG_RPM", "ENG_MP", "ENG_SHAKE_FRQ", "ENG_SHAKE_AMP", "LGEARS_STATE", "LGEARS_PRESS", "EAS", "AOA", "ACCELERATION", "COCKPIT_SHAKE", "AGL", "FLAPS", "AIR_BRAKES",
 
-//"SETUP_ENG_PosX","SETUP_ENG_PosY","SETUP_ENG_PosZ","SETUP_ENG_MaxRPM",
-//"SETUP_GUN_PosX","SETUP_GUN_PosY","SETUP_GUN_PosZ","SETUP_GUN_ProjectileMass","SETUP_GUN_ShootVelocity",
-//"SETUP_LGEAR_PosX","SETUP_LGEAR_PosY","SETUP_LGEAR_PosZ","SETUP_LGEAR_Distance",
-
-"DROP_BOMB_Event",/*"DROP_BOMB_PosX","DROP_BOMB_PosY","DROP_BOMB_PosZ","DROP_BOMB_Mass",*/"DROP_BOMB_Distance",
-"ROCKET_LAUNCH_Event",/*"ROCKET_LAUNCH_PosX","ROCKET_LAUNCH_PosY","ROCKET_LAUNCH_PosZ","ROCKET_LAUNCH_Mass",*/"ROCKET_LAUNCH_Distance",
-"HIT_Event",/*"HIT_PosX","HIT_PosY","HIT_PosZ","HIT_ForceX","HIT_ForceY","HIT_ForceZ",*/ "HIT_Force",
-"DAMAGE_Event",/*"DAMAGE_PosX","DAMAGE_PosY","DAMAGE_PosZ","DAMAGE_ForceX","DAMAGE_ForceY","DAMAGE_ForceZ",*/ "DAMAGE_Force",
-"EXPLOSION_Event",/*"EXPLOSION_PosX","EXPLOSION_PosY","EXPLOSION_PosZ","EXPLOSION_Radius",*/"EXPLOSION_Distance",
-"Gun_Event",/*"GunIndex"*/
-"SETUP_GUN_PosX","SETUP_GUN_PosY","SETUP_GUN_PosZ"
+"DROP_BOMB_Event","DROP_BOMB_Distance",
+"ROCKET_LAUNCH_Event","ROCKET_LAUNCH_Distance",
+"HIT_Event","HIT_Force",
+"DAMAGE_Event","DAMAGE_Force",
+"EXPLOSION_Event","EXPLOSION_Distance",
+"Gun_Event",
             };
         }
 
@@ -182,6 +176,13 @@ namespace YawVR_Game_Engine.Plugin {
         Config pConfig;
         public void Init() {
             Console.WriteLine("IL2 INIT");
+
+            m_fElapsedYaw = 0.0f;
+            m_fCurrentYaw = 0.0f;
+            m_fYawDt = 0.0f;
+            m_fYaw2 = 0.0f;
+            m_bFirst = true;
+
             stop = false;
             pConfig = dispatcher.GetConfigObject<Config>();
             udpClient = new UdpClient(pConfig.Port);
@@ -196,6 +197,18 @@ namespace YawVR_Game_Engine.Plugin {
         }
 
 
+
+        private float m_fElapsedYaw = 0.0f;
+        private float m_fCurrentYaw = 0.0f;
+        private float m_fYawDt = 0.0f;
+        private bool m_bFirst = true;
+        private float m_fYaw2 = 0.0f;
+
+        float ToRadian(float fDegree) 
+        {
+            float fRandian = (fDegree / 180.0f) * 3.141592654f;
+            return fRandian;
+        }
 
         private void ReadFunction()
         {
@@ -213,6 +226,47 @@ namespace YawVR_Game_Engine.Plugin {
 
                     yaw *= -1.0f;
 
+                    // Jump Limit
+                    if (true == m_bFirst) 
+                    {
+                        m_fElapsedYaw = m_fCurrentYaw = yaw;
+                        m_bFirst = false;
+                    }
+                    m_fElapsedYaw = m_fCurrentYaw;
+                    m_fCurrentYaw = yaw;
+                    m_fYawDt = m_fCurrentYaw - m_fElapsedYaw;
+                    if (Math.Abs(m_fYawDt) > pConfig.YawJumpLimit) 
+                    {
+                        m_fYawDt = Math.Sign(m_fYawDt) * pConfig.YawJumpLimit;
+                    }
+                    m_fYaw2 += m_fYawDt;
+
+                    ;
+
+                    // Roll Limit
+                    if (roll < pConfig.RollLimitMin) { roll = pConfig.RollLimitMin; }
+                    if (roll > pConfig.RollLimitMax) { roll = pConfig.RollLimitMax; }
+
+                    float roll2 = roll;
+                    if (roll > 0.0f)
+                    {
+                        float t = roll / pConfig.RollLimitMax; // -> [0.0 .. 1.0]
+                        float x = t * 1.0f; // -> [0.0 .. 1.0]
+                        float y = 0.6f * (float)Math.Sin((double)x * 1.55);
+                        float weight = y / 1.0f;
+                        roll2 = weight * pConfig.RollLimitMax;
+                    }
+                    else if (roll < 0.0f)
+                    {
+                        float t = roll / pConfig.RollLimitMin; // -> [0.0 .. 1.0]
+                        float x = t * 1.0f; // -> [0.0 .. 1.0]
+                        float y = 0.6f * (float)Math.Sin((double)x * 1.55);
+                        float weight = y / 1.0f;
+                        roll2 = weight * pConfig.RollLimitMin;
+                    }
+
+                    ;
+
                     float velocityX = ReadSingle(rawData, 20, true) * 57.3f;
                     float velocityY = ReadSingle(rawData, 24, true) * 57.3f;
                     float velocityZ = ReadSingle(rawData, 28, true) * 57.3f;
@@ -223,9 +277,9 @@ namespace YawVR_Game_Engine.Plugin {
 
                     if (true == mtx.WaitOne(100))
                     {
-                        controller.SetInput(0, yaw);
+                        controller.SetInput(0, /*yaw*/m_fYaw2);
                         controller.SetInput(1, pitch);
-                        controller.SetInput(2, roll);
+                        controller.SetInput(2, /*roll*/roll2);
 
                         controller.SetInput(3, velocityX);
                         controller.SetInput(4, velocityY);
@@ -262,7 +316,11 @@ namespace YawVR_Game_Engine.Plugin {
         byte gunIndex;
 
         DateTime startGunPos;
+        bool bIsValidGunPos = false;
         Vector3 v3GunPos = new Vector3();
+
+        bool bIsValidEnginePos = false;
+        Vector3 v3LocalEnginePos = new Vector3();
 
         public void ReadTelemetryData()
         {
@@ -273,6 +331,11 @@ namespace YawVR_Game_Engine.Plugin {
             startExplosionData = new DateTime(1970, 1, 1);
             startGunIndex = new DateTime(1970, 1, 1);
             startGunPos = new DateTime(1970, 1, 1);
+            bIsValidGunPos = false;
+            bIsValidEnginePos = false;
+            Plane planeX = new Plane(new Vector3(0, 0, 0), new Vector3(1, 0, 0));
+            Plane planeY = new Plane(new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+            Plane planeZ = new Plane(new Vector3(0, 0, 0), new Vector3(0, 0, 1));
 
             while (!stop)
             {
@@ -561,7 +624,7 @@ namespace YawVR_Game_Engine.Plugin {
                         switch (eventId)
                         {
                             case 1: // SETUP_ENG
-                                /*STEEngineSetup engineSetup = new STEEngineSetup
+                                STEEngineSetup engineSetup = new STEEngineSetup
                                 {
                                     nIndex = BitConverter.ToInt16(rawData, offset),
                                     nID = BitConverter.ToInt16(rawData, offset + 2),
@@ -573,7 +636,10 @@ namespace YawVR_Game_Engine.Plugin {
                                     fMaxRPM = ReadSingle(rawData, offset + 16, true)
                                 };
 
-                                if (true == mtx.WaitOne(100)) 
+                                v3LocalEnginePos = new Vector3(engineSetup.afPos[0], engineSetup.afPos[1], engineSetup.afPos[2]);
+                                bIsValidEnginePos = true;
+
+                                /*if (true == mtx.WaitOne(100)) 
                                 {
                                     controller.SetInput(nId++, engineSetup.afPos[0]);
                                     controller.SetInput(nId++, engineSetup.afPos[1]);
@@ -582,7 +648,7 @@ namespace YawVR_Game_Engine.Plugin {
 
                                     mtx.ReleaseMutex();
                                 }*/
-                                    
+
                                 break;
                             case 2: // SETUP_GUN
                                 STEGunSetup gunSetup = new STEGunSetup
@@ -598,7 +664,7 @@ namespace YawVR_Game_Engine.Plugin {
                                 };
 
                                 v3GunPos = new Vector3(gunSetup.afPos[0], gunSetup.afPos[1], gunSetup.afPos[2]);
-
+                                bIsValidGunPos = true;
                                 startGunPos = DateTime.Now;
 
                                 /*if (true == mtx.WaitOne(100))
@@ -957,27 +1023,61 @@ namespace YawVR_Game_Engine.Plugin {
                         }
                     }
 
-                    // GunPosMilliseconds
-                    if (nGunPosMilliseconds <= (UInt64)pConfig.EventTime)
+                    // Hit_Yaw/Hit_Pitch/Hit_Roll
+                    if (true == bIsValidEnginePos && true == bIsValidGunPos && nDamageDataMilliseconds <= (UInt64)pConfig.EventTime)
                     {
-                        if (true == mtx.WaitOne(100))
-                        {
-                            controller.SetInput(nId++, v3GunPos.X);
-                            controller.SetInput(nId++, v3GunPos.Y);
-                            controller.SetInput(nId++, v3GunPos.Z);
+                        float fHitYaw = 0.0f;
+                        float fHitPitch = 0.0f;
+                        float fHitRoll = 0.0f;
 
-                            mtx.ReleaseMutex();
-                        }
-                    }
-                    else
-                    {
-                        if (true == mtx.WaitOne(100))
-                        {
-                            controller.SetInput(nId++, v3GunPos.X);
-                            controller.SetInput(nId++, v3GunPos.Y);
-                            controller.SetInput(nId++, v3GunPos.Z);
+                        Vector3 v3LocalDamagePos = new Vector3(damageData.afPos[0], damageData.afPos[1], damageData.afPos[2]);
+                        Vector3 v3ToDamage = v3LocalDamagePos - v3LocalEnginePos;
+                        float fForce = v3ToDamage.Length();
 
-                            mtx.ReleaseMutex();
+                        bool bIsPositiveX = (v3ToDamage.X >= 0.0f) ? true : false;
+                        bool bIsPositiveY = (v3ToDamage.Y >= 0.0f) ? true : false;
+                        bool bIsPositiveZ = (v3ToDamage.Z >= 0.0f) ? true : false;
+
+                        // Yaw
+                        {
+                            // PlaneX
+                            float fDistanceX = Math.Abs(planeX.GetDistance(v3ToDamage));
+                            // PlaneZ
+                            float fDistanceZ = Math.Abs(planeZ.GetDistance(v3ToDamage));
+
+                            if (true == bIsPositiveX && true == bIsPositiveZ) // 1
+                            {
+                                float fSign = 0.0f;
+                                if (fDistanceX < fDistanceZ) { fSign = 1.0f; }
+                                else { fSign = -1.0f; }
+
+                                fHitYaw = fForce * fSign;
+                            }
+                            else if (false == bIsPositiveX && true == bIsPositiveZ) // 2
+                            {
+                                float fSign = 0.0f;
+                                if (fDistanceX > fDistanceZ) { fSign = 1.0f; }
+                                else { fSign = -1.0f; }
+
+                                fHitYaw = fForce * fSign;
+                            }
+                            else if (false == bIsPositiveX && false == bIsPositiveZ) // 3
+                            {
+                                float fSign = 0.0f;
+                                if (fDistanceX < fDistanceZ) { fSign = 1.0f; }
+                                else { fSign = -1.0f; }
+
+                                fHitYaw = fForce * fSign;
+                            }
+                            else if (true == bIsPositiveX && false == bIsPositiveZ) // 4
+                            {
+                                float fSign = 0.0f;
+                                if (fDistanceX > fDistanceZ) { fSign = 1.0f; }
+                                else { fSign = -1.0f; }
+
+                                fHitYaw = fForce * fSign;
+                            }
+
                         }
                     }
 

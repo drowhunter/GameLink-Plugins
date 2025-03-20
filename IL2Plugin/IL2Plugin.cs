@@ -251,9 +251,10 @@ namespace YawVR_Game_Engine.Plugin {
                     ;
 
                     // Roll Limit
-                    if (roll < RollLimitMin) { roll = RollLimitMin; }
+                    /*if (roll < RollLimitMin) { roll = RollLimitMin; }
                     if (roll > RollLimitMax) { roll = RollLimitMax; }
 
+                    // Roll sin v1
                     float roll2 = roll;
                     if (roll > 0.0f)
                     {
@@ -269,6 +270,21 @@ namespace YawVR_Game_Engine.Plugin {
                         float x = t * 1.0f; // -> [0.0 .. 1.0]
                         float y = 0.6f * (float)Math.Sin((double)x * 1.55);
                         float weight = y / 1.0f;
+                        roll2 = weight * RollLimitMin;
+                    }*/
+
+                    // Roll sin v2
+                    float roll2 = roll;
+                    if (roll > 0.0f)
+                    {
+                        float fRollRad = ToRadian(roll);
+                        float weight = (float)Math.Sin((double)fRollRad / 2.0);
+                        roll2 = weight * RollLimitMax;
+                    }
+                    else if (roll < 0.0f) 
+                    {
+                        float fRollRad = ToRadian(Math.Abs(roll));
+                        float weight = (float)Math.Sin((double)fRollRad / 2.0);
                         roll2 = weight * RollLimitMin;
                     }
 

@@ -142,7 +142,8 @@ namespace YawVR_Game_Engine.Plugin {
 
         public string[] GetInputData() {
             return new string[] {
-"Yaw","Pitch","Roll","PlayerRotateVelocity_X","PlayerRotateVelocity_Y","PlayerRotateVelocity_Z","PlayerAcceleration_X","PlayerAcceleration_Y","PlayerAcceleration_Z",
+"Yaw","Pitch","Roll","Yaw_Modified","Pitch_Modified","Roll_Modified",
+"PlayerRotateVelocity_X","PlayerRotateVelocity_Y","PlayerRotateVelocity_Z","PlayerAcceleration_X","PlayerAcceleration_Y","PlayerAcceleration_Z",
 
 "ENG_RPM_1","ENG_RPM_2","ENG_RPM_3","ENG_RPM_4",
 "ENG_MP_1","ENG_MP_2","ENG_MP_3","ENG_MP_4",
@@ -271,6 +272,8 @@ namespace YawVR_Game_Engine.Plugin {
                         roll2 = weight * RollLimitMin;
                     }
 
+                    roll2 = ((pConfig.RollToRollModifiedWeight) * roll2) + ((1.0f - pConfig.RollToRollModifiedWeight) * roll);
+
                     ;
 
                     float velocityX = ReadSingle(rawData, 20, true) * 57.3f;
@@ -283,17 +286,21 @@ namespace YawVR_Game_Engine.Plugin {
 
                     if (true == mtx.WaitOne(100))
                     {
-                        controller.SetInput(0, /*yaw*/m_fYaw2);
+                        controller.SetInput(0, yaw);
                         controller.SetInput(1, pitch);
-                        controller.SetInput(2, /*roll*/roll2);
+                        controller.SetInput(2, roll);
 
-                        controller.SetInput(3, velocityX);
-                        controller.SetInput(4, velocityY);
-                        controller.SetInput(5, velocityZ);
+                        controller.SetInput(3, m_fYaw2);
+                        controller.SetInput(4, pitch);
+                        controller.SetInput(5, roll2);
 
-                        controller.SetInput(6, accX);
-                        controller.SetInput(7, accY);
-                        controller.SetInput(8, accZ);
+                        controller.SetInput(6, velocityX);
+                        controller.SetInput(7, velocityY);
+                        controller.SetInput(8, velocityZ);
+
+                        controller.SetInput(9, accX);
+                        controller.SetInput(10, accY);
+                        controller.SetInput(11, accZ);
 
                         mtx.ReleaseMutex();
                     }
@@ -348,7 +355,7 @@ namespace YawVR_Game_Engine.Plugin {
 
                 try
                 {
-                    int nId = 9;
+                    int nId = 12;
 
                     byte[] rawData = telemetryUdpClient.Receive(ref telemetryRemote);
                     int indicatorsCount = rawData[10];

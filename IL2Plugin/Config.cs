@@ -21,6 +21,9 @@ namespace IL2Plugin
         [Info(Description = "(degree)")]
         public float YawJumpLimit = 0.05f;
 
+        [Info(Description = "Roll to Roll_Modified Weight [0.0 .. 1.0]")]
+        public float RollToRollModifiedWeight = 1.0f;
+
         public Config()
         {
         }

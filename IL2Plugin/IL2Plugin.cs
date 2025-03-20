@@ -177,6 +177,10 @@ namespace YawVR_Game_Engine.Plugin {
         Config pConfig;
         float RollLimitMin = -15.0f;
         float RollLimitMax = 15.0f;
+
+        float PitchLimitF = 30.0f;
+        float PitchLimitB = -30.0f;
+
         public void Init() {
             Console.WriteLine("IL2 INIT");
 
@@ -189,6 +193,8 @@ namespace YawVR_Game_Engine.Plugin {
             IDeviceParameters deviceParameters = dispatcher.GetDeviceParameters();
             RollLimitMin = -deviceParameters.RollLimit;
             RollLimitMax = deviceParameters.RollLimit;
+            PitchLimitF = deviceParameters.PitchLimitF;
+            PitchLimitB = -deviceParameters.PitchLimitB;
 
             stop = false;
             pConfig = dispatcher.GetConfigObject<Config>();
@@ -250,30 +256,7 @@ namespace YawVR_Game_Engine.Plugin {
 
                     ;
 
-                    // Roll Limit
-                    /*if (roll < RollLimitMin) { roll = RollLimitMin; }
-                    if (roll > RollLimitMax) { roll = RollLimitMax; }
-
-                    // Roll sin v1
-                    float roll2 = roll;
-                    if (roll > 0.0f)
-                    {
-                        float t = roll / RollLimitMax; // -> [0.0 .. 1.0]
-                        float x = t * 1.0f; // -> [0.0 .. 1.0]
-                        float y = 0.6f * (float)Math.Sin((double)x * 1.55);
-                        float weight = y / 1.0f;
-                        roll2 = weight * RollLimitMax;
-                    }
-                    else if (roll < 0.0f)
-                    {
-                        float t = roll / RollLimitMin; // -> [0.0 .. 1.0]
-                        float x = t * 1.0f; // -> [0.0 .. 1.0]
-                        float y = 0.6f * (float)Math.Sin((double)x * 1.55);
-                        float weight = y / 1.0f;
-                        roll2 = weight * RollLimitMin;
-                    }*/
-
-                    // Roll sin v2
+                    // Roll sin
                     float roll2 = roll;
                     if (roll > 0.0f)
                     {
@@ -288,9 +271,20 @@ namespace YawVR_Game_Engine.Plugin {
                         roll2 = weight * RollLimitMin;
                     }
 
-                    roll2 = ((pConfig.RollToRollModifiedWeight) * roll2) + ((1.0f - pConfig.RollToRollModifiedWeight) * roll);
-
-                    ;
+                    // Pitch sin
+                    float pitch2 = pitch;
+                    if (pitch > 0.0f) // forward
+                    {
+                        float fPitchRad = ToRadian(pitch);
+                        float weight = (float)Math.Sin((double)fPitchRad);
+                        pitch2 = weight * PitchLimitF;
+                    }
+                    else if (pitch < 0.0f) // backward
+                    {
+                        float fPitchRad = ToRadian(Math.Abs(pitch));
+                        float weight = (float)Math.Sin((double)fPitchRad);
+                        pitch2 = weight * PitchLimitB;
+                    }
 
                     float velocityX = ReadSingle(rawData, 20, true) * 57.3f;
                     float velocityY = ReadSingle(rawData, 24, true) * 57.3f;
@@ -307,7 +301,7 @@ namespace YawVR_Game_Engine.Plugin {
                         controller.SetInput(2, roll);
 
                         controller.SetInput(3, m_fYaw2);
-                        controller.SetInput(4, pitch);
+                        controller.SetInput(4, pitch2);
                         controller.SetInput(5, roll2);
 
                         controller.SetInput(6, velocityX);

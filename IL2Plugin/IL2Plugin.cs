@@ -174,6 +174,8 @@ namespace YawVR_Game_Engine.Plugin {
         }
 
         Config pConfig;
+        float RollLimitMin = -15.0f;
+        float RollLimitMax = 15.0f;
         public void Init() {
             Console.WriteLine("IL2 INIT");
 
@@ -182,6 +184,10 @@ namespace YawVR_Game_Engine.Plugin {
             m_fYawDt = 0.0f;
             m_fYaw2 = 0.0f;
             m_bFirst = true;
+
+            IDeviceParameters deviceParameters = dispatcher.GetDeviceParameters();
+            RollLimitMin = -deviceParameters.RollLimit;
+            RollLimitMax = deviceParameters.RollLimit;
 
             stop = false;
             pConfig = dispatcher.GetConfigObject<Config>();
@@ -244,25 +250,25 @@ namespace YawVR_Game_Engine.Plugin {
                     ;
 
                     // Roll Limit
-                    if (roll < pConfig.RollLimitMin) { roll = pConfig.RollLimitMin; }
-                    if (roll > pConfig.RollLimitMax) { roll = pConfig.RollLimitMax; }
+                    if (roll < RollLimitMin) { roll = RollLimitMin; }
+                    if (roll > RollLimitMax) { roll = RollLimitMax; }
 
                     float roll2 = roll;
                     if (roll > 0.0f)
                     {
-                        float t = roll / pConfig.RollLimitMax; // -> [0.0 .. 1.0]
+                        float t = roll / RollLimitMax; // -> [0.0 .. 1.0]
                         float x = t * 1.0f; // -> [0.0 .. 1.0]
                         float y = 0.6f * (float)Math.Sin((double)x * 1.55);
                         float weight = y / 1.0f;
-                        roll2 = weight * pConfig.RollLimitMax;
+                        roll2 = weight * RollLimitMax;
                     }
                     else if (roll < 0.0f)
                     {
-                        float t = roll / pConfig.RollLimitMin; // -> [0.0 .. 1.0]
+                        float t = roll / RollLimitMin; // -> [0.0 .. 1.0]
                         float x = t * 1.0f; // -> [0.0 .. 1.0]
                         float y = 0.6f * (float)Math.Sin((double)x * 1.55);
                         float weight = y / 1.0f;
-                        roll2 = weight * pConfig.RollLimitMin;
+                        roll2 = weight * RollLimitMin;
                     }
 
                     ;

@@ -21,12 +21,6 @@ namespace IL2Plugin
         [Info(Description = "(degree)")]
         public float YawJumpLimit = 0.05f;
 
-        [Info(Description = "(degree)")]
-        public float RollLimitMin = -15.0f;
-
-        [Info(Description = "(degree)")]
-        public float RollLimitMax = 15.0f;
-
         public Config()
         {
         }

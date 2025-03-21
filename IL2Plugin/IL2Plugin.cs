@@ -228,7 +228,9 @@ namespace YawVR_Game_Engine.Plugin {
             float x2 = 90.0f - x;
 
             float k = pConfig.K;
-            return (float)(1.0 - Math.Exp(-k * (1.0 - x2 / 90.0)));
+            float y = (float)(1.0 - Math.Exp(-k * (1.0 - x2 / 90.0)));
+            if (y > x) { y = x; } // vágás
+            return y;
         }
 
         private void ReadFunction()

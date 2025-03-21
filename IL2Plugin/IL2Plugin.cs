@@ -229,7 +229,6 @@ namespace YawVR_Game_Engine.Plugin {
 
             float k = pConfig.K;
             float y = (float)(1.0 - Math.Exp(-k * (1.0 - x2 / 90.0)));
-            if (y > x) { y = x; } // vágás
             return y;
         }
 
@@ -314,6 +313,7 @@ namespace YawVR_Game_Engine.Plugin {
                         float weight = ExponentialCurve(Math.Abs(roll) / 2.0f);
                         roll3 = weight * RollLimitMin;
                     }
+                    if (Math.Abs(roll3) > Math.Abs(roll)) { roll3 = roll; } // nem lehet nagyobb
 
                     // Pitch exp
                     float pitch3 = pitch;
@@ -331,6 +331,7 @@ namespace YawVR_Game_Engine.Plugin {
                         float weight = ExponentialCurve(Math.Abs(pitch));
                         pitch3 = weight * PitchLimitB;
                     }
+                    if (Math.Abs(pitch3) > Math.Abs(pitch)) { pitch3 = pitch; } // nem lehet nagyobb
 
                     ;
 

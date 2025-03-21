@@ -21,6 +21,9 @@ namespace IL2Plugin
         [Info(Description = "(degree)")]
         public float YawJumpLimit = 0.05f;
 
+        [Info(Description = "(ExponentialCurve)")]
+        public float K = 10.0f;
+
         public Config()
         {
         }

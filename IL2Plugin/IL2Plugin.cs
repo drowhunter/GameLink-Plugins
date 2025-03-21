@@ -142,7 +142,7 @@ namespace YawVR_Game_Engine.Plugin {
 
         public string[] GetInputData() {
             return new string[] {
-"Yaw","Pitch","Roll","Yaw_Modified","Pitch_Modified","Roll_Modified",
+"Yaw","Pitch","Roll","Yaw_Modified","Pitch_Modified","Roll_Modified","Pitch_Exp","Roll_Exp",
 "PlayerRotateVelocity_X","PlayerRotateVelocity_Y","PlayerRotateVelocity_Z","PlayerAcceleration_X","PlayerAcceleration_Y","PlayerAcceleration_Z",
 
 "ENG_RPM_1","ENG_RPM_2","ENG_RPM_3","ENG_RPM_4",
@@ -223,6 +223,14 @@ namespace YawVR_Game_Engine.Plugin {
             return fRandian;
         }
 
+        float ExponentialCurve(float x)
+        {
+            float x2 = 90.0f - x;
+
+            float k = pConfig.K;
+            return (float)(1.0 - Math.Exp(-k * (1.0 - x2 / 90.0)));
+        }
+
         private void ReadFunction()
         {
 
@@ -286,6 +294,44 @@ namespace YawVR_Game_Engine.Plugin {
                         pitch2 = weight * PitchLimitB;
                     }
 
+                    ;
+
+                    // Roll exp
+                    float roll3 = roll;
+                    if (roll > 0.0f)
+                    {
+                        //float fRollRad = ToRadian(roll);
+                        //float weight = (float)Math.Sin((double)fRollRad / 2.0);
+                        float weight = ExponentialCurve(roll / 2.0f);
+                        roll3 = weight * RollLimitMax;
+                    }
+                    else if (roll < 0.0f)
+                    {
+                        //float fRollRad = ToRadian(Math.Abs(roll));
+                        //float weight = (float)Math.Sin((double)fRollRad / 2.0);
+                        float weight = ExponentialCurve(Math.Abs(roll) / 2.0f);
+                        roll3 = weight * RollLimitMin;
+                    }
+
+                    // Pitch exp
+                    float pitch3 = pitch;
+                    if (pitch > 0.0f) // forward
+                    {
+                        //float fPitchRad = ToRadian(pitch);
+                        //float weight = (float)Math.Sin((double)fPitchRad);
+                        float weight = ExponentialCurve(pitch);
+                        pitch3 = weight * PitchLimitF;
+                    }
+                    else if (pitch < 0.0f) // backward
+                    {
+                        //float fPitchRad = ToRadian(Math.Abs(pitch));
+                        //float weight = (float)Math.Sin((double)fPitchRad);
+                        float weight = ExponentialCurve(Math.Abs(pitch));
+                        pitch3 = weight * PitchLimitB;
+                    }
+
+                    ;
+
                     float velocityX = ReadSingle(rawData, 20, true) * 57.3f;
                     float velocityY = ReadSingle(rawData, 24, true) * 57.3f;
                     float velocityZ = ReadSingle(rawData, 28, true) * 57.3f;
@@ -304,13 +350,16 @@ namespace YawVR_Game_Engine.Plugin {
                         controller.SetInput(4, pitch2);
                         controller.SetInput(5, roll2);
 
-                        controller.SetInput(6, velocityX);
-                        controller.SetInput(7, velocityY);
-                        controller.SetInput(8, velocityZ);
+                        controller.SetInput(6, pitch3);
+                        controller.SetInput(7, roll3);
 
-                        controller.SetInput(9, accX);
-                        controller.SetInput(10, accY);
-                        controller.SetInput(11, accZ);
+                        controller.SetInput(8, velocityX);
+                        controller.SetInput(9, velocityY);
+                        controller.SetInput(10, velocityZ);
+
+                        controller.SetInput(11, accX);
+                        controller.SetInput(12, accY);
+                        controller.SetInput(13, accZ);
 
                         mtx.ReleaseMutex();
                     }
@@ -365,7 +414,7 @@ namespace YawVR_Game_Engine.Plugin {
 
                 try
                 {
-                    int nId = 12;
+                    int nId = 14;
 
                     byte[] rawData = telemetryUdpClient.Receive(ref telemetryRemote);
                     int indicatorsCount = rawData[10];

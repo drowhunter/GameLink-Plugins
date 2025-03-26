@@ -3,7 +3,7 @@ using System.Net;
 using System.Numerics;
 
 
-
+// credit. Nenkai - PDTools https://github.com/Nenkai/PDTools
 namespace GT7Plugin
 {
     public enum SimInterfacePacketType

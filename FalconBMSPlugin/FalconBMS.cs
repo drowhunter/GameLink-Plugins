@@ -76,9 +76,17 @@ namespace YawVR_Game_Engine.Plugin
         private int lastRegisteredDamage = 0;
         private float lastRegisteredDamageForce = 0.0f;
 
+        // For acceleration calculations
+        private float vtDelta = 0.0f; // Delta VT
+        private float previousVt = 0.0f; // Previous VT
+        private double prevTime = 0.0f; // Previous time for delta calculations
+        float updateInterval = 0.05f; // 50 ms
+
         // For calculating immersive rotation values
-        private float yaw_immersive = 0.0f;
-        private float previous_yaw = 0.0f;
+        private float yawImmersive = 0.0f;
+        private float previousYaw = 0.0f;
+        private float previousYawImmersive = 0.0f;
+        float yawImmersiveDelta = 0.0f;
 
         private static readonly string[] FlightDataFields = new[]
         {
@@ -94,7 +102,7 @@ namespace YawVR_Game_Engine.Plugin
 
         private static readonly string[] IntelliVibeDataFields = new[]
         {
-            "CollisionCounter", "IsFiringGun", "IsEjecting", "IsOnGround"
+            "Gforce", "IsFiringGun", "IsOverG", "IsOnGround"
         };
 
 
@@ -119,7 +127,8 @@ namespace YawVR_Game_Engine.Plugin
         {
             return FlightDataFields
                 .Concat(IntelliVibeDataFields)
-                .Concat(new[] { "adaptedYaw", "adaptedPitch", "adaptedRoll", "damageYaw", "damagePitch", "damageRoll", "damageRumble" })
+                .Concat(new[] { "adaptedYawDelta", "adaptedPitch", "adaptedRoll", "damageYaw", "damagePitch", 
+                    "damageRoll", "damageRumble", "vtDelta" })
                 .ToArray();
         }
 
@@ -138,7 +147,7 @@ namespace YawVR_Game_Engine.Plugin
         public void ReadThread()
         {
             var flightDataReader = new Reader();
-            int inputCount = FlightDataFields.Length + IntelliVibeDataFields.Length + 7; // +7 for adapted values
+            int inputCount = FlightDataFields.Length + IntelliVibeDataFields.Length + 8; // +8 for adapted values
 
             while (running)
             {
@@ -152,7 +161,7 @@ namespace YawVR_Game_Engine.Plugin
 
                     FlightData flightData = flightDataReader.GetCurrentData();
 
-                    isSimRunning = !(flightData.IntellivibeData.IsEndFlight || flightData.IntellivibeData.IsPaused);
+                    isSimRunning = !(flightData.IntellivibeData.IsEndFlight || flightData.IntellivibeData.IsPaused || flightData.IntellivibeData.IsEjecting);
 
                     if (flightData == null)
                     {
@@ -160,17 +169,20 @@ namespace YawVR_Game_Engine.Plugin
                         continue;
                     }
 
+                    double currentTime = stopwatch.Elapsed.TotalSeconds;
+                    float deltaTime = (float)(currentTime - prevTime);
+
                     float rigPitch = flightData.pitch * (180 / (float)Math.PI);
                     float rigRoll = flightData.roll * (180 / (float)Math.PI);
                     float rigYaw = flightData.yaw * (180 / (float)Math.PI);
-                    float pitch_multiplier = (float)Math.Cos(rigPitch * Math.PI / 180.0);
+                    float pitchMultiplier = (float)Math.Cos(rigPitch * Math.PI / 180.0);
 
-                    float roll_immersive_temp = (rigRoll < -90) ? -180 - rigRoll :
+                    float rollImmersiveTemp = (rigRoll < -90) ? -180 - rigRoll :
                                                 (rigRoll > 90) ? 180 - rigRoll : rigRoll;
-                    float roll_immersive = pitch_multiplier * roll_immersive_temp;
-                    yaw_immersive = NormalizeAngle(yaw_immersive - (pitch_multiplier * NormalizeAngle(previous_yaw - rigYaw)));
+                    float rollImmersive = pitchMultiplier * rollImmersiveTemp;
+                    yawImmersive = NormalizeAngle(yawImmersive - (pitchMultiplier * NormalizeAngle(previousYaw - rigYaw)));
 
-                    previous_yaw = rigYaw;
+                    previousYaw = rigYaw;
 
                     // Detect damage
 
@@ -217,6 +229,18 @@ namespace YawVR_Game_Engine.Plugin
                     float damageRollOut = damageRoll * decayFactor;
                     float damageRumbleOut = damageRumble * decayFactor;
 
+                    if (deltaTime >= updateInterval)
+                    {
+                        vtDelta = flightData.vt - previousVt;
+                        previousVt = flightData.vt;
+
+                        // Also use lower update rate for yaw delta
+                        yawImmersiveDelta = yawImmersive - previousYawImmersive;
+                        previousYawImmersive = yawImmersive;
+
+                        prevTime = currentTime;
+                    }
+
 
                     // Prepare full input array
                     float[] fullValues = new float[inputCount];
@@ -228,13 +252,15 @@ namespace YawVR_Game_Engine.Plugin
                     foreach (var (_, value) in GetInputs(flightData.IntellivibeData, IntelliVibeDataFields))
                         fullValues[idx++] = value;
 
-                    fullValues[idx++] = yaw_immersive;
+                    float yawIndex = idx;
+                    fullValues[idx++] = yawImmersiveDelta;
                     fullValues[idx++] = rigPitch;
-                    fullValues[idx++] = roll_immersive;
+                    fullValues[idx++] = rollImmersive;
                     fullValues[idx++] = damageYawOut;
                     fullValues[idx++] = damagePitchOut;
                     fullValues[idx++] = damageRollOut;
                     fullValues[idx++] = damageRumbleOut;
+                    fullValues[idx++] = vtDelta;
 
                     // Initialize target arrays if needed
                     if (targetValues == null)
@@ -262,7 +288,7 @@ namespace YawVR_Game_Engine.Plugin
 
                     for (int i = 0; i < inputCount; i++)
                     {
-                        if (!isSimRunning) // Zero flight data, keep state inputs
+                        if (!isSimRunning && i != yawIndex) // Zero flight data, keep state inputs
                         {
                             targetValues[i] = 0.0f;
                         }

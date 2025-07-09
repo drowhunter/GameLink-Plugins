@@ -129,6 +129,8 @@ Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "SharedLib", "SharedLib\Shar
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NewStarGPPlugin", "NewStarGPPlugin\NewStarGPPlugin.csproj", "{247A212C-EA3C-46D9-82B1-2D7A8DD839E1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RaceRoomPlugin", "RaceRoomPlugin\RaceRoomPlugin.csproj", "{C7E1B331-2F79-4820-9AE4-52B0B3B45766}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -371,6 +373,11 @@ Global
 		{4D31DE79-3B0E-4CAF-91AB-F3ACFBBE5F9B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4D31DE79-3B0E-4CAF-91AB-F3ACFBBE5F9B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4D31DE79-3B0E-4CAF-91AB-F3ACFBBE5F9B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C7E1B331-2F79-4820-9AE4-52B0B3B45766}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C7E1B331-2F79-4820-9AE4-52B0B3B45766}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C7E1B331-2F79-4820-9AE4-52B0B3B45766}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C7E1B331-2F79-4820-9AE4-52B0B3B45766}.Release|Any CPU.Build.0 = Release|Any CPU
+
 		{ACDE3183-B78B-48E8-AB68-101FFA2F242F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{ACDE3183-B78B-48E8-AB68-101FFA2F242F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ACDE3183-B78B-48E8-AB68-101FFA2F242F}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -379,7 +386,6 @@ Global
 		{247A212C-EA3C-46D9-82B1-2D7A8DD839E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{247A212C-EA3C-46D9-82B1-2D7A8DD839E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{247A212C-EA3C-46D9-82B1-2D7A8DD839E1}.Release|Any CPU.Build.0 = Release|Any CPU
-
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

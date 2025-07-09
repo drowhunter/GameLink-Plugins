@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace IL2Plugin.Properties {
+namespace RaceRoomPlugin.Properties {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace IL2Plugin.Properties {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("IL2Plugin.Properties.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("RaceRoomPlugin.Properties.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -61,24 +61,7 @@ namespace IL2Plugin.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to To enable IL2 telemetry: 
-        ///&lt;br&gt;
-        ///Edit the file data/startup.cfg located within the Il2 Sturmovik game folder and add the following:
-        ///&lt;ul&gt;
-        ///&lt;li&gt;[KEY = motiondevice] 
-        ///&lt;li&gt;	addr = &quot;127.0.0.1&quot;
-        ///&lt;li&gt;	decimation = 1
-        ///&lt;li&gt;	enable = true
-        ///&lt;li&gt;	port = 4321
-        ///&lt;li&gt;[END]
-        ///&lt;li&gt;
-        ///&lt;li&gt;[KEY = telemetrydevice]
-        ///&lt;li&gt;	addr = &quot;127.0.0.1&quot;
-        ///&lt;li&gt;	decimation = 1
-        ///&lt;li&gt;	enable = true
-        ///&lt;li&gt;	port = 4322
-        ///&lt;li&gt;[END]
-        ///&lt;/ul&gt;.
+        ///   Looks up a localized string similar to .
         /// </summary>
         internal static string description {
             get {

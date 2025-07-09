@@ -4,17 +4,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
-    <AssemblyVersion>1.3.0.0</AssemblyVersion>
-    <FileVersion>1.3.0.0</FileVersion>
-    <AssemblyName>$(MSBuildProjectName)</AssemblyName>
+	  <Version>0.1.4</Version>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Remove="Resources\description.html" />
-    <None Remove="Resources\logo.png" />
-    <None Remove="Resources\recent.png" />
-    <None Remove="Resources\wide.png" />
-  </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="Resources\Default.yawglprofile" />
@@ -24,14 +15,16 @@
     <EmbeddedResource Include="Resources\wide.png" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="System.ComponentModel.Composition" Version="9.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
+  <ItemGroup>   
     <ProjectReference Include="..\YawGLAPI\YawGLAPI.csproj" />
   </ItemGroup>
 
-  <Import Project="..\SharedLib\SharedLib.projitems" Label="Shared" />
+    <ItemGroup>
+		<PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+		<PackageReference Include="System.ComponentModel.Composition" Version="9.0.0" />
+		<PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
+	</ItemGroup>
+
+    <Import Project="..\SharedLib\SharedLib.projitems" Label="Shared" />
 
 </Project>

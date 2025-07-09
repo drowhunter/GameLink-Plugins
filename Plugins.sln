@@ -121,9 +121,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TDUSCPlugin", "TDUSCPlugin\
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{0CE2DEE3-ACB5-45F6-B995-6496481B4875}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistancePlugin", "DistancePlugin\DistancePlugin.csproj", "{4D31DE79-3B0E-4CAF-91AB-F3ACFBBE5F9B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IronRebellion", "IronRebellionPlugin\IronRebellion.csproj", "{ACDE3183-B78B-48E8-AB68-101FFA2F242F}"
+EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "SharedLib", "SharedLib\SharedLib.shproj", "{A0988E26-18F3-4AE4-95DF-3BD3B0ABE37E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistancePlugin", "DistancePlugin\DistancePlugin.csproj", "{4D31DE79-3B0E-4CAF-91AB-F3ACFBBE5F9B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NewStarGPPlugin", "NewStarGPPlugin\NewStarGPPlugin.csproj", "{247A212C-EA3C-46D9-82B1-2D7A8DD839E1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RaceRoomPlugin", "RaceRoomPlugin\RaceRoomPlugin.csproj", "{C7E1B331-2F79-4820-9AE4-52B0B3B45766}"
 EndProject
@@ -373,6 +377,15 @@ Global
 		{C7E1B331-2F79-4820-9AE4-52B0B3B45766}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C7E1B331-2F79-4820-9AE4-52B0B3B45766}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C7E1B331-2F79-4820-9AE4-52B0B3B45766}.Release|Any CPU.Build.0 = Release|Any CPU
+
+		{ACDE3183-B78B-48E8-AB68-101FFA2F242F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ACDE3183-B78B-48E8-AB68-101FFA2F242F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ACDE3183-B78B-48E8-AB68-101FFA2F242F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ACDE3183-B78B-48E8-AB68-101FFA2F242F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{247A212C-EA3C-46D9-82B1-2D7A8DD839E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{247A212C-EA3C-46D9-82B1-2D7A8DD839E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{247A212C-EA3C-46D9-82B1-2D7A8DD839E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{247A212C-EA3C-46D9-82B1-2D7A8DD839E1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -382,12 +395,14 @@ Global
 		{A0988E26-18F3-4AE4-95DF-3BD3B0ABE37E} = {0CE2DEE3-ACB5-45F6-B995-6496481B4875}
 	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		SharedLib\SharedLib.projitems*{247a212c-ea3c-46d9-82b1-2d7a8dd839e1}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{4d31de79-3b0e-4caf-91ab-f3acfbbe5f9b}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{72d8c5ad-5439-4235-a355-a2546a509a05}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{75a5ac51-c340-4fbc-b93e-cc70b9771ff2}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{88c6fdd2-9cd4-4015-bb6c-3389c29003be}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{9dd14943-3f95-45c8-aace-0eb2582e47ef}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{a0988e26-18f3-4ae4-95df-3bd3b0abe37e}*SharedItemsImports = 13
+		SharedLib\SharedLib.projitems*{acde3183-b78b-48e8-ab68-101ffa2f242f}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{b1a7d5e1-4f6b-4d3a-9f8d-2c8a1e6b5a3f}*SharedItemsImports = 5
 	EndGlobalSection
 EndGlobal

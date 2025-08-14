@@ -14,7 +14,7 @@ namespace ForzaHorizon5Plugin
 {
     [Export(typeof(Game))]
 	[ExportMetadata("Name", "Forza Horizon 5")]
-	[ExportMetadata("Version", "1.1")]
+	[ExportMetadata("Version", "1.2")]
 	public class ForzaHorizon5Plugin : Game {
 		
 
@@ -91,7 +91,7 @@ namespace ForzaHorizon5Plugin
 			stop = false;
 		
 			var pConfig = dispatcher.GetConfigObject<Config>();
-			receivingUdpClient = new UdpClient(pConfig.Port);
+			receivingUdpClient = new UdpClient(pConfig.IPAddress, pConfig.Port);
 			receivingUdpClient.Client.ReceiveTimeout = 2000;
 			readthread = new Thread(new ThreadStart(ReadFunction));
 			readthread.Start();

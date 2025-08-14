@@ -7,8 +7,8 @@
     <AssemblyTitle>ForzaHorizon5Plugin</AssemblyTitle>
     <Product>ForzaHorizon5Plugin</Product>
     <Copyright>Copyright ©  2021</Copyright>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <FileVersion>1.0.0.0</FileVersion>
+    <AssemblyVersion>1.2.0.0</AssemblyVersion>
+    <FileVersion>1.2.0.0</FileVersion>
   </PropertyGroup>
   <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">

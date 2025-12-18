@@ -1,12 +1,14 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.5.2.0
+# Visual Studio Version 18
+VisualStudioVersion = 18.1.11304.174 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RFactor2Plugin", "RFactor2Plugin.csproj", "{DC715ABE-F926-0B20-29ED-300C2240F70B}"
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "SharedLib", "..\SharedLib\SharedLib.shproj", "{A0988E26-18F3-4AE4-95DF-3BD3B0ABE37E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TelemetryConsole", "..\..\..\..\Modding\TelemetryConsole\TelemetryConsole.csproj", "{3BB3EEF0-0A5D-4579-A84E-BCCD071BF670}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TelemetryConsole", "..\..\..\Modding\TelemetryConsole\TelemetryConsole.csproj", "{3BB3EEF0-0A5D-4579-A84E-BCCD071BF670}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YawGLAPI", "..\YawGLAPI\YawGLAPI.csproj", "{6783A35C-1136-A9CE-92F8-A7667EC92B0C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -22,6 +24,10 @@ Global
 		{3BB3EEF0-0A5D-4579-A84E-BCCD071BF670}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3BB3EEF0-0A5D-4579-A84E-BCCD071BF670}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3BB3EEF0-0A5D-4579-A84E-BCCD071BF670}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6783A35C-1136-A9CE-92F8-A7667EC92B0C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6783A35C-1136-A9CE-92F8-A7667EC92B0C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6783A35C-1136-A9CE-92F8-A7667EC92B0C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6783A35C-1136-A9CE-92F8-A7667EC92B0C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -102,7 +102,7 @@ namespace RFactor2Plugin
             {
                 try
                 {
-                    var data = telemetry.Receive();
+                    rF2Telemetry data = telemetry.Receive();
 
                     if (data.IsCarIsActive)
                     {

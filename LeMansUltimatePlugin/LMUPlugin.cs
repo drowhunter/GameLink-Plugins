@@ -22,16 +22,16 @@ using YawGLAPI;
 namespace RFactor2Plugin
 {
     [Export(typeof(Game))]
-    [ExportMetadata("Name", "RFactor2")]
+    [ExportMetadata("Name", "Le Mans Ultimate")]
     [ExportMetadata("Version", "0.1")]
 #pragma warning disable CA1416 // Validate platform compatibility
-    public class RFactor2Plugin : Game, IDisposable
+    public class LMUPlugin : Game, IDisposable
     {
 
         #region Standard Properties
 
-        public int STEAM_ID => 365960;
-        public string PROCESS_NAME => "RFactor2";
+        public int STEAM_ID => 2399420;
+        public string PROCESS_NAME => "Le Mans Ultimate";
         public string AUTHOR => "Trevor Jones (Drowhunter)";
 
         public bool PATCH_AVAILABLE => true;

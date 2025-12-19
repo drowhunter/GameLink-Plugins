@@ -11,7 +11,7 @@
     <Version>0.1.0</Version>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="RFactor2TelemetryData.cs" />
+    <Compile Remove="LMUTelemetryData.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="Resources\Default.yawglprofile" />

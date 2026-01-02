@@ -46,42 +46,32 @@
     </style>
 </head>
 <body>
-    <h3>Easy Install</h3>
-    <ol>
-        <li>Follow Steps 1-3 for UUVR insallation</li>
-        <l1>Then Click the <b>Patch Game</b> button and Enjoy</l1>
-    </ol>
+    <h2>Star Wars X-Wing Alliance Upgrade</h2>
 
-    <h3>Normal Install (no VR)</h3>
+    <h3>Install</h3>
     <ol>
+        <li>Install Star Wars X-Wing Alliance or Tie Fighter Total Conversion from Steam or elsewhere</li>
         <li>
-            Download Telemetry Mod <a href="https://github.com/Unity-Telemetry-Mods/NewStarGP-TelemetryMod/releases/latest">here</a>
+            Download X-Wing Alliance Upgrade mod <a href="https://github.com/JeremyAnsel/XwaInstallerManager/raw/main/zip/XwaInstallerManager.zip">here</a>, extract and install.
         </li>
-        <li>Install BepinEx v5 into your game folder. (<a href="https://github.com/BepInEx/BepInEx/releases/tag/v5.4.23.2">click here</a>)</li>
-        <li>Place plugin dll file from step 1 into <b>[GameDir]/release/BepinEx/plugins</b> folder</li>
+        <li>Or download TFTC <a href="https://www.moddb.com/mods/tie-fighter-total-conversion-tftc">download</a> and install it</li>
+
+        <li>Once installed go into your modded game folder and edit <b>CockpitLook.cfg</b> </li>
     </ol>
 
-    <h3>UUVR install</h3>
-    <ol>
-        <li>Download RaiPal. (<a href="https://github.com/Raicuparta/rai-pal/releases">click here</a>)</li>
-        <li>Scan for your games and then click on New Star GP.</li>
-        <li>Install <strong>UUVR Mono Modern</strong> <i>(which includes BepinEx)</i></li>
-        <li>
-            Install Telemetry Mod
-            <ol>
-                <li style="list-style-type: lower-alpha">Click the 3 dots next to <strong>UUVR Mono Modern</strong></li>
-                <li>
-                    Click <b>Open Mod Folder</b> button<br /><br /><i>The folder path should be something like: </i>
-                    <code>%APPDATA%\raicuparta\rai-pal\data\installed-mods\[ModId]\</code>
-                </li>
+    Make sure the following lines are present and configured as below:
+    <pre>
+yawvr_enable = 0
 
-            </ol>
-        </li>
-        <li>Place Telemetry Mod dll into <b>[UUVR_Mod_Folder]/BepinEx/plugins</b> folder.</li>
+UDP_telemetry_enabled = 1
+UDP_telemetry_port = 20777
+UDP_telemetry_server = 127.0.0.1
+UDP_telemetry_format = JSON
+UDP_telemetry_sparse = 0
+</pre>
 
-    </ol>
-    <h5>Note: The default profile was tuned with Yaw set to 15 degrees limit on pitch and roll</h5>
-    <h5>Press F5 in game for mod options</h5>
-    <small>Version 1.0.0</small>
+    <p>Watch a demonstration of this plugin on <a href="https://www.youtube.com/watch?v=D4GHwcY5v5w">Youtube</a></p>
+    <br />
+    <small>Version 0.1.0</small>
 </body>
 </html>

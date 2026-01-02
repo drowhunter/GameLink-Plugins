@@ -62,8 +62,7 @@ namespace RFactor2Plugin
 
         CancellationTokenSource _readCts;
 
-        //private MmfTelemetry<rF2Telemetry> telemetry;
-        //MappedBuffer<rF2Telemetry> telemetryBuffer;
+        
         private RF2MemoryReader _memoryReader;
 
         public void SetReferences(IProfileManager controller, IMainFormDispatcher dispatcher)
@@ -80,7 +79,7 @@ namespace RFactor2Plugin
             this._settings = _dispatcher.GetConfigObject<Config>();
             _deviceParameters = _dispatcher.GetDeviceParameters();
 
-            //telemetryBuffer = new MappedBuffer<rF2Telemetry>(MM_TELEMETRY_FILE_NAME, true /*partial*/, true /*skipUnchanged*/);
+            
 
             _memoryReader = new();
 
@@ -177,8 +176,8 @@ namespace RFactor2Plugin
 
                     var gp = (GamePhase)scoring?.GamePhase;
 
-                    data.OnTrack = scoring?.GamePhase ?? 0;
-                    data.IsPaused = 0;// !(new GamePhase[] { GamePhase.PausedOrHeartbeat, GamePhase.SessionOver, GamePhase.SessionStopped}).Any(_ => _ == gp) ? 1f : 0f;
+                    //data.OnTrack = scoring?.GamePhase ?? 0;
+                    //data.IsPaused = 0;// !(new GamePhase[] { GamePhase.PausedOrHeartbeat, GamePhase.SessionOver, GamePhase.SessionStopped}).Any(_ => _ == gp) ? 1f : 0f;
 
                     foreach (var (i, key, value) in InputHelper.GetValues(data).WithIndex())
                     {
@@ -312,12 +311,7 @@ namespace RFactor2Plugin
         public float TireRL_SusHeight;
         public float TireRR_SusHeight;
 
-        public float OnTrack;
-        public float IsPaused;
-        public float Loading;
-
-        //public Quat Rot;
-
+        
         /// <summary>
         /// Angular velocity in degrees per second where x = pitch rate, y = yaw rate, z = roll rate
         /// </summary>

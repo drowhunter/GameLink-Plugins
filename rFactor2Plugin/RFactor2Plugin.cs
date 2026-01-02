@@ -177,8 +177,8 @@ namespace RFactor2Plugin
 
                     var gp = (GamePhase)scoring?.GamePhase;
 
-                    data.OnTrack = scoring?.GamePhase ?? 0;
-                    data.IsPaused = 0;// !(new GamePhase[] { GamePhase.PausedOrHeartbeat, GamePhase.SessionOver, GamePhase.SessionStopped}).Any(_ => _ == gp) ? 1f : 0f;
+                    //data.OnTrack = scoring?.GamePhase ?? 0;
+                    //data.IsPaused = 0;// !(new GamePhase[] { GamePhase.PausedOrHeartbeat, GamePhase.SessionOver, GamePhase.SessionStopped}).Any(_ => _ == gp) ? 1f : 0f;
 
                     foreach (var (i, key, value) in InputHelper.GetValues(data).WithIndex())
                     {
@@ -312,9 +312,9 @@ namespace RFactor2Plugin
         public float TireRL_SusHeight;
         public float TireRR_SusHeight;
 
-        public float OnTrack;
-        public float IsPaused;
-        public float Loading;
+        //public float OnTrack;
+        //public float IsPaused;
+        //public float Loading;
 
         //public Quat Rot;
 

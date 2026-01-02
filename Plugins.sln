@@ -135,6 +135,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FalconBMS", "FalconBMSPlugi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlyDangerous", "FlyDangerous\FlyDangerous.csproj", "{8C2C05C2-3F2E-6D6E-4FF4-AEEDFD88E003}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XwauPlugin", "XwaPlugin\XwauPlugin.csproj", "{B9267946-947B-0627-226C-DC6C672427AF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LMUPlugin", "LeMansUltimatePlugin\LMUPlugin.csproj", "{A25885E1-D017-50D3-DD84-4731BF1E5D16}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RFactor2Plugin", "rFactor2Plugin\RFactor2Plugin.csproj", "{7778D85B-C238-F74B-46DE-D4441E6F8794}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -397,6 +403,18 @@ Global
 		{8C2C05C2-3F2E-6D6E-4FF4-AEEDFD88E003}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8C2C05C2-3F2E-6D6E-4FF4-AEEDFD88E003}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8C2C05C2-3F2E-6D6E-4FF4-AEEDFD88E003}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B9267946-947B-0627-226C-DC6C672427AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B9267946-947B-0627-226C-DC6C672427AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B9267946-947B-0627-226C-DC6C672427AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B9267946-947B-0627-226C-DC6C672427AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A25885E1-D017-50D3-DD84-4731BF1E5D16}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A25885E1-D017-50D3-DD84-4731BF1E5D16}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A25885E1-D017-50D3-DD84-4731BF1E5D16}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A25885E1-D017-50D3-DD84-4731BF1E5D16}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7778D85B-C238-F74B-46DE-D4441E6F8794}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7778D85B-C238-F74B-46DE-D4441E6F8794}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7778D85B-C238-F74B-46DE-D4441E6F8794}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7778D85B-C238-F74B-46DE-D4441E6F8794}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -413,11 +431,14 @@ Global
 		SharedLib\SharedLib.projitems*{4d31de79-3b0e-4caf-91ab-f3acfbbe5f9b}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{72d8c5ad-5439-4235-a355-a2546a509a05}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{75a5ac51-c340-4fbc-b93e-cc70b9771ff2}*SharedItemsImports = 5
+		SharedLib\SharedLib.projitems*{7778d85b-c238-f74b-46de-d4441e6f8794}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{88c6fdd2-9cd4-4015-bb6c-3389c29003be}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{9dd14943-3f95-45c8-aace-0eb2582e47ef}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{a0988e26-18f3-4ae4-95df-3bd3b0abe37e}*SharedItemsImports = 13
+		SharedLib\SharedLib.projitems*{a25885e1-d017-50d3-dd84-4731bf1e5d16}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{acde3183-b78b-48e8-ab68-101ffa2f242f}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{b1a7d5e1-4f6b-4d3a-9f8d-2c8a1e6b5a3f}*SharedItemsImports = 5
+		SharedLib\SharedLib.projitems*{b9267946-947b-0627-226c-dc6c672427af}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{df775724-f4c4-85a1-b474-c422ceb4b242}*SharedItemsImports = 5
 	EndGlobalSection
 EndGlobal

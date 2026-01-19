@@ -27,7 +27,6 @@ namespace SharedLib.TelemetryHelper
         public T FromBytes(byte[] data)
         {
             string json = Encoding.UTF8.GetString(data);
-            json = Regex.Replace(json, @"""XWA.status.location""(?= : ""\d"")", @"""XWA.status.hangar""");
             var s = JsonConvert.DeserializeObject<T>(json, _options)!;
             return s;
         }

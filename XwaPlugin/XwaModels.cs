@@ -74,6 +74,15 @@ namespace YawVR_Game_Engine.Plugin
         [JsonProperty("XWA.player.roll_inertia")]
         public double RollInertia;
 
+        [JsonProperty("XWA.player.abs_yaw")]
+        public double Yaw;
+
+        [JsonProperty("XWA.player.abs_pitch")]
+        public double Pitch;
+
+        [JsonProperty("XWA.player.abs_roll")]
+        public double Roll;
+
         [JsonProperty("XWA.player.accel_inertia")]
         public double AccelInertia;
 
@@ -160,6 +169,9 @@ namespace YawVR_Game_Engine.Plugin
                 UnderJammingBeam = src.UnderJammingBeam ? 1f : 0f,
                 LaserFired = src.LaserFired ? 1f : 0f,
                 WarheadFired = src.WarheadFired ? 1f : 0f,
+                Yaw = (float)src.Yaw,
+                Pitch = (float)src.Pitch,
+                Roll = (float)src.Roll,
                 YawInertia = (float)src.YawInertia / 100f,
                 PitchInertia = (float)src.PitchInertia / 100f,
                 RollInertia = (float)src.RollInertia,

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.31903.59
+# Visual Studio Version 18
+VisualStudioVersion = 18.3.11520.95
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "1976BackToMidway", "1976BackToMidway\1976BackToMidway.csproj", "{94357F09-4D94-4EF8-833F-727AF04C5DD1}"
 EndProject
@@ -435,10 +435,12 @@ Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		SharedLib\SharedLib.projitems*{247a212c-ea3c-46d9-82b1-2d7a8dd839e1}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{4d31de79-3b0e-4caf-91ab-f3acfbbe5f9b}*SharedItemsImports = 5
+		SharedLib\SharedLib.projitems*{6a8b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{72d8c5ad-5439-4235-a355-a2546a509a05}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{75a5ac51-c340-4fbc-b93e-cc70b9771ff2}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{7778d85b-c238-f74b-46de-d4441e6f8794}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{88c6fdd2-9cd4-4015-bb6c-3389c29003be}*SharedItemsImports = 5
+		SharedLib\SharedLib.projitems*{92393ab1-1006-4b0b-9e9d-365a03efb5c7}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{9dd14943-3f95-45c8-aace-0eb2582e47ef}*SharedItemsImports = 5
 		SharedLib\SharedLib.projitems*{a0988e26-18f3-4ae4-95df-3bd3b0abe37e}*SharedItemsImports = 13
 		SharedLib\SharedLib.projitems*{a25885e1-d017-50d3-dd84-4731bf1e5d16}*SharedItemsImports = 5

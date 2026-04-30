@@ -1,5 +1,4 @@
-﻿using EliteDangerousPlugin.Properties;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -11,7 +10,9 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 using YawGLAPI;
-
+using SharedLib;
+using System.Xml.Linq;
+using Newtonsoft.Json;
 namespace YawVR_Game_Engine.Plugin
 {
 
@@ -19,27 +20,29 @@ namespace YawVR_Game_Engine.Plugin
 
     [Export(typeof(Game))]
     [ExportMetadata("Name", "Elite Dangerous")]
-    [ExportMetadata("Version", "1.7")]
+    [ExportMetadata("Version", "1.8")]
     class EliteDangerousPlugin : Game {
    
      
         public int STEAM_ID => 359320;
         public string PROCESS_NAME => "EliteDangerous64";
         public bool PATCH_AVAILABLE => false;
-        public string AUTHOR => "YawVR";
+        public string AUTHOR => "Drowhunter";
 
-        public Stream Logo => GetStream("logo.png");
-        public Stream SmallLogo => GetStream("recent.png");
+        
+        public Stream Logo => ResourceHelper.Logo;
+        public Stream SmallLogo => ResourceHelper.SmallLogo;
+        public Stream Background => ResourceHelper.Background;
 
-        public Stream Background => GetStream("wide.png");
+        public string Description => ResourceHelper.GetString("description.html");
 
-        public string Description => string.Empty;
+        private string defProfilejson => ResourceHelper.GetString("Default.yawglprofile");
 
         private IMainFormDispatcher dispatcher;
         private IProfileManager controller;
 
 
-
+        EliteConfig settings = new EliteConfig();
         private bool running = false;
         private Thread readThread;
         private Process handle;
@@ -55,37 +58,128 @@ namespace YawVR_Game_Engine.Plugin
         [DllImport("kernel32.dll")]
         public static extern IntPtr ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress,
             [In, Out] byte[] buffer, UInt32 size, out IntPtr lpNumberOfBytesRead);
-  
-        public List<Profile_Component> DefaultProfile() {
 
+        public LedEffect DefaultLED() => dispatcher.JsonToLED(defProfilejson);
 
-            return dispatcher.JsonToComponents(Resources.defProfile);
-        }
-        public LedEffect DefaultLED() {
-
-            return dispatcher.JsonToLED(Resources.defProfile);
-        }
+        public List<Profile_Component> DefaultProfile() => dispatcher.JsonToComponents(defProfilejson);
 
         public void Exit() {
             running = false;
         }
 
         public string[] GetInputData() {
+#if DEBUG
+            Debugger.Launch();
+
+#endif
+            
+            
+            LoadOffsets(settings.Game);
+
             return inputs;
         }
 
+        /// <summary>
+        /// Convert EliteDangerous64_Offsets.xml to JSon in the format of the object file, this is done to allow users to easily add their own offsets file without needing to convert it to json themselves. The xml file is in the format of the one provided by the elite dangerous memory layout github repo, and the json file is in the format of the object file used by yawglapi.
+        /// </summary>
+        /// <param name="xmlPath"></param>
+        /// <param name="isHorizons"></param>
+        /// <returns></returns>
+        private JObject OffsetXMLToJobject(string xmlPath, bool isHorizons, int version = 0)
+        {
+            if (File.Exists(xmlPath))
+            {
+                XDocument doc = XDocument.Load(xmlPath);
+                JObject jObject = new JObject();
+
+                XElement root = doc.Root;
+                if (root == null)
+                {
+                    dispatcher.ShowNotification(NotificationType.ERROR, "Offsets XML is invalid: missing root element.");
+                    return null;
+                }
+
+                string modeName = isHorizons ? "Horizons" : "Odyssey";
+                XElement modeNode = root.Element(modeName);
+                if (modeNode == null)
+                {
+                    dispatcher.ShowNotification(NotificationType.ERROR, $"Offsets XML is missing '{modeName}' section.");
+                    return null;
+                }
+
+                foreach (XElement pointerNode in modeNode.Elements())
+                {
+                    XAttribute offsetsCountAttribute = pointerNode.Attribute("Offsets");
+                    if (offsetsCountAttribute == null || !int.TryParse(offsetsCountAttribute.Value, out int offsetsCount))
+                    {
+                        continue;
+                    }
+
+                    JArray offsets = new JArray();
+                    for (int i = 0; i < offsetsCount; i++)
+                    {
+                        XAttribute offsetAttribute = pointerNode.Attribute($"Offset_{i}");
+                        if (offsetAttribute == null)
+                        {
+                            break;
+                        }
+
+                        offsets.Add(offsetAttribute.Value.Trim());
+                    }
+
+                    if (offsets.Count > 0)
+                    {
+                        jObject[pointerNode.Name.LocalName] = new JObject
+                        {
+                            ["Offsets"] = offsets
+                        };
+                    }
+                }
+
+                return new JObject
+                {
+                    ["version"] = version+"",
+                    ["data"] = jObject
+                };
+            }
+
+            dispatcher.ShowNotification(NotificationType.ERROR, "Offsets file not found, plugin will not work. Please download 'EliteDangerous64_Offsets.xml' file to plugin folder.");
+            return null;
+        }
 
         public void SetReferences(IProfileManager controller,IMainFormDispatcher dispatcher)
         {
             this.controller = controller;
             this.dispatcher = dispatcher;
-            JObject objectFileData;
-            dispatcher.GetObjectFile("elitedangerous", out objectFileData);
-            if (objectFileData != null)
-            {
-                SetupInputs(objectFileData);
-            }
 
+
+
+        }
+
+        private void LoadOffsets(string game)
+        {
+            //JObject objectFileData;
+
+            //dispatcher.GetObjectFile("elitedangerous", out objectFileData);
+
+            string offsetsPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "EliteDangerous64_Offsets.xml");
+            //string existingVersion = objectFileData?["version"]?.ToString() ?? "9";
+            JObject objectFileData = OffsetXMLToJobject(offsetsPath, game == "Horizons", 8);
+
+            if (objectFileData == null)
+                return;
+            
+
+            var of = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "EliteDangerous64_Offsets.json");
+
+            File.WriteAllText(of, JsonConvert.SerializeObject(objectFileData, Formatting.Indented));
+
+
+            JObject dataNode = (objectFileData?["data"] as JObject) ?? objectFileData;
+            if (dataNode != null)
+            {
+                SetupInputs(dataNode);
+            }
         }
 
         private void SetupInputs(JObject objectFileData)
@@ -117,6 +211,12 @@ namespace YawVR_Game_Engine.Plugin
         }
         public void Init() {
 
+#if DEBUG
+            Debugger.Launch();
+
+#endif
+            
+            //this.settings = dispatcher.GetConfigObject<EliteConfig>();
             Console.WriteLine("STARTED ELITE PLUGIN");
             running = true;
           
@@ -129,6 +229,9 @@ namespace YawVR_Game_Engine.Plugin
         private void ReadFunction() {
             try {
                 GetBase(PROCESS_NAME);
+                settings = dispatcher.GetConfigObject<EliteConfig>();
+                LoadOffsets(settings.Game);
+
                 while (running) {
                     if (handle != null)
                     {
@@ -280,20 +383,24 @@ namespace YawVR_Game_Engine.Plugin
             return null;
         }
 
-        Stream GetStream(string resourceName)
-        {
-            var assembly = GetType().Assembly;
-            var rr = assembly.GetManifestResourceNames();
-            string fullResourceName = $"{assembly.GetName().Name}.Resources.{resourceName}";
-            return assembly.GetManifestResourceStream(fullResourceName);
-        }
+        
 
         public Type GetConfigBody()
         {
-            return null;
+            return typeof(EliteConfig);
         }
     }
 
+    public struct EliteConfig
+    {
+        [Info(Description = "Is your game Horizons or Odyssey", Name = "Game Version", RegexValidator = "Horizons|Odyssey")]
 
+        public string Game;
+
+        public EliteConfig()
+        {
+            Game = "Odyssey";
+        }
+    }
 
 }

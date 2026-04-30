@@ -27,6 +27,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dirtrally2Plugin", "Dirtral
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EliteDangerousPlugin", "EliteDangerousPlugin\EliteDangerousPlugin.csproj", "{92393AB1-1006-4B0B-9E9D-365A03EFB5C7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EliteDangerousOdysseyPlugin", "EliteDangerousOdysseyPlugin\EliteDangerousOdysseyPlugin.csproj", "{42B251B3-D8C7-4D7F-9B41-F37A80E3EE2E}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EuroTruckSimulator2Plugin", "EuroTruckSimulator2Plugin\EuroTruckSimulator2Plugin.csproj", "{D2732427-4BB0-4540-AA74-0DB9987EBE46}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FarmingSimulator19Plugin", "FarmingSimulator19Plugin\FarmingSimulator19Plugin.csproj", "{C1411400-48BD-48DC-85B8-D151DCD061EC}"
@@ -197,6 +199,10 @@ Global
 		{92393AB1-1006-4B0B-9E9D-365A03EFB5C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{92393AB1-1006-4B0B-9E9D-365A03EFB5C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{92393AB1-1006-4B0B-9E9D-365A03EFB5C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{42B251B3-D8C7-4D7F-9B41-F37A80E3EE2E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{42B251B3-D8C7-4D7F-9B41-F37A80E3EE2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{42B251B3-D8C7-4D7F-9B41-F37A80E3EE2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{42B251B3-D8C7-4D7F-9B41-F37A80E3EE2E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D2732427-4BB0-4540-AA74-0DB9987EBE46}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D2732427-4BB0-4540-AA74-0DB9987EBE46}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D2732427-4BB0-4540-AA74-0DB9987EBE46}.Release|Any CPU.ActiveCfg = Release|Any CPU

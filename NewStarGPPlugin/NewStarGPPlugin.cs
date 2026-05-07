@@ -20,7 +20,7 @@ namespace YawVR_Game_Engine.Plugin
     [ExportMetadata("Version", "1.0")]
     public class NewStarGPPlugin : Game
     {
-        
+        private const float RadiansToDegrees = 57.2957795f;
 
         #region Standard Properties
         public int STEAM_ID => 2217580;
@@ -94,11 +94,34 @@ namespace YawVR_Game_Engine.Plugin
                 try
                 {
                     foreach (var (i, key, value) in InputHelper.GetValues(telem.Receive()).WithIndex())
-                        controller.SetInput(i, value);
+                        controller.SetInput(i, NormalizeInputValue(key, value));
                 }
                 catch(SocketException) { }
             }
             
+        }
+
+        private static float NormalizeInputValue(string key, float value)
+        {
+            return key switch
+            {
+                nameof(Telemetry.Pitch) => NormalizeSignedDegrees(value * RadiansToDegrees),
+                nameof(Telemetry.Yaw) => NormalizeSignedDegrees(value * RadiansToDegrees),
+                nameof(Telemetry.Roll) => NormalizeSignedDegrees(value * RadiansToDegrees),
+                "Lean" => NormalizeSignedDegrees(value * RadiansToDegrees),
+                _ => value
+            };
+        }
+
+        private static float NormalizeSignedDegrees(float angleDegrees)
+        {
+            angleDegrees %= 360f;
+            if (angleDegrees > 180f)
+                angleDegrees -= 360f;
+            else if (angleDegrees < -180f)
+                angleDegrees += 360f;
+
+            return angleDegrees;
         }
 
        

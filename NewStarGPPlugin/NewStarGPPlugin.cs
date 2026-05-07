@@ -20,7 +20,7 @@ namespace YawVR_Game_Engine.Plugin
     [ExportMetadata("Version", "1.0")]
     public class NewStarGPPlugin : Game
     {
-        private const float RadiansToDegrees = 57.2957795f;
+        private const float DegreesPerRadian = 57.2957795f;
         private const string LeanChannelName = "Lean";
 
         #region Standard Properties
@@ -106,10 +106,10 @@ namespace YawVR_Game_Engine.Plugin
         {
             return key switch
             {
-                nameof(Telemetry.Pitch) => NormalizeSignedDegrees(value * RadiansToDegrees),
-                nameof(Telemetry.Yaw) => NormalizeSignedDegrees(value * RadiansToDegrees),
-                nameof(Telemetry.Roll) => NormalizeSignedDegrees(value * RadiansToDegrees),
-                LeanChannelName => NormalizeSignedDegrees(value * RadiansToDegrees),
+                nameof(Telemetry.Pitch) => NormalizeSignedDegrees(value * DegreesPerRadian),
+                nameof(Telemetry.Yaw) => NormalizeSignedDegrees(value * DegreesPerRadian),
+                nameof(Telemetry.Roll) => NormalizeSignedDegrees(value * DegreesPerRadian),
+                LeanChannelName => NormalizeSignedDegrees(value * DegreesPerRadian),
                 _ => value
             };
         }

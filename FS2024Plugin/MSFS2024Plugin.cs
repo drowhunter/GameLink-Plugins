@@ -15,7 +15,7 @@ namespace MSFS2024
 {
     [Export(typeof(Game))]
     [ExportMetadata("Name", "Microsoft Flight Simulator 2024")]
-    [ExportMetadata("Version", "3.0")]
+    [ExportMetadata("Version", "3.1")]
     class FS2024Plugin : Game
     {
         private bool isSimRunning = false;          // False is the user in menu, true if the user is in control
@@ -132,7 +132,7 @@ namespace MSFS2024
             public double engRotorRpm4;
             public int    engineType;
             public int    engineCount;
-            public int    simPauseState;        // initially fetches CAMERA STATE, converted to pause state
+            public int    cameraState;        // was previously converting camera state to pause state
 
             // --- End variables returned from SimConnect (66 currently)
 
@@ -148,12 +148,13 @@ namespace MSFS2024
             public double yaw_dynamic;
             public double heave_dynamic;
             public double surge_dynamic;
-            public double invertedCue;
+
+            public double unused;             // no longer used but keeping placeholder so that old profiles don't get reset by Game Link
         };
 
         // Field index offsets for input variables that are not zeroed when pasued:
         const int kHeading = 5;
-        const int kSimPauseState = 66;
+        const int kCameraState = 66;
         const int kYawNormalized = 69;
         const int kYawNormalizedTwist = 70;
         const int kLastSimVariable = 70;
@@ -381,16 +382,13 @@ namespace MSFS2024
         {
             // The MSFS pause flags don't report when we're in the main menu or still loading the flight.
             // Some folks have worked out that you can use the CAMERA STATE variable to detect other times that a flight is not active.
-            // So we're loading that variable in s1.simPauseState and then testing whether to overwrite it with the known pause state.
-            if (s1.simPauseState < 11)
+            if (s1.cameraState < 11)
             {
-                s1.simPauseState = simPauseState;   // camera is in a flight mode: replace with known pause state
                 isSimRunning = (simPauseState == PAUSE_STATE_FLAG_OFF);
             }
             else if (isSimRunning)
             {
                 Debug.WriteLine("Simulation in non-flight camera state (treating as paused).");
-                s1.simPauseState = simPauseState;
                 isSimRunning = false;
             }
         }
@@ -434,12 +432,15 @@ namespace MSFS2024
 
 
         // Persistent states
-        private double blendFactor = 0.0f;
         private double smoothedLateralG = 0.0f;
         private double sustainedVerticalG = 0.0f;
-        private double manueverVerticalG = 0.0f;
-        private double rateLimitRollResult = 0.0f;
         private double rateLimitPitchResult = 0.0f;
+        private double rateLimitRollCue = 0.0f;
+        private double previousLateralResidualG = 0.0f;
+        private double oscillationLevel = 0.0f;
+        private double fastHeaveG = 0.0f;
+        private double filteredSurge = 0.0f;
+        private double surgeTau = 0.0f;
 
         // Smoothly transitions a value toward a target using exponential smoothing.
         // <prev> is current/previous state value and <input> is value to move towards.
@@ -492,6 +493,11 @@ namespace MSFS2024
             return Math.Sign(x) * (knee + headroom * (2.0 / Math.PI) * Math.Atan(excess / headroom));
         }
 
+        private static double SmoothStep(double x)
+        {
+            return x * x * (3.0 - 2.0 * x);
+        }
+
         private void CalcExtraSimVariables(ref Struct1 s1)
         {
             double planePitchSine = Math.Sin(s1.planePitchRadians);
@@ -520,151 +526,233 @@ namespace MSFS2024
 
             // --- Begin CCrim's additional computed fields
 
-        /*  My Yaw 3 MSFS profile makes use of these dynamic force acceleration variables to try to simulate the forces felt in a real aircraft
-            and not just reflect the attitude of the aircraft.
+            /*  My Yaw 3 MSFS profile makes use of these dynamic force acceleration variables to try to simulate the forces felt in a real aircraft
+                and not just reflect the attitude of the aircraft.
 
-            Axis Orientations:                                                    Variable Orientations:       left    right
-                MSFS x axis: lateral         positive is right                            accelerationBodyX:   -       +
-                MSFS y axis: vertical        positive is up                           turn_coordinator_ball:   -       +
-                MSFS z axis: longitudinal    positive is forward                  roll/bank, incidence_beta:   +       -
-                Yaw 3 rig pitch: positive is forward/down
-                Yaw 3 rig roll:  positive is left
+                Axis Orientations:                                                    Variable Orientations:       left    right
+                    MSFS x axis: lateral         positive is right                            accelerationBodyX:   -       +
+                    MSFS y axis: vertical        positive is up                           turn_coordinator_ball:   -       +
+                    MSFS z axis: longitudinal    positive is forward                  roll/bank, incidence_beta:   +       -
+                    Yaw 3 rig pitch: positive is forward/down
+                    Yaw 3 rig roll:  positive is left
 
-            Roll attitude causes unintuitive behavior due to how forces coordinate in an aircraft.
-            In a normal coordinated turn, gravity, lift and centrifugal forces balance and combine in such a way to direct
-            an increased g force directly perpindicular to the seat. When the forces are balanced, the pilot/ passenger feels no sideways force
-            from either the bank angle or centrifugal force of the turn. Instead they feel a force pressing them into their seat, proportional
-            to the strength of the turn (determined by airspeed and turn radius).
+                Roll attitude causes unintuitive behavior due to how forces coordinate in an aircraft.
+                In a normal coordinated turn, gravity, lift and centrifugal forces balance and combine in such a way to direct
+                an increased g force directly perpindicular to the seat. When the forces are balanced, the pilot/ passenger feels no sideways force
+                from either the bank angle or centrifugal force of the turn. Instead they feel a force pressing them into their seat, proportional
+                to the strength of the turn (determined by airspeed and turn radius).
 
-            During uncoordinated turns, the opposing forces are unbalanced, and you feel a force directed to either the inside or outside
-            of the turn depending on the orientation of the plane, with the nose pointing either into or away from the inside of the turning circle.
-            In a skid, the nose is pointed to the inside the turn, you feel a centrifugal pull to the outside of the turn and the turn coordinator
-            ball moves to the outside. In a sideslip, the nose is pointed to the outside of the turn, you feel a force pulling to the inside
-            of the turn and the turn coordinator ball moves to the inside.
+                During uncoordinated turns, the opposing forces are unbalanced, and you feel a force directed to either the inside or outside
+                of the turn depending on the orientation of the plane, with the nose pointing either into or away from the inside of the turning circle.
+                In a skid, the nose is pointed to the inside the turn, you feel a centrifugal pull to the outside of the turn and the turn coordinator
+                ball moves to the outside. In a sideslip, the nose is pointed to the outside of the turn, you feel a force pulling to the inside
+                of the turn and the turn coordinator ball moves to the inside.
 
-            In aircraft that can maintain a static roll position, if you don't apply rudder to maintain altitude then the aircraft will be in free fall
-            (can't simulate this) but when you do apply rudder you will once again feel the counterforce of lift to your side.
+                In aircraft that can maintain a static roll position, if you don't apply rudder to maintain altitude then the aircraft will be in free fall
+                (can't simulate this) but when you do apply rudder you will once again feel the counterforce of lift to your side.
 
-            A motion sim rig can thus simulate these unbalanced forces by tilting to the inside or outside of the turn direction along the roll axis
-            in proportion to the amount of force but scaled down as very little tilt is actually needed to be convincing when your view also
-            mimics the banking motion via VR goggles or an enclosed cockpit.
+                A motion sim rig can thus simulate these unbalanced forces by tilting to the inside or outside of the turn direction along the roll axis
+                in proportion to the amount of force but scaled down as very little tilt is actually needed to be convincing when your view also
+                mimics the banking motion via VR goggles or an enclosed cockpit.
 
-            Aircraft feature a device called a turn/slip indicator or turn coordinator ball to help pilots maintain coordinated turns and perform
-            standard rate turns (like two minutes for 360 degrees). We can't use the TURN INDICATOR BALL variable directly because it simulates a
-            mechanical device with dampening (too slow) and oscillation (it'll swing from side to side in fast maneuvers).
+                Aircraft feature a device called a turn/slip indicator or turn coordinator ball to help pilots maintain coordinated turns and perform
+                standard rate turns (like two minutes for 360 degrees). We can't use the TURN INDICATOR BALL variable directly because it simulates a
+                mechanical device with dampening (too slow) and oscillation (it'll swing from side to side in fast maneuvers).
 
-            To simulate force from slip or skid, we want to tilt in the direction of the ball or opposite incidence_beta's sign.
-            Turning to left example: accelerationBodyX goes negative.  When it's coordinated, no tilt.
-            Without left rudder or with too much right rudder, coordinator ball goes to left, we want to tilt left.
-            With too much rudder left, ball goes to the right, we want to tilt right to simulate centrifugal force.
-        */
-
-        //  ROLL_DYNAMIC -- Calculate the lateral component of uncoordinated force pulling on the pilot.
-            double lateralGravityComponent = Math.Sin(s1.planeBankRadians) * planePitchCosine;  // negative to the right
-            double lateralAccelG = s1.accelerationBodyX / kGravity;     // Convert lateral acceleration to G's
-
-            // In a coordinated turn, lateralAccelG and lateralGravityComponent should oppose and cancel each other out,
-            // providing an estimation of uncoordinated lateral force:
-            double uncoordinatedForce = lateralAccelG + lateralGravityComponent;     // result is in G's
-            uncoordinatedForce = Math.Clamp(uncoordinatedForce, -1, 1);              // safety clamp to keep from poisoning smoothedLateralG
-
-            double groundForce = lateralAccelG * 0.12;                              // suppress lateral acceleration on the ground
-            double targetState = (s1.sim_on_ground == 0) ? 1.0 : 0.0;
-            blendFactor = LowPass(blendFactor, targetState, elapsedTime, 1.5);      // blend factor during transition between ground and air
-            double blendedTarget = (uncoordinatedForce * blendFactor) + (groundForce * (1.0 - blendFactor));
-
-            // Scale to make small slips apparent while using power function to compress large values:
-            blendedTarget = Math.Sign(blendedTarget) * Math.Pow(Math.Abs(blendedTarget), 0.8) * 3.0;    // lower power emphasizes low end, multiplier just scales
-
-            // Calculate smoothed lateral force via low pass filter (fast enough for bumps, slow enough to suppress jitters):
-            smoothedLateralG = LowPass(smoothedLateralG, blendedTarget, elapsedTime, 0.2);
-
-            // Rate limit (rad/sec) helps prevent violent back-and-forth:
-            rateLimitRollResult = RateLimit(rateLimitRollResult, smoothedLateralG, elapsedTime, 0.6);
-            s1.roll_dynamic = rateLimitRollResult;
-
+                To simulate force from slip or skid, we want to tilt in the direction of the ball or opposite incidence_beta's sign.
+                Turning to left example: accelerationBodyX goes negative.  When it's coordinated, no tilt.
+                Without left rudder or with too much right rudder, coordinator ball goes to left, we want to tilt left.
+                With too much rudder left, ball goes to the right, we want to tilt right to simulate centrifugal force.
+            */
+            
+            bool isRotaryAircraft = (s1.engineType == 3) || (s1.engRotorRpm1 > 0);
 
             // PITCH_DYNAMIC -- Simulates the shift of gravity from the pitch attitude as well as sustained G loads.
             // We want the gravity shift due to pitch attitude to be linear near level flight without feeling too abrupt or violent compared to the visual simulation
             // while also allowing for use of more of our available pitch range for extreme pitch angles.  This result is then enhanced or contradicted by
             // any g loading force from diving, climbing or banking. The G load calculation is able to overcome the pitch cue when appropriate
             // (like pulling out of a dive or climb) but without using up our available range too quickly.
-            const double kGravityPitchScaleLow = 1.2;
-            const double kGravityPitchScaleHigh = 2.0;
-            const double kGLoadScale = 0.30;        // 0.40 ... was 0.20-0.50 depending on different curves
-            const double kGLoadLimit = 0.8;         // 0.6 = more compression, 1.2 = less compression
-            const double kBumpCueScale = 0.20;
-            const double kNegativeGCueScale = 0.30;
+            const double kGLoadScale = 0.40;        // was 0.20-0.50 depending on different curves
+            const double kNegativeGCueScale = 0.40;
+            const double kNegativeGFadeRange = 1.5;
 
-            // Calculate a pitch gain based on the attitude so that small angles don't feel too violent and large angles use more of our range:
-            double pitchGain = kGravityPitchScaleLow + (kGravityPitchScaleHigh - kGravityPitchScaleLow) * Math.Abs(planePitchSine);
-            double gravityPitchCue = planePitchSine * pitchGain;
+            // Note that accelerationBodyY includes any coordinated down force from a banked turn.
+            // INVESTIGATE: Does it?  Or does it just include the offset of gravity from attitude?
+            // It also goes from 0 in level flight to +1G at 90 degree bank and +2G at 180 degrees (inverted) and to -2G pushing the nose up while inverted.
+            double verticalAccelG = s1.accelerationBodyY / kGravity;      // convert to G's
 
-            // Note that MSFS subtracts gravity (1G) from accelerationBodyY: level flight = 0G, +/-90 deg roll = +1G, inverted = +2G
-            // We need to remove this to get just the vertical acceleration from non-gravity G force loading:
-            double gravityCorrection = (planeBankCosine * planePitchCosine);
-            double verticalAccelG = (s1.accelerationBodyY / kGravity) - (1.0 - gravityCorrection);      // convert to G's
+            // For aircraft sitting idle on the ground, clamp down noisy sim variables that can cause violent shaking:
+            // (This was happening with at least one helicopter in certain weather conditions.)
+            if (s1.sim_on_ground != 0 && Math.Abs(s1.ground_velocity) < 0.03)
+                verticalAccelG = Math.Clamp(verticalAccelG, -0.03, 0.03);
 
-            sustainedVerticalG = LowPass(sustainedVerticalG, verticalAccelG, elapsedTime, 0.90);    // slow filter for eliminating bumps
-            manueverVerticalG = LowPass(manueverVerticalG, verticalAccelG, elapsedTime, 0.35);      // fast filter for maneuver onset
+            // Estimate sustained G loading via a low pass filter of verticalAccelG:
+            sustainedVerticalG = LowPass(sustainedVerticalG, verticalAccelG, elapsedTime, 0.60);    // slow filter for capturing sustained forces (banked turns, climbs, dives)
 
-            // Estimate G loading (during maneuvers like pulling out of a steep dive) via a low pass filter of verticalAccelG.
-            double dynamicGLoad = sustainedVerticalG * kGLoadScale;     // g-load is independent of the force of gravity from attitude
+            // Calculate our deviation from the attitude baseline:
+            double gravityOffset = 1.0 - (planeBankCosine * planePitchCosine);                      // ranges from 0 to 2 in upright to inverted flight
+            double baselineDeviation = sustainedVerticalG - gravityOffset;
 
-            rateLimitPitchResult = RateLimit(rateLimitPitchResult, dynamicGLoad, elapsedTime, 0.25); // tune 0.15–0.40 per sec
-            dynamicGLoad = rateLimitPitchResult;
+            // Calculate a pitch cue based on attitude such that small angles don't feel too violent and large angles use more of our range:
+            const double kPitchAttitudeScaleLow = 1.2;
+            const double kPitchAttitudeScaleHigh = 1.6;
+            double pitchGain = kPitchAttitudeScaleLow + (kPitchAttitudeScaleHigh - kPitchAttitudeScaleLow) * Math.Abs(planePitchSine);
+            double pitchAttitudeCue = planePitchSine * pitchGain;
 
-            // Compress G load with a soft, asymptotic ceiling at kGLoadLimit, keeping the low end linear:
-            dynamicGLoad = kGLoadLimit * (2.0 / Math.PI) * Math.Atan(dynamicGLoad / kGLoadLimit);
+            // If we're inverted, calculate an inverted cue (negative G's, hanging from straps):
+            if (planeBankCosine < 0.0)
+            {
+                double negativeGFadeOut = Math.Clamp(1.0 - (baselineDeviation / kNegativeGFadeRange), 0.0, 1.5);    // fade out based on pulling/pushing G's
+                negativeGFadeOut *= negativeGFadeOut;                   // Squaring for a smooth nonlinear fade
+
+                // Inverted cue is scaled by bank and pitch attitude:
+                pitchAttitudeCue += -planeBankCosine * kNegativeGCueScale * Math.Abs(planePitchCosine) * negativeGFadeOut;
+            }
+
+            // Calculate a dynamic G load from our baseline deviation:
+            double dynamicGLoad = baselineDeviation * kGLoadScale;     // g-load is independent of the force of gravity from attitude
 
             // Combine and let dynamic G load potentially override the pitch cue:
-            s1.pitch_dynamic = gravityPitchCue - dynamicGLoad;
+            s1.pitch_dynamic = pitchAttitudeCue - dynamicGLoad;
+
             // Compress and constrain the high end of forward pitch (positive) while allowing backward pitch to be unconstrained:
-            if (s1.pitch_dynamic > 0) s1.pitch_dynamic = SoftKneeCurve(s1.pitch_dynamic, 1.2, 2.0);
+            if (s1.pitch_dynamic > 0.0)
+                s1.pitch_dynamic = SoftKneeCurve(s1.pitch_dynamic, 1.5, 2.4);
+            
+            // We need this rate limit to keep fast acrobatic movements from feeling too violent. (But lower limits delay move too much.)
+            rateLimitPitchResult = RateLimit(rateLimitPitchResult, s1.pitch_dynamic, elapsedTime, 1.5);
+            s1.pitch_dynamic = rateLimitPitchResult;
+
+
+
+
+            // HEAVE_DYNAMIC (bumps/turbulence)
+            // In the absence of a heave axis, calculate dynamic cues from vertical acceleration telemetry so that we feel vertical
+            // bumps and turbulence via our pitch axis. Any "bump" is the difference between what's happening now and the trend.  It's also a natural washout.
+            double bumpHeaveCue = (verticalAccelG - sustainedVerticalG);        // raw minus smooth gives bumps (forward pitch, feels rougher than backward pitch?)
+
+            // Fast impact cue to retain follow-up wheel/gear contact detail:
+            fastHeaveG = LowPass(fastHeaveG, verticalAccelG, elapsedTime, 0.08);
+            double impactCue = verticalAccelG - fastHeaveG;
+            impactCue = Math.Max(0, Math.Abs(impactCue) - 0.03) * Math.Sign(impactCue);     // apply linear coring (deadzone) to avoid sign change inflection
+            bumpHeaveCue = (0.90 * bumpHeaveCue) + (0.10 * impactCue);          // use only a little fast impact detail
+
+            s1.heave_dynamic = bumpHeaveCue * 0.12;     // heave up is returned as negative, scaled in profile for Yaw 3's pitch axis (was 0.15, was 0.10)
+
+
 
 
             // SURGE_DYNAMIC (longitudinal acceleration: thrust/braking/air drag)
             // In the absence of a surge axis, we'll apply a dynamic cue from longitudinal acceleration telemetry to the pitch axis.
             // Convert to G's and remove the included gravity effect coming from pitch angle:
-            s1.surge_dynamic = (s1.accelerationBodyZ / kGravity) - planePitchSine;      // positive is forward, scale and invert for Yaw 3's pitch axis
+            double rawSurge = - (s1.accelerationBodyZ / kGravity) + planePitchSine;
+
+            // surge_dynamic tends to pile up pitch feedback in twitchy, acrobatic planes so watch for pitch activity to suppress:
+            const double kPitchRateStart = 0.5;
+            const double kPitchRateFull = 1.0;
+            double pitchActivity = Math.Clamp((Math.Abs(s1.rotationVelocityBodyX) - kPitchRateStart) / (kPitchRateFull - kPitchRateStart), 0.0, 1.0);
+
+            // Convert pitch activity into a target low pass filter time:
+            double targetSurgeTau = 0.2 + (0.8 * pitchActivity);        // slow to 1.0 second during high pitch activity, was base of 0.25 but reduced to improve surge impact
+
+            // Increase tau immediately so early contaminated surge gets damped,
+            // but make tau fall slowly so the filter doesn't suddenly catch up:
+            if (targetSurgeTau > surgeTau) surgeTau = targetSurgeTau;
+            else surgeTau = LowPass(surgeTau, targetSurgeTau, elapsedTime, 0.50);
+
+            filteredSurge = LowPass(filteredSurge, rawSurge, elapsedTime, surgeTau);
+            s1.surge_dynamic = filteredSurge;                           // forward surge is returned as negative, scaled in profile for Yaw 3's pitch axis
 
 
-            // HEAVE_DYNAMIC (bumps/turbulence)
-            // In the absence of a heave axis, calculate dynamic cues from vertical acceleration telemetry so that we feel vertical
-            // bumps and turbulence via our pitch axis. Any "bump" is the difference between what's happening now and the trend.
-            // This also acts as a natural washout.
-            double bumpHeaveCue = (verticalAccelG - sustainedVerticalG);
-
-            // Apply Linear Coring (Smooth Deadzone) 
-            // This kills the "horizon skip" lag without causing a jumpy inflection.
-            bumpHeaveCue = Math.Max(0, Math.Abs(bumpHeaveCue) - 0.02) * Math.Sign(bumpHeaveCue);
-
-            // Comfort clamp: limit range of heave-pitch (0.15 G's * 10x scaler in motion profile -> 1.5 degrees)
-            s1.heave_dynamic = Math.Clamp(bumpHeaveCue * kBumpCueScale, -0.15, 0.15);                   // positive is heave up, scale and invert for Yaw 3's pitch axis
 
 
-            // INVERTED_CUE: When in an inverted roll, add a sensation of inversion (negative G's) by pitching forward (positive values).
-            // If manueverVerticalG is 0.0, the pilot only feels static gravity (inverted = hanging).
-            // If > 0.5 (Pulling Gs), the maneuver force pins the pilot into the seat, overcoming the feeling of hanging. The cue fades to 0.
-            // If < 0.0 (Pushing Gs), the pilot is being pulled out of the seat even harder. The cue remains at full strength (1.0).
-            const double kFadeRange = 1.5;      // Fade out over this range of G's
-            double negativeGFadeOut = Math.Clamp(1.0 - (manueverVerticalG / kFadeRange), 0.0, 1.0);
-            negativeGFadeOut *= negativeGFadeOut;      // Squaring for a gentle smooth fade
+            //  ROLL_DYNAMIC -- Calculate the lateral component of uncoordinated force pulling on the pilot.  (See detailed explanation above.)
+            double rollAttitudeComponent = Math.Sin(s1.planeBankRadians);
+            double lateralGravityComponent = rollAttitudeComponent * planePitchCosine;  // negative to the right
+            double lateralAccelG = -s1.accelerationBodyX / kGravity;        // convert to G's
 
-            // We only want this inverted cue if we are inverted (planeBankCosine < 0) but reduced by how aggressively we're pitched or pulling positive G's.
-            s1.invertedCue = (planeBankCosine < 0.0)
-                         ? (- planeBankCosine * kNegativeGCueScale * Math.Abs(planePitchCosine) * negativeGFadeOut) : 0.0;
-            // TODO: Eventually we want to be able to feel increasing negative G's if they push the stick forward while inverted.  Currently it caps at 1G.
-            // A little tricky since we want the smooth fade to zero but don't want any curve that will grow quickly after 1.0.
+            // In a coordinated turn, lateralAccelG and lateralGravityComponent should oppose and cancel each other out,
+            // leaving an approximation of uncoordinated lateral forces:
+            smoothedLateralG = LowPass(smoothedLateralG, lateralAccelG, elapsedTime, 0.20);        // fast enough for bumps but suppress noisy telemetry (esp. some helicopters)
+            double targetLateralG = (lateralGravityComponent - smoothedLateralG);
+            // INVESTIGATE: Sideslip even with full rudder is completely missing in some aircraft like King Air.  Bad telemetry data?
+
+            // In rotary aircraft (helicopters), adjust the amount of estimated lateral force based on forward velocity:
+            if (isRotaryAircraft)
+            {
+                // Some helicopters produce very heavy oscillating telemetry noise. Try to detect this and keep it from shaking the roll axis excessively: 
+                double lateralResidualG = lateralAccelG - smoothedLateralG;
+                bool signFlip = Math.Sign(lateralResidualG) != Math.Sign(previousLateralResidualG)
+                                && Math.Abs(previousLateralResidualG) > 0.05
+                                && Math.Abs(lateralResidualG) > 0.05;
+                previousLateralResidualG = lateralResidualG;
+                if (signFlip) oscillationLevel = Math.Min(1.0, oscillationLevel + 0.15);
+                oscillationLevel *= Math.Exp(-elapsedTime / 0.30);
+
+                // Forward airflow increases confidence that bank-related force coordination is meaningful.
+                // At low forward speeds, let aircraft attitude dominate over any lateral acceleration (and coordinated force cancellation):
+                double forwardFlow = Math.Clamp(Math.Abs(s1.relativeWindVelocityBodyZ) / 200.0, 0.0, 1.0);
+                double accelWeight = 0.15 + (0.85 * forwardFlow);
+                accelWeight *= 1.0 - (1.0 * oscillationLevel);     // also reduce telemetry oscillation noise
+                targetLateralG = (lateralGravityComponent - (smoothedLateralG * accelWeight));
+
+                // Apply a power function to emphasize small bank angles:
+                double x = Math.Abs(targetLateralG);
+                targetLateralG = Math.Sign(targetLateralG) * (2.0 * Math.Pow(x, 0.8)) / (1.0 + 0.9 * Math.Pow(x, 1.2));     // .06->.20, .10->.24, .30->.63, .50->0.83, 1.0->1.053
+                rateLimitRollCue = 0.0;
+            }
+            // For fixed wing aircraft, calculate an additional component from roll activity and large roll attitudes:
+            else
+            {
+                // Estimate how much roll activity is occuring from our longitudinal rotational velocity.
+                // (Since the Yaw 3 has a curved roll axis, we'll generate the desired vestibular roll acceleration cues by actually moving to a new roll attitude.)
+                const double kRollRateStart = 0.2;
+                const double kRollRateFull = 1.2;
+                double rollActivity = Math.Clamp((Math.Abs(s1.rotationVelocityBodyZ) - kRollRateStart) / (kRollRateFull - kRollRateStart), 0.0, 1.0);
+
+                // Create a bank attitude term tempered by pitch angle and squared to emphasize gravity shift at high bank angles:
+                double highBankAttitude = Math.Abs(rollAttitudeComponent) * Math.Abs(rollAttitudeComponent);
+                // Reduce this term to zero during hard banked turn or otherwise pulling vertical G's:
+                double excessVerticalG = Math.Abs(sustainedVerticalG) - Math.Abs(lateralGravityComponent);      // must remove up to 1G from roll attitude to isolate vertical G's
+                highBankAttitude *= (1.0 - Math.Clamp(excessVerticalG * 0.3, 0.0, 0.75));
+
+                // Let the amount of roll activity determine how quickly we change roll attitude:
+                const double kRollCueRateSlow = 0.5;
+                const double kRollCueRateFast = 3.0;
+                double rollCueRateLimit = kRollCueRateSlow + (kRollCueRateFast - kRollCueRateSlow) * rollActivity;
+
+                double attitudeWeight = Math.Max(0.25 * rollActivity, 0.75 * highBankAttitude);
+                rateLimitRollCue = RateLimit(rateLimitRollCue, rollAttitudeComponent * attitudeWeight, elapsedTime, rollCueRateLimit);
+            }
+
+            s1.roll_dynamic = targetLateralG + rateLimitRollCue;
+
+
 
 
             // YAW_DYNAMIC
-            // Calculate a reasonable value for the yaw axis by scaling the vertical axis rotational acceleration by the "yaw motion of inertia"
-            // of the plane since we can't get a measure of the distance between the pilot position and the center of rotation.
-            // (It's a big range of values: airliner might be 2.8 million "slugs per ft squared" vs. 10,000 for a small plane.)
-            // Note: Use 0.005 or 0.01 instead of 0.001 if the airliner feels too "snappy" compared to small planes.
-            double scaleFactor = 2.0 + (0.005 * Math.Pow(s1.totalWeightYawMOI, 0.35));
-            s1.yaw_dynamic = s1.rotationAccelerationBodyY / scaleFactor;
+            // Calculate an incremental value to add to the yaw axis per frame.
+            // For rotary aircraft, just use rotation velocity directly: 
+            if (isRotaryAircraft)
+            {
+                s1.yaw_dynamic = s1.rotationVelocityBodyY / 10.0;
+            }
+            else
+            {
+                // For fixed wing aircraft, we'll use rotation acceleration and scale it based on the aircraft's "yaw motion of inertia" since we can't
+                // get a measure of the distance between the pilot position and the center of rotation.
+                // It's a big range of values: Cessna 172 MOI=3300, King Air C90 MOI=100K, Airbus 320 MOI=2.83 million.
+                // Result is scaled by 1.0 in profile and interpreted as degrees added incrementally per frame to the yaw axis 
+                double yawScaleFactor = 90.0 + (910.0 / Math.Pow(Math.Max(s1.totalWeightYawMOI, 1.0), 0.30));     // results: Cessna -> 170, King Air -> 119, A320 -> 101
+                s1.yaw_dynamic = s1.rotationAccelerationBodyY / yawScaleFactor;
+
+                // Boost only very small cues: 0.10 -> 0.184, 0.20 -> 0.228, 0.30 -> 0.309
+                s1.yaw_dynamic *= (1.0 + 1.25 / (1.0 + Math.Pow(Math.Abs(s1.yaw_dynamic) / 0.12, 4.0)));
+
+                // While on the ground, also include some ongoing yaw based on rotational velocity:
+                if (s1.sim_on_ground != 0)
+                    s1.yaw_dynamic += s1.rotationVelocityBodyY / 10.0;
+            }
 
             // --- End CCrim's additional computed fields
         }
@@ -714,7 +802,7 @@ namespace MSFS2024
                     for (int i = 0; i < fields.Length; i++)
                     {
                         // Use current values if sim is running or for heading-based variables (to avoid rotating motion rig):
-                        if (isSimRunning || i == kHeading || i == kYawNormalized || i == kYawNormalizedTwist || i == kSimPauseState)
+                        if (isSimRunning || i == kHeading || i == kYawNormalized || i == kYawNormalizedTwist || i == kCameraState)
                         {
                             float value = Convert.ToSingle(fields[i].GetValue(s1));
                             targetValues[i] = float.IsNaN(value) ? 0.0f : (float)Math.Round(value, 3);

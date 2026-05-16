@@ -1,4 +1,4 @@
-﻿using ForzaHorizon6Plugin.Properties;
+﻿using SharedLib;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -30,11 +30,11 @@ namespace ForzaHorizon6Plugin
 		public bool PATCH_AVAILABLE => true;
 		public string AUTHOR => "Drowhunter";
 
-		public string Description => Resources.description;
+		public string Description => ResourceHelper.Description;
 
-		public Stream Logo => GetStream("logo.png");
-		public Stream SmallLogo => GetStream("recent.png");
-		public Stream Background => GetStream("wide.png");
+		public Stream Logo => ResourceHelper.Logo;
+		public Stream SmallLogo => ResourceHelper.SmallLogo;
+		public Stream Background => ResourceHelper.Background;
 
 
 
@@ -55,7 +55,7 @@ namespace ForzaHorizon6Plugin
 
 		public List<Profile_Component> DefaultProfile() {
 
-			return dispatcher.JsonToComponents(Resources.defProfile);
+			return dispatcher.JsonToComponents(ResourceHelper.DefaultProfile);
 
 		}
 
@@ -168,14 +168,6 @@ namespace ForzaHorizon6Plugin
         public Dictionary<string, ParameterInfo[]> GetFeatures()
         {
             return null;
-        }
-
-        Stream GetStream(string resourceName)
-        {
-            var assembly = GetType().Assembly;
-            var rr = assembly.GetManifestResourceNames();
-            string fullResourceName = $"{assembly.GetName().Name}.Resources.{resourceName}";
-            return assembly.GetManifestResourceStream(fullResourceName);
         }
 
         public Type GetConfigBody()

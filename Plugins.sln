@@ -147,6 +147,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RFactor2Plugin", "rFactor2P
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XPlane12Plugin", "XPlane12Plugin\XPlane12Plugin.csproj", "{38C3765B-AFD3-C9DD-94F8-90C5CD3890D3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ForzaHorizon6Plugin", "ForzaHorizon6Plugin\ForzaHorizon6Plugin.csproj", "{0CE66456-3E03-49E1-8035-BDB41270FF8D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -997,6 +999,18 @@ Global
 		{38C3765B-AFD3-C9DD-94F8-90C5CD3890D3}.Release|x64.Build.0 = Release|Any CPU
 		{38C3765B-AFD3-C9DD-94F8-90C5CD3890D3}.Release|x86.ActiveCfg = Release|Any CPU
 		{38C3765B-AFD3-C9DD-94F8-90C5CD3890D3}.Release|x86.Build.0 = Release|Any CPU
+		{0CE66456-3E03-49E1-8035-BDB41270FF8D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0CE66456-3E03-49E1-8035-BDB41270FF8D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0CE66456-3E03-49E1-8035-BDB41270FF8D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0CE66456-3E03-49E1-8035-BDB41270FF8D}.Debug|x64.Build.0 = Debug|Any CPU
+		{0CE66456-3E03-49E1-8035-BDB41270FF8D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0CE66456-3E03-49E1-8035-BDB41270FF8D}.Debug|x86.Build.0 = Debug|Any CPU
+		{0CE66456-3E03-49E1-8035-BDB41270FF8D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0CE66456-3E03-49E1-8035-BDB41270FF8D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0CE66456-3E03-49E1-8035-BDB41270FF8D}.Release|x64.ActiveCfg = Release|Any CPU
+		{0CE66456-3E03-49E1-8035-BDB41270FF8D}.Release|x64.Build.0 = Release|Any CPU
+		{0CE66456-3E03-49E1-8035-BDB41270FF8D}.Release|x86.ActiveCfg = Release|Any CPU
+		{0CE66456-3E03-49E1-8035-BDB41270FF8D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

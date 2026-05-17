@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <Configurations>All;Debug;Release</Configurations>
+    <AssemblyTitle>ForzaHorizon6Plugin</AssemblyTitle>
+    <Product>ForzaHorizon6Plugin</Product>
+    <Copyright>Copyright ©  2021</Copyright>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Remove="Resources\Default.yawglprofile" />
+    <None Remove="Resources\description.html" />
+    <None Remove="Resources\logo.png" />
+    <None Remove="Resources\recent.png" />
+    <None Remove="Resources\wide.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Default.yawglprofile" />
+    <EmbeddedResource Include="Resources\description.html" />
+    <EmbeddedResource Include="Resources\logo.png" />
+    <EmbeddedResource Include="Resources\recent.png" />
+    <EmbeddedResource Include="Resources\wide.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="System.ComponentModel.Composition" Version="9.0.0" />
+    <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\YawGLAPI\YawGLAPI.csproj" />
+  </ItemGroup>
+  <Import Project="..\SharedLib\SharedLib.projitems" Label="Shared" />
+</Project>

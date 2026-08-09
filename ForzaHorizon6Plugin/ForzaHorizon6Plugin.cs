@@ -1,4 +1,5 @@
 ﻿using SharedLib;
+using SharedLib.TelemetryHelper;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -7,23 +8,21 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Threading;
 using YawGLAPI;
 namespace ForzaHorizon6Plugin
 {
     [Export(typeof(Game))]
 	[ExportMetadata("Name", "Forza Horizon 6")]
-	[ExportMetadata("Version", "1.1")]
+	[ExportMetadata("Version", "1.2")]
 	public class ForzaHorizon6Plugin : Game {
-		
+
 
 		private bool stop = false;
 		private Thread readthread;
-		UdpClient receivingUdpClient;
-		IPEndPoint RemoteIpEndPoint = new IPEndPoint(IPAddress.Any, 0);
-        private IMainFormDispatcher dispatcher;
-        private IProfileManager controller;
+		private UdpTelemetry<ForzaTelemetry> telemetry;
+			private IMainFormDispatcher dispatcher;
+			private IProfileManager controller;
 
         public string PROCESS_NAME => "ForzaHorizon6";
 		public int STEAM_ID => 2483190;
@@ -60,8 +59,8 @@ namespace ForzaHorizon6Plugin
 		}
 
 		public void Exit() {
-			receivingUdpClient.Close();
-			receivingUdpClient = null;
+			telemetry?.Dispose();
+			telemetry = null;
 			stop = true;
 			//readthread.Abort();
 
@@ -89,10 +88,15 @@ namespace ForzaHorizon6Plugin
 		public void Init() {
 			Addloopback();
 			stop = false;
-		
+
 			var pConfig = dispatcher.GetConfigObject<Config>();
-			receivingUdpClient = new UdpClient(pConfig.Port);
-			receivingUdpClient.Client.ReceiveTimeout = 2000;
+
+			telemetry = new UdpTelemetry<ForzaTelemetry>(new UdpTelemetryConfig
+			{
+				ReceiveAddress = new IPEndPoint(IPAddress.Any, pConfig.Port),
+				ReceiveTimeout = 2000
+			}, new MarshalByteConverter<ForzaTelemetry>());
+
 			readthread = new Thread(new ThreadStart(ReadFunction));
 			readthread.Start();
 		}
@@ -100,7 +104,6 @@ namespace ForzaHorizon6Plugin
 		private void ReadFunction() {
 
 			Console.WriteLine("ForzaRD");
-			ForzaTelemetry obj = new ForzaTelemetry();
 			FieldInfo[] fields = typeof(ForzaTelemetry).GetFields();
 			try
 			{
@@ -108,15 +111,8 @@ namespace ForzaHorizon6Plugin
 				{
 					try
 					{
-						// Blocks until a message returns on this socket from a remote host.
-						byte[] rawData = receivingUdpClient.Receive(ref RemoteIpEndPoint);
-						Console.Write(BitConverter.ToSingle(rawData, 0));
-
-						IntPtr unmanagedPointer = Marshal.AllocHGlobal(rawData.Length);
-						Marshal.Copy(rawData, 0, unmanagedPointer, rawData.Length);
-						// Call unmanaged code
-						Marshal.FreeHGlobal(unmanagedPointer);
-						Marshal.PtrToStructure(unmanagedPointer, obj);
+						// Receive telemetry data using UdpTelemetry helper
+						var obj = telemetry.Receive();
 
 						obj.Yaw *= 57.295f;
 						obj.Pitch *= 57.295f;

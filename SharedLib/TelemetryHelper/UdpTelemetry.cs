@@ -14,6 +14,12 @@ namespace SharedLib.TelemetryHelper
 
         public int ReceiveTimeout { get; set; } = 0;
 
+        /// <summary>
+        /// Enable shared UDP port listening (allows multiple apps to listen on the same port).
+        /// Default is true.
+        /// </summary>
+        public bool SharedMode { get; set; } = true;
+
         public UdpTelemetryConfig()
         {
              
@@ -79,8 +85,30 @@ namespace SharedLib.TelemetryHelper
         {
             if (config.ReceiveAddress != null)
             {
-                Log($"Create UdpClient: Receiving @ {config.ReceiveAddress.Address}: {config.ReceiveAddress.Port} with timeout of {Config.ReceiveTimeout} ms");
-                udpClient = new UdpClient(config.ReceiveAddress);                
+                Log($"Create UdpClient: Receiving @ {config.ReceiveAddress.Address}: {config.ReceiveAddress.Port} with timeout of {Config.ReceiveTimeout} ms (SharedMode: {config.SharedMode})");
+
+                if (config.SharedMode)
+                {
+                    // Create socket with shared mode options
+                    var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+
+                    // Allow multiple listeners on the same UDP port
+                    // On Windows, ReuseAddress enables port sharing for UDP
+                    socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+
+                    // Bind to the receive address
+                    socket.Bind(config.ReceiveAddress);
+
+                    // Create UdpClient with the configured socket
+                    udpClient = new UdpClient();
+                    udpClient.Client.Dispose();
+                    udpClient.Client = socket;
+                }
+                else
+                {
+                    // Standard mode - exclusive port binding
+                    udpClient = new UdpClient(config.ReceiveAddress);
+                }
             }
             else
             {

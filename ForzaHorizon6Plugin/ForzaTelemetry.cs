@@ -3,7 +3,7 @@
 namespace ForzaHorizon6Plugin
 {
     [StructLayout(LayoutKind.Sequential)]
-    internal class ForzaTelemetry
+    internal struct ForzaTelemetry
     {
         public uint IsRaceOn; // = 1 when race is on. = 0 when in menus/race stopped …
 

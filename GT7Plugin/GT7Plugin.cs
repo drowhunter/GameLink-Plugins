@@ -18,7 +18,7 @@ namespace GT7Plugin
 {
     [Export(typeof(Game))]
     [ExportMetadata("Name", "Gran Turismo 7")]
-    [ExportMetadata("Version", "1.4")]
+    [ExportMetadata("Version", "1.5")]
     public class GT7Plugin : Game
     {
         #region Standard Properties

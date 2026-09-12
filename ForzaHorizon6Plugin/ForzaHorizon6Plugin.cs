@@ -52,11 +52,9 @@ namespace ForzaHorizon6Plugin
 
 		}
 
-		public List<Profile_Component> DefaultProfile() {
+		public List<Profile_Component> DefaultProfile() => dispatcher.JsonToComponents(ResourceHelper.DefaultProfile);
 
-			return dispatcher.JsonToComponents(ResourceHelper.DefaultProfile);
-
-		}
+		
 
 		public void Exit() {
 			telemetry?.Dispose();

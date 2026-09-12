@@ -33,7 +33,8 @@ namespace GT7Plugin
         /// </summary>
         /// <param name="port"></param>
         /// <param name="packetType"></param>
-        public UDPListener(SimInterfacePacketType packetType, int port = 33740)
+        /// <param name="sharedMode">Enable shared UDP port listening (allows multiple apps on same port). Default: true</param>
+        public UDPListener(SimInterfacePacketType packetType, int port = 33740, bool sharedMode = true)
         {
             _packetType = packetType;
 
@@ -48,7 +49,29 @@ namespace GT7Plugin
             _cryptor = new (packetType);
 
             cancellationTokenSource = new CancellationTokenSource();
-            udpClient = new UdpClient(port);
+
+            if (sharedMode)
+            {
+                // Create socket with shared mode to allow multiple listeners on the same UDP port
+                var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+
+                // Allow multiple listeners on the same UDP port
+                // On Windows, ReuseAddress enables port sharing for UDP
+                socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+
+                // Bind to the port
+                socket.Bind(new IPEndPoint(IPAddress.Any, port));
+
+                // Create UdpClient with the configured socket
+                udpClient = new UdpClient();
+                udpClient.Client.Dispose();
+                udpClient.Client = socket;
+            }
+            else
+            {
+                // Standard mode - exclusive port binding
+                udpClient = new UdpClient(port);
+            }
 
             if (port == 33740) {
                 // only send heartbeats if we are listening on the default port,

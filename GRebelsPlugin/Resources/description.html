@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Installation Instructions</title>
+    <style type="text/css">
+        li {
+            margin: 10px unset;
+        }
+        a, a:visited {
+            color: #37E5DB;
+        }
+    </style>
+</head>
+<body>
+    <h3>Setup</h3>
+    <p>G-Rebels has built-in motion telemetry. No mod or patch is required.</p>
+    <ol>
+        <li>Launch G-Rebels and open the <b>Options</b> menu.</li>
+        <li>Turn on <b>Telemetry</b>.</li>
+        <li>In the telemetry settings, <b>uncheck</b> the <b>Positive Speed</b> option.</li>
+        <li>Start GameLink. The game sends telemetry to UDP port <b>33001</b> on this PC.</li>
+    </ol>
+
+    <h3>Notes</h3>
+    <ul>
+        <li>The game does not send angular velocity. The plugin calculates <b>AngularVelocityX</b> (pitch), <b>AngularVelocityY</b> (yaw) and <b>AngularVelocityZ</b> (roll) from the change in rotation between packets.</li>
+        <li>The plugin also calculates <b>Bump</b> (size of vertical acceleration) and <b>Slide</b> (size of sideways velocity). The default profile uses them for rumble (AMP and HZ), and uses <b>Speed</b> for the fan (SPlug).</li>
+        <li>RPM, Gear, suspension travel and wheel terrain are part of the packet but G-Rebels always sends them as 0.</li>
+        <li>Other SimRacingStudio-compatible apps can listen on port 33001 at the same time.</li>
+    </ul>
+    <small>Version 1.0.0</small>
+</body>
+</html>

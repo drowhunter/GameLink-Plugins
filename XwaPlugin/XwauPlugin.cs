@@ -5,15 +5,12 @@ using SharedLib.TelemetryHelper;
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using System.Threading;
 
 using YawGLAPI;
@@ -22,7 +19,7 @@ namespace YawVR_Game_Engine.Plugin
 {
     [Export(typeof(Game))]
     [ExportMetadata("Name", "X-Wing Alliance")]
-    [ExportMetadata("Version", "1.0")]
+    [ExportMetadata("Version", "1.2")]
     public class XwauPlugin : Game
     {
         
@@ -87,6 +84,8 @@ namespace YawVR_Game_Engine.Plugin
 
         }
 
+        
+
         private void ReadThread()
         {
             var options = new JsonSerializerSettings()
@@ -127,9 +126,12 @@ namespace YawVR_Game_Engine.Plugin
 
         public async void PatchGame()
         {
+
 #if DEBUG
             Debugger.Launch();
-#endif                        
+#endif           
+            
+
         }
 
         // Custom converter for "0"/"1" to bool

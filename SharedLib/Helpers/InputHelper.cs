@@ -12,7 +12,10 @@ namespace SharedLib
             if(data == null)
                 data = new T();
 
-            var props = (data?.GetType() ?? typeof(T)).GetProperties();
+            // Static properties (e.g. Vector3.Zero) recurse forever and indexers (Vector3.Item) need arguments.
+            var props = (data?.GetType() ?? typeof(T)).GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(p => p.GetIndexParameters().Length == 0)
+                .ToArray();
 
             if(!props.Any())
                 foreach (var field in (data?.GetType() ?? typeof(T)).GetFields())

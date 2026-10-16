@@ -96,12 +96,7 @@ namespace YawVR_Game_Engine.Plugin
                         {
                             foreach (var (i, key, value) in InputHelper.GetValues(data).WithIndex())
                             {
-                                var nv = key switch
-                                {
-                                    nameof(RushOfBloodTelemetryData.Pitch) => MathsF.ScalePitchRoll(value, -90, 90, -deviceParameters.PitchLimitF, deviceParameters.PitchLimitB),
-                                    nameof(RushOfBloodTelemetryData.Roll) => MathsF.ScalePitchRoll(value, -90, 90, -deviceParameters.RollLimit, deviceParameters.RollLimit),
-                                    _ => value
-                                };
+                                var nv = ScaleInput(key, value, deviceParameters);
 
                                 controller.SetInput(i, nv);
                             }
@@ -121,6 +116,15 @@ namespace YawVR_Game_Engine.Plugin
                 catch (ObjectDisposedException) { break; }
             }
         }
+
+        internal static float ScaleInput(string key, float value, IDeviceParameters limits) => key switch
+        {
+            // GameLink calibration drives final pitch +F forward and -B backward. The default
+            // profile inverts pitch, so negative input becomes +F and positive input becomes -B.
+            nameof(RushOfBloodTelemetryData.Pitch) => MathsF.ScalePitchRoll(value, -90, 90, -limits.PitchLimitF, limits.PitchLimitB),
+            nameof(RushOfBloodTelemetryData.Roll) => MathsF.ScalePitchRoll(value, -90, 90, -limits.RollLimit, limits.RollLimit),
+            _ => value
+        };
 
         public Dictionary<string, ParameterInfo[]> GetFeatures() => null;
 

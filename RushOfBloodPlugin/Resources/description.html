@@ -47,6 +47,16 @@
 
     <h3>Notes</h3>
     <ul>
+        <li>Orientation uses the game's Y-up axes: yaw about Y, pitch about X, roll about Z.
+            Yaw is an absolute heading in degrees; GameLink handles its wrap at +/-180 degrees.</li>
+        <li>Pitch and roll are scaled to the configured device limits, not its maximum capabilities.
+            Keep Pitch inverted as in the default profile: pitch scaling accounts for this inversion
+            so final forward output uses PitchLimitF and backward output uses PitchLimitB.
+            Roll uses RollLimit in both directions. Custom multipliers, offsets or axis inversion changes
+            can alter the final range.</li>
+        <li>If upgrading from the original default profile, update the motion mappings in your saved profile:
+            <b>Yaw (input 1) to Yaw</b>, <b>Pitch (input 2) to Pitch</b>, and <b>Roll (input 3) to Roll</b>.
+            The original default profile had Pitch and Roll outputs crossed. Existing saved profiles are not changed by replacing the DLL.</li>
         <li>Telemetry is sent to <b>127.0.0.1:25151</b> by default (matches the plugin's default IP and port settings).</li>
         <li>Telemetry is on by default. It is disabled if the environment variable
             <code>SHADPS4_ROB_MOTION_TELEMETRY=0</code> is set.</li>

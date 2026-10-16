@@ -102,22 +102,7 @@ namespace YawVR_Game_Engine.Plugin
                         {
                             foreach (var (i, key, value) in InputHelper.GetValues(data).WithIndex())
                             {
-                                var nv = 0f;
-
-                                switch (key)
-                                {
-                                    case nameof(DistanceTelemetryData.Pitch):
-                                        nv = MathsF.ScalePitchRoll(value, -90, 90, -deviceParameters.PitchLimitF, deviceParameters.PitchLimitB);
-                                        break;
-                                    case nameof(DistanceTelemetryData.Roll):
-                                        nv = MathsF.ScalePitchRoll(value, -90, 90, -deviceParameters.RollLimit, deviceParameters.RollLimit);
-                                        break;
-                                    default:
-                                        nv = value;
-                                        break;
-                                }
-
-                                controller.SetInput(i, nv);
+                                controller.SetInput(i, ScaleInput(key, value, deviceParameters));
                             }
                         }
                         else
@@ -137,6 +122,13 @@ namespace YawVR_Game_Engine.Plugin
         }
 
         bool isRestting = false;
+
+        internal static float ScaleInput(string key, float value, IDeviceParameters limits) => key switch
+        {
+            nameof(DistanceTelemetryData.Pitch) => MathsF.ScalePitchRoll(value, -90, 90, -limits.PitchLimitF, limits.PitchLimitB),
+            nameof(DistanceTelemetryData.Roll) => MathsF.ScalePitchRoll(value, -90, 90, -limits.RollLimit, limits.RollLimit),
+            _ => value
+        };
 
 
         CancellationTokenSource cts = new CancellationTokenSource();

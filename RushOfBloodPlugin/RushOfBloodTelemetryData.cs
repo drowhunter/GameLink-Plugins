@@ -25,8 +25,9 @@ namespace YawVR_Game_Engine.Plugin
         {
             get
             {
-                var siny = 2f * (quatW * quatZ + quatX * quatY);
-                var cosy = 1f - 2f * (quatY * quatY + quatZ * quatZ);
+                // Y-up, Z-forward: yaw about Y, pitch about X, roll about Z (Y-X-Z order).
+                var siny = 2f * (quatW * quatY + quatX * quatZ);
+                var cosy = 1f - 2f * (quatX * quatX + quatY * quatY);
                 return MathF.Atan2(siny, cosy) * Rad2Deg;
             }
         }
@@ -35,7 +36,7 @@ namespace YawVR_Game_Engine.Plugin
         {
             get
             {
-                var sinp = Math.Clamp(2f * (quatW * quatY - quatZ * quatX), -1f, 1f);
+                var sinp = Math.Clamp(2f * (quatW * quatX - quatY * quatZ), -1f, 1f);
                 return MathF.Asin(sinp) * Rad2Deg;
             }
         }
@@ -44,8 +45,8 @@ namespace YawVR_Game_Engine.Plugin
         {
             get
             {
-                var sinr = 2f * (quatW * quatX + quatY * quatZ);
-                var cosr = 1f - 2f * (quatX * quatX + quatY * quatY);
+                var sinr = 2f * (quatW * quatZ + quatX * quatY);
+                var cosr = 1f - 2f * (quatX * quatX + quatZ * quatZ);
                 return MathF.Atan2(sinr, cosr) * Rad2Deg;
             }
         }

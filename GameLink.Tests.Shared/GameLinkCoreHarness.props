@@ -1,0 +1,18 @@
+<Project>
+  <!-- Shared headless GameLink.Core harness. Import from a plugin test project. -->
+  <PropertyGroup>
+    <GameLinkCoreSource Condition="'$(GameLinkCoreSource)' == ''">D:\Ripped\YawVR GameLink 2\GameLink.Core</GameLinkCoreSource>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.11.0" />
+    <Compile Include="$(MSBuildThisFileDirectory)CoreSourceCompiler.cs" Link="Harness\CoreSourceCompiler.cs" />
+    <None Include="$(MSBuildThisFileDirectory)HeadlessCore.cs.txt" Link="HeadlessCore.cs.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(GameLinkCoreSource)\ProfileManager.cs" Link="CoreSource\ProfileManager.cs" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(GameLinkCoreSource)\Helpers.cs" Link="CoreSource\Helpers.cs" CopyToOutputDirectory="PreserveNewest" />
+    <Using Include="GameLink.Tests.Shared" />
+  </ItemGroup>
+  <Target Name="RequireCoreSource" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('$(GameLinkCoreSource)\ProfileManager.cs')"
+           Text="Set GameLinkCoreSource to the attached GameLink.Core source folder." />
+  </Target>
+</Project>

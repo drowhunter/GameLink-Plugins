@@ -1,0 +1,112 @@
+using System;
+using System.Collections.ObjectModel;
+using YawGLAPI;
+
+namespace GameLink.Core
+{
+    // Only lifecycle, services and device I/O are replaced. All calculation methods
+    // are compiled verbatim from the attached Core source, not reimplemented here.
+    public class ObservableObject
+    {
+        protected void OnPropertyChanged(string name) { }
+    }
+
+    // The decompiled source indexes arrays with enum members without casting.
+    // Integer constants preserve their values and let those expressions compile.
+    public static class OutputType
+    {
+        public const int YAW = 0, PITCH = 1, ROLL = 2, AMP = 3, HZ = 4, SPLUG = 5;
+    }
+
+    public struct SpikeData { public float value, t; }
+    public class Vector3 { public float X, Y, Z; }
+    public class Profile { public ObservableCollection<Profile_Component> Components = new(); }
+    public class PluginProfiles { public Profile ActiveProfile = new(); }
+    public class USBComponent : Profile_Component { public Guid UsbGuid; }
+    public class USBComponentCondition : ProfileCondition { public Guid UsbGuid; }
+    public class USBComponentMath : ProfileMath { public Guid UsbGuid; }
+    public class USBProfile { public ObservableCollection<USBComponent> Components = new(); }
+    public class USBProfiles { public USBProfile ActiveProfile = new(); }
+    public interface IUSBService
+    {
+        USBProfiles Profiles { get; }
+        bool Enabled { get; }
+        bool IsDevicePresent(Guid id);
+        float GetInputValue(Guid id, int index);
+    }
+    public class CoreContext
+    {
+        public static CoreContext Instance = new();
+        public bool InGame = true;
+        public IUSBService GetUSBService() => null;
+    }
+    public class Antirollover { public bool Roll, Pitch; }
+    public class Settings
+    {
+        public static Settings Instance = new();
+        public bool Antijump, LimitSmooth;
+        public int AntijumpValue = 30;
+        public Antirollover Antirollover = new();
+    }
+    public class DeviceParameters { public int PitchLimitF = 25, PitchLimitB = 40, RollLimit = 20; }
+    public class YawDevice { public DeviceParameters DeviceParams = new(); }
+    public class YawController
+    {
+        public static YawController Instance = new();
+        public YawDevice SelectedDevice = new();
+        public double Yaw, Pitch, Roll;
+        public void SetOrientation(double yaw, double pitch, double roll)
+            { Yaw = yaw; Pitch = pitch; Roll = roll; }
+        public void SetBuzzer(byte amplitude, byte frequency) { }
+        public void SetPlug(byte value) { }
+    }
+    public class Smooth
+    {
+        // LimitSmooth is outside these yaw tests; fail instead of silently emulating it.
+        public void SetLimitMin(float value) => throw new NotSupportedException("LimitSmooth");
+        public void SetLimitMax(float value) => throw new NotSupportedException("LimitSmooth");
+        public float Update(float value) => throw new NotSupportedException("LimitSmooth");
+    }
+    public static class Helpers
+    {
+        /* HELPER_METHODS */
+    }
+    public class ProfileManager : ObservableObject
+    {
+        private float[] outputArray = new float[6], prevOutputArray = new float[6];
+        private float[] prevValues = Array.Empty<float>(), prevRawValues = Array.Empty<float>();
+        private SpikeData[] spikeData = Array.Empty<SpikeData>();
+        private float previousYaw, yawOffset;
+        private bool resetyawFlag;
+        private YawController controller = new();
+        private Smooth m_smoothPitch = new(), m_smoothRoll = new();
+        public float[] InputArray = new float[15], ComponentOutput = Array.Empty<float>();
+        public PluginProfiles Profile = new();
+        public bool OverrideMovement;
+        public Vector3 overridePos = new();
+        public float GlobalWashout = 1;
+        public void Configure(ObservableCollection<Profile_Component> components, bool antijump,
+            int threshold, float washout)
+        {
+            CoreContext.Instance = new();
+            Settings.Instance = new() { Antijump = antijump, AntijumpValue = threshold };
+            Profile.ActiveProfile.Components = components;
+            GlobalWashout = washout;
+        }
+        public void RequestYawReset() => resetyawFlag = true;
+        public float GetCapturedOutput(int index) => index switch
+        {
+            0 => (float)controller.Yaw,
+            1 => (float)controller.Pitch,
+            2 => (float)controller.Roll,
+            _ => outputArray[index]
+        };
+        public float Step(float[] inputs)
+        {
+            InputArray = inputs;
+            CalculateOutput();
+            return (float)controller.Yaw;
+        }
+        /* PROFILE_METHODS */
+    }
+}

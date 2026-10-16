@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Until Dawn: Rush of Blood</title>
+    <style type="text/css">
+
+        li {
+            margin: 10px unset;
+        }
+
+        a, a:visited {
+            color: #37E5DB;
+        }
+
+        code {
+            display: block;
+            background-color: black;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            padding: 2px 5px;
+        }
+    </style>
+</head>
+<body>
+    <h3>Until Dawn: Rush of Blood</h3>
+    <p>
+        Rush of Blood is a PS4 / PSVR game. It runs on PC through <b>BloodRush</b>, an unofficial build of the
+        <a href="https://github.com/shadps4-emu/shadPS4">shadPS4</a> emulator (2D desktop and PC-VR) that streams the
+        cart's motion (speed, orientation and G-forces) over UDP.
+    </p>
+
+    <h3>Get the emulator</h3>
+    <ol>
+        <li>Download the latest BloodRush release <a href="https://github.com/maranone/BloodRush/releases/latest">here</a>
+            (<a href="https://github.com/maranone/BloodRush">project page</a>). Use a release from <b>b002</b> or newer; earlier builds don't send telemetry.</li>
+        <li>Extract it and follow the release instructions. <i>No game files are provided, so you must dump your own copy of the game.</i></li>
+    </ol>
+
+    <h3>Play</h3>
+    <ol>
+        <li>Select this game in GameLink and press <b>Start</b>.</li>
+        <li>Launch Rush of Blood with BloodRush's <b>shadps4.exe</b> (desktop or pc-vr).</li>
+        <li>Ride. Motion is applied while the cart is in play. When the game is paused or between rides, the motion platform holds its position.</li>
+    </ol>
+
+    <h3>Notes</h3>
+    <ul>
+        <li>Telemetry is sent to <b>127.0.0.1:25151</b> by default (matches the plugin's default IP and port settings).</li>
+        <li>Telemetry is on by default. It is disabled if the environment variable
+            <code>SHADPS4_ROB_MOTION_TELEMETRY=0</code> is set.</li>
+        <li>You do <b>not</b> need to run the BloodRush_telemetry Python bridge. The plugin reads the UDP feed directly.
+            The port is shared, so the bridge can still run alongside the plugin for other motion software.</li>
+    </ul>
+
+    <small>Version 1.0.0</small>
+</body>
+</html>

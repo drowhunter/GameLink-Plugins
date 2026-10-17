@@ -19,7 +19,7 @@ namespace Automobilista2Plugin.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "18.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -70,12 +70,31 @@ namespace Automobilista2Plugin.Properties {
                 return ResourceManager.GetString("description", resourceCulture);
             }
         }
-        internal static string profile
-        {
-            get
-            {
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {
+        ///    &quot;GameName&quot;: &quot;Automobilista2&quot;,
+        ///    &quot;Name&quot;: &quot;Default&quot;,
+        ///    &quot;Components&quot;: [
+        ///        {
+        ///            &quot;Constant&quot;: false,
+        ///            &quot;Input_index&quot;: 3,
+        ///            &quot;Output_index&quot;: 4,
+        ///            &quot;MultiplierPos&quot;: 20.0,
+        ///            &quot;MultiplierNeg&quot;: 0.0,
+        ///            &quot;Offset&quot;: 0.5,
+        ///            &quot;Inverse&quot;: false,
+        ///            &quot;Limit&quot;: -1.0,
+        ///            &quot;Smoothing&quot;: 0.75192505,
+        ///            &quot;Enabled&quot;: true,
+        ///            &quot;Spikeflatter&quot;: {
+        ///                &quot;Enabled&quot;: false,
+        ///                &quot;Limit&quot;: 100.0, [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string profile {
+            get {
                 return ResourceManager.GetString("profile", resourceCulture);
             }
         }
-     }
+    }
 }

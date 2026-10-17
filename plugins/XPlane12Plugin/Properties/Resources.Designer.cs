@@ -10,8 +10,8 @@
 
 namespace XPlane12Plugin.Properties {
     using System;
-
-
+    
+    
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.
     /// </summary>
@@ -19,19 +19,19 @@ namespace XPlane12Plugin.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "18.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
-
+        
         private static global::System.Resources.ResourceManager resourceMan;
-
+        
         private static global::System.Globalization.CultureInfo resourceCulture;
-
+        
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-
+        
         /// <summary>
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
@@ -45,7 +45,7 @@ namespace XPlane12Plugin.Properties {
                 return resourceMan;
             }
         }
-
+        
         /// <summary>
         ///   Overrides the current thread's CurrentUICulture property for all
         ///   resource lookups using this strongly typed resource class.
@@ -59,7 +59,7 @@ namespace XPlane12Plugin.Properties {
                 resourceCulture = value;
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to {&quot;GameName&quot;:&quot;X-Plane 12&quot;,&quot;Name&quot;:&quot;Cessna_standard&quot;,&quot;components&quot;:[{&quot;Constant&quot;:false,&quot;Input_index&quot;:1,&quot;Output_index&quot;:1,&quot;MultiplierPos&quot;:1.0,&quot;MultiplierNeg&quot;:1.0,&quot;Offset&quot;:0.0,&quot;Inverse&quot;:true,&quot;Limit&quot;:-1.0,&quot;Smoothing&quot;:0.28678447,&quot;Enabled&quot;:true,&quot;Spikeflatter&quot;:{&quot;Enabled&quot;:false,&quot;Limit&quot;:100.0,&quot;Strength&quot;:0.5},&quot;Deadzone&quot;:0.0,&quot;Type&quot;:0,&quot;Condition&quot;:[],&quot;Math&quot;:[]},{&quot;Constant&quot;:false,&quot;Input_index&quot;:2,&quot;Output_index&quot;:2,&quot;MultiplierPos&quot;:1.0,&quot;MultiplierNeg&quot;:1.0,&quot;Offset&quot;:0.0,&quot;Inverse&quot;:true,&quot;Limit&quot;:-1.0,&quot;Smoothing&quot;:0.5214221,&quot;Enabled&quot;:tr [rest of string was truncated]&quot;;.
         /// </summary>
@@ -68,7 +68,7 @@ namespace XPlane12Plugin.Properties {
                 return ResourceManager.GetString("def_profile", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Go into settings-&gt;Data Output and tick &quot;Send network data output&quot;&lt;br&gt;
         ///Set IP Address to 127.0.0.1, Port to 4123&lt;br&gt;

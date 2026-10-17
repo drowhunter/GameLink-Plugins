@@ -1,0 +1,14 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="../../SharedLib/SharedLib.shproj" />
+  <Project Path="../../YawGLAPI/YawGLAPI.csproj">
+    <Build Solution="Debug|Any CPU" Project="false" />
+  </Project>
+  <Project Path="FalconBMS.csproj">
+    <Build Solution="*|x86" Project="false" />
+    <Build Solution="Release|Any CPU" Project="false" />
+  </Project>
+</Solution>

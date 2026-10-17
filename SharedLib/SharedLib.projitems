@@ -23,7 +23,11 @@
     <Compile Include="$(MSBuildThisFileDirectory)TelemetryHelper\Convertors\IByteConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TelemetryHelper\Convertors\JsonByteConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TelemetryHelper\Convertors\MarshalByteConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)TelemetryHelper\Convertors\NewtonsoftJsonConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TelemetryHelper\Convertors\RawBytesConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)TelemetryHelper\Convertors\SparseJsonConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)TelemetryHelper\Convertors\SparseJsonDictConverter.cs" />
+    <Compile Include="..\..\SharedLib\TelemetryHelper\Convertors\SparseJsonDictConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TelemetryHelper\Convertors\StringByteConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TelemetryHelper\MmfTelemetry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TelemetryHelper\TcpTelemetry.cs" />

@@ -1,0 +1,10 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="All" />
+    <BuildType Name="Debug" />
+    <BuildType Name="Release" />
+  </Configurations>
+  <Project Path="../../SharedLib/SharedLib.shproj" />
+  <Project Path="../../YawGLAPI/YawGLAPI.csproj" Type="474b5939-1cf9-4045-b605-dca1a1a4efd8" />
+  <Project Path="XwauPlugin.csproj" Type="474b5939-1cf9-4045-b605-dca1a1a4efd8" />
+</Solution>

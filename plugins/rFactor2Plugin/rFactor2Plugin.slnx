@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="../../SharedLib/SharedLib.shproj" />
+  <Project Path="../../YawGLAPI/YawGLAPI.csproj" />
+  <Project Path="../LeMansUltimatePlugin/LMUPlugin.csproj" />
+  <Project Path="RFactor2Plugin.csproj" />
+</Solution>

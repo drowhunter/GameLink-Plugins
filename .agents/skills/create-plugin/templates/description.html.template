@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{Title}}</title>
+    <style type="text/css">
+
+        li {
+            margin: 10px unset;
+        }
+
+        a, a:visited {
+            color: #37E5DB;
+        }
+
+        code {
+            display: block;
+            background-color: black;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            padding: 2px 5px;
+        }
+    </style>
+</head>
+<body>
+    <h3>{{Title}}</h3>
+    <p>{{Overview}}</p>
+
+    <h3>Get the game / mod</h3>
+    <ol>
+        <li>Download the latest release <a href="{{ReleasesUrl}}">here</a> (<a href="{{ProjectUrl}}">project page</a>). {{MinimumVersionNote}}</li>
+        <li>{{InstallSteps}}</li>
+    </ol>
+
+    <h3>Play</h3>
+    <ol>
+        <li>Select this game in GameLink and press <b>Start</b>.</li>
+        <li>{{LaunchStep}}</li>
+        <li>{{PlayStep}}</li>
+    </ol>
+
+    <h3>Notes</h3>
+    <ul>
+        <li>Telemetry is sent to <b>{{DefaultIP}}:{{DefaultPort}}</b> by default (matches the plugin's default IP and port settings).</li>
+        <li>{{EnableDisableNote}}</li>
+    </ul>
+
+    <small>Version 1.0.0</small>
+</body>
+</html>

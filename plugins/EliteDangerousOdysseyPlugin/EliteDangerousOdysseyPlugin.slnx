@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="../../SharedLib/SharedLib.shproj" />
+  <Project Path="../../YawGLAPI/YawGLAPI.csproj" />
+  <Project Path="EliteDangerousOdysseyPlugin.csproj" />
+</Solution>

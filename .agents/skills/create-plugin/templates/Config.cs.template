@@ -1,0 +1,15 @@
+﻿using YawGLAPI;
+
+namespace YawVR_Game_Engine.Plugin
+{
+    public struct Config
+    {
+        [Info(Description = "IP Address to listen on (default {{DefaultIP}})", Name = "IP Address", RegexValidator = ConfigValidator.IPValidator)]
+        public string IP = "{{DefaultIP}}";
+
+        [Info(Description = "{{PortDescription}}", Name = "Port", RegexValidator = ConfigValidator.PortRange)]
+        public int Port = {{DefaultPort}};
+
+        public Config() { }
+    }
+}

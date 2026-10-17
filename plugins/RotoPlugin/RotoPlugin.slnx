@@ -1,0 +1,10 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="All" />
+    <BuildType Name="Debug" />
+    <BuildType Name="Release" />
+  </Configurations>
+  <Project Path="../../SharedLib/SharedLib.shproj" />
+  <Project Path="../../YawGLAPI/YawGLAPI.csproj" />
+  <Project Path="RotoPlugin.csproj" />
+</Solution>

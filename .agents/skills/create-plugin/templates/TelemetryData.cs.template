@@ -1,0 +1,63 @@
+using System;
+using System.Runtime.InteropServices;
+
+namespace YawVR_Game_Engine.Plugin
+{
+    /// <summary>
+    /// {{WireFormatSummary}}
+    /// Private fields mirror the wire format exactly; public properties are the plugin inputs
+    /// (declaration order = input index used by Default.yawglprofile).
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    internal struct {{GameName}}TelemetryData
+    {
+        // ---- Wire fields (exact order/types of the packet) ----
+        private float speed;
+        private float quatX, quatY, quatZ, quatW;
+        private float gForceX, gForceY, gForceZ;
+        private uint flags;
+
+        private const float Rad2Deg = 180f / MathF.PI;
+
+        // ---- Inputs (primary motion first) ----
+        public float Speed => speed;
+
+        // Quaternion -> Euler. Match the convention used by the game's own tooling.
+        public float Yaw
+        {
+            get
+            {
+                var siny = 2f * (quatW * quatZ + quatX * quatY);
+                var cosy = 1f - 2f * (quatY * quatY + quatZ * quatZ);
+                return MathF.Atan2(siny, cosy) * Rad2Deg;
+            }
+        }
+
+        public float Pitch
+        {
+            get
+            {
+                var sinp = Math.Clamp(2f * (quatW * quatY - quatZ * quatX), -1f, 1f);
+                return MathF.Asin(sinp) * Rad2Deg;
+            }
+        }
+
+        public float Roll
+        {
+            get
+            {
+                var sinr = 2f * (quatW * quatX + quatY * quatZ);
+                var cosr = 1f - 2f * (quatX * quatX + quatY * quatY);
+                return MathF.Atan2(sinr, cosr) * Rad2Deg;
+            }
+        }
+
+        public float GForceLateral => gForceX;
+        public float GForceVertical => gForceY;
+        public float GForceLongitudinal => gForceZ;
+
+        // ---- Flags (used to gate motion in the plugin) ----
+        public bool InPlay => (flags & 1) != 0;
+        public bool Paused => (flags & 4) != 0;
+    }
+}

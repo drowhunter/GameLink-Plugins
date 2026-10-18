@@ -4,6 +4,7 @@ using SharedLib.TelemetryHelper;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -24,7 +25,7 @@ namespace YawVR_Game_Engine.Plugin
         public string PROCESS_NAME => "xwvm";
         public string AUTHOR => "Trevor Jones (Drowhunter)";
 
-        public bool PATCH_AVAILABLE => false;
+        public bool PATCH_AVAILABLE => true;
 
         public string Description => ResourceHelper.Description;
         public Stream Logo => ResourceHelper.Logo;
@@ -129,6 +130,7 @@ namespace YawVR_Game_Engine.Plugin
 
         public void PatchGame()
         {
+            Debugger.Launch();
         }
     }
 }

@@ -1,4 +1,4 @@
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 
 using System;
 using System.Collections;
@@ -42,6 +42,8 @@ namespace YawVR_Game_Engine.Plugin
         public float Pitch;
         public float Roll;
 
+        public float Paused;
+
         private const float FireWindow = 0.2f;
         private const float ShakeWindow = 0.5f;
 
@@ -69,7 +71,7 @@ namespace YawVR_Game_Engine.Plugin
                 ShieldFront = Num(d, "fShd"),
                 ShieldBack = Num(d, "rShd"),
                 Hull = Num(d, "hull"),
-                Shake = dmgT >= 0 && t >= dmgT && t - dmgT < ShakeWindow ? 1f - (t - dmgT) / ShakeWindow : 0f,
+                Shake = dmgT > 0 && t >= dmgT && t - dmgT < ShakeWindow ? 1f - (t - dmgT) / ShakeWindow : 0f,
 
                 HitX = hit.x,
                 HitY = hit.y,
@@ -92,6 +94,8 @@ namespace YawVR_Game_Engine.Plugin
                 Yaw = rot.y,
                 Pitch = -Wrap(rot.x),
                 Roll = -Wrap(rot.z),
+
+                Paused = Num(d, "paused") > 0 ? 1f : 0f,
             };
         }
 
@@ -104,7 +108,7 @@ namespace YawVR_Game_Engine.Plugin
         }
 
         private static float Recent(float now, float last, float window)
-            => last >= 0 && now >= last && now - last < window ? 1f : 0f;
+            => last > 0 && now >= last && now - last < window ? 1f : 0f;
 
         private static float ToFloat(object v, float def = 0f)
         {

@@ -1,6 +1,5 @@
 using SharedLib;
 using SharedLib.TelemetryHelper;
-using SharedLib.TelemetryHelper.Convertors;
 
 using System;
 using System.Collections.Generic;
@@ -46,6 +45,7 @@ namespace YawVR_Game_Engine.Plugin
 
         private volatile bool running = false;
         private UdpTelemetry<Dictionary<string, object>> telem;
+        private readonly XwvmConverter converter = new();
         private Thread readThread;
         private IMainFormDispatcher dispatcher;
         private IProfileManager controller;
@@ -73,17 +73,40 @@ namespace YawVR_Game_Engine.Plugin
 
         private void ReadThread()
         {
+            converter.Reset();
             telem = new UdpTelemetry<Dictionary<string, object>>(new UdpTelemetryConfig
             {
                 ReceiveAddress = new IPEndPoint(IPAddress.Parse(settings.IP), settings.Port),
                 ReceiveTimeout = 1000
-            }, new SparseJsonDictConverter());
+            }, converter);
 
+            var lastTime = float.NaN;
+            var lastPacket = long.MinValue;
             while (running)
             {
                 try
                 {
-                    var telemetry = Telemetry.From(telem.Receive());
+                    var data = telem.Receive();
+
+                    // packet counter restarts on a new mission: drop stale keys
+                    var packet = data.TryGetValue("p", out var pv) ? Convert.ToInt64(pv) : 0L;
+                    if (packet < lastPacket)
+                    {
+                        var fresh = new Dictionary<string, object>(data);
+                        converter.Reset();
+                        foreach (var kv in fresh) converter.Data[kv.Key] = kv.Value;
+                        data = converter.Data;
+                        lastTime = float.NaN;
+                    }
+                    lastPacket = packet;
+
+                    var telemetry = Telemetry.From(data);
+
+                    // JSON has no pause flag; the mission clock stops while paused
+                    var time = data.TryGetValue("t", out var tv) ? Convert.ToSingle(tv) : 0f;
+                    if (time == lastTime)
+                        telemetry.Paused = 1f;
+                    lastTime = time;
 
                     var i = 0;
                     foreach (var (_, value) in InputHelper.GetValues(telemetry))

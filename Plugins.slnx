@@ -83,6 +83,7 @@
     <Project Path="plugins/XPlane11Plugin/XPlane11Plugin.csproj" />
     <Project Path="plugins/XPlane12Plugin/XPlane12Plugin.csproj" />
     <Project Path="plugins/XwaPlugin/XwauPlugin.csproj" />
+    <Project Path="plugins/XWVMPlugin/XWVMPlugin.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/DistancePlugin.Tests/DistancePlugin.Tests.csproj" />

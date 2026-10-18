@@ -79,12 +79,12 @@ namespace YawVR_Game_Engine.Plugin
                 LaserFired = Recent(t, Max(d, "canFT", Num(d, "canN")), FireWindow),
                 WarheadFired = Recent(t, Max(d, "lauFT", Num(d, "lauN")), FireWindow),
 
-                // aVel = (pitch, yaw, roll) deg/s; acc = (lateral, vertical, longitudinal)
-                PitchInertia = aVel.x,
+                // aVel = (pitch nose-down +, yaw right +, roll right +) deg/s; acc = (lateral, vertical, longitudinal). Pitch flipped so nose-up is +.
+                PitchInertia = -aVel.x,
                 YawInertia = aVel.y,
                 RollInertia = aVel.z,
                 LateralAccel = acc.x,
-                VerticalAccel = acc.y,
+                VerticalAccel = -acc.y,
                 AccelInertia = acc.z,
 
                 HyperspacePhase = Num(d, "hypM"),

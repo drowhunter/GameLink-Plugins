@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X-Wing Virtual Machine (XWVM)</title>
+    <style type="text/css">
+
+        li {
+            margin: 10px unset;
+        }
+
+        a, a:visited {
+            color: #37E5DB;
+        }
+
+        code {
+            display: block;
+            background-color: black;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            padding: 2px 5px;
+        }
+    </style>
+</head>
+<body>
+    <h3>X-Wing Virtual Machine (XWVM)</h3>
+    <p>XWVM is a free fan-made engine that remakes the classic LucasArts X-Wing on Windows. It has built-in motion telemetry and sends JSON over UDP while you are in flight.</p>
+
+    <h3>Get the game / mod</h3>
+    <ol>
+        <li>Get the latest XWVM installer from the official <a href="https://discord.gg/nfQN9ht">XWVM Discord</a>. Use a build that has <b>Settings &gt; Telemetry</b>. The engine needs your own copy of X-Wing (Collector Series / GOG / Steam); no game files are provided.</li>
+        <li>In XWVM open <b>Settings &gt; Telemetry</b>. Turn broadcasting on, set <b>Format</b> to <b>JSON</b>, address <b>127.0.0.1</b> and port <b>10555</b>.</li>
+    </ol>
+
+    <h3>Play</h3>
+    <ol>
+        <li>Select this game in GameLink and press <b>Start</b>.</li>
+        <li>Launch <b>xwvm.exe</b>.</li>
+        <li>Start a mission. Telemetry is only sent while you are flying.</li>
+    </ol>
+
+    <h3>Notes</h3>
+    <ul>
+        <li>Telemetry is sent to <b>127.0.0.1:10555</b> by default (matches the plugin's default IP and port settings).</li>
+        <li><b>JSON</b> is recommended: it includes ship orientation, which seeds the Yaw heading. XWVM currently ignores the saved Format on startup and sends <b>SimHub</b> until you change the dropdown in-game, so after launching set Format to SimHub and back to JSON. SimHub packets are also accepted; they carry only rates/accelerations, so Yaw starts from 0 and the World angles stay at 0.</li><li>XWVM yaws the ship about a 45&deg; banked axis, so the plugin drives Yaw from the turn rate and Pitch/Roll from the ship's rotation rates (full rate = 90&deg;). Holding yaw also banks the rig toward the turn. Raw Euler angles are available as WorldYaw/WorldPitch/WorldRoll.</li>
+        <li>Lower the broadcast interval (default 0.1 s = 10 Hz) for smoother motion.</li>
+    </ul>
+
+    <small>Version 1.0.0</small>
+</body>
+</html>
+
+

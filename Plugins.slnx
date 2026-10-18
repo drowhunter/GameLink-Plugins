@@ -89,5 +89,6 @@
     <Project Path="tests/DistancePlugin.Tests/DistancePlugin.Tests.csproj" />
     <Project Path="tests/RushOfBloodPlugin.Tests/RushOfBloodPlugin.Tests.csproj" />
     <Project Path="tests/SharedLib.Tests/SharedLib.Tests.csproj" />
+    <Project Path="tests/XWVMPlugin.Tests/XWVMPlugin.Tests.csproj" />
   </Folder>
 </Solution>

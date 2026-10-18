@@ -49,6 +49,7 @@ namespace YawVR_Game_Engine.Plugin
         private Thread readThread;
         private IMainFormDispatcher dispatcher;
         private IProfileManager controller;
+        private IDeviceParameters deviceParameters;
 
         public void Exit()
         {
@@ -65,6 +66,7 @@ namespace YawVR_Game_Engine.Plugin
         public void Init()
         {
             settings = dispatcher.GetConfigObject<Config>();
+            deviceParameters = dispatcher.GetDeviceParameters();
 
             running = true;
             readThread = new Thread(new ThreadStart(ReadThread)) { IsBackground = true };
@@ -108,15 +110,22 @@ namespace YawVR_Game_Engine.Plugin
                         telemetry.Paused = 1f;
                     lastTime = time;
 
-                    var i = 0;
-                    foreach (var (_, value) in InputHelper.GetValues(telemetry))
-                        controller.SetInput(i++, value);
+                    foreach (var (i, key, value) in InputHelper.GetValues(telemetry).WithIndex())
+                        controller.SetInput(i, ScaleInput(key, value, deviceParameters));
                 }
                 catch (SocketException) { }
                 catch (ObjectDisposedException) { break; }
                 catch (Newtonsoft.Json.JsonException) { }
             }
         }
+
+        internal static float ScaleInput(string key, float value, IDeviceParameters limits) => key switch
+        {
+            // Pitch is nose-down positive and the default profile does not invert it, so nose-down maps to +F (forward).
+            nameof(Telemetry.Pitch) => MathsF.ScalePitchRoll(value, -90, 90, -limits.PitchLimitB, limits.PitchLimitF),
+            nameof(Telemetry.Roll) => MathsF.ScalePitchRoll(value, -90, 90, -limits.RollLimit, limits.RollLimit),
+            _ => value
+        };
 
         public void PatchGame()
         {

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -43,7 +43,7 @@
     <h3>Notes</h3>
     <ul>
         <li>Telemetry is sent to <b>127.0.0.1:10555</b> by default (matches the plugin's default IP and port settings).</li>
-        <li><b>JSON</b> is recommended: it includes ship orientation (Yaw/Pitch/Roll). XWVM currently ignores the saved Format on startup and sends <b>SimHub</b> until you change the dropdown in-game, so after launching set Format to SimHub and back to JSON. SimHub packets are also accepted, but carry only rates/accelerations (Yaw/Pitch/Roll inputs stay at 0).</li>
+        <li><b>JSON</b> is recommended: it includes ship orientation, which seeds the Yaw heading. XWVM currently ignores the saved Format on startup and sends <b>SimHub</b> until you change the dropdown in-game, so after launching set Format to SimHub and back to JSON. SimHub packets are also accepted; they carry only rates/accelerations, so Yaw starts from 0 and the World angles stay at 0.</li><li>XWVM yaws the ship about a 45&deg; banked axis, so the plugin drives Yaw from the turn rate and Pitch/Roll from the ship's rotation rates (full rate = 90&deg;). Holding yaw also banks the rig toward the turn. Raw Euler angles are available as WorldYaw/WorldPitch/WorldRoll.</li>
         <li>Lower the broadcast interval (default 0.1 s = 10 Hz) for smoother motion.</li>
     </ul>
 

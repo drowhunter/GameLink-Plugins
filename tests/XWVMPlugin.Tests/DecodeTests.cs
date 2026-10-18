@@ -1,4 +1,4 @@
-using SharedLib;
+﻿using SharedLib;
 using System.Reflection;
 using Xunit;
 using Xunit.Abstractions;
@@ -14,7 +14,7 @@ public sealed class DecodeTests(ITestOutputHelper log)
         "Speed", "Throttle", "MaxSpeed", "BeamEnergy", "SFoils", "ShieldFront", "ShieldBack", "Hull", "Shake",
         "HitX", "HitY", "HitZ", "LaserFired", "WarheadFired",
         "YawInertia", "PitchInertia", "RollInertia", "AccelInertia", "LateralAccel", "VerticalAccel",
-        "HyperspacePhase", "Ejected", "Yaw", "Pitch", "Roll", "Paused",
+        "HyperspacePhase", "Ejected", "Yaw", "Pitch", "Roll", "Paused", "WorldYaw", "WorldPitch", "WorldRoll",
     ];
 
     [Fact]
@@ -26,6 +26,9 @@ public sealed class DecodeTests(ITestOutputHelper log)
         Assert.Equal(Yaw, Array.IndexOf(ExpectedInputs, "Yaw"));
         Assert.Equal(Pitch, Array.IndexOf(ExpectedInputs, "Pitch"));
         Assert.Equal(Roll, Array.IndexOf(ExpectedInputs, "Roll"));
+        Assert.Equal(WorldYaw, Array.IndexOf(ExpectedInputs, "WorldYaw"));
+        Assert.Equal(WorldPitch, Array.IndexOf(ExpectedInputs, "WorldPitch"));
+        Assert.Equal(WorldRoll, Array.IndexOf(ExpectedInputs, "WorldRoll"));
 
         var profile = LoadProfile();
         Assert.All(profile, c => Assert.InRange(c.Input_index, 0, InputCount - 1));
@@ -62,9 +65,13 @@ public sealed class DecodeTests(ITestOutputHelper log)
         var line = File.ReadLines(DataFile("json-capture.jsonl")).First();
         var t = Decode(new XwvmConverter(), System.Text.Encoding.UTF8.GetBytes(line));
         // rot "3.59 0 349.75": Unity eulers, x = pitch (nose-down +), z = roll (left +).
+        Close(t.WorldYaw, 0);
+        Close(t.WorldPitch, 3.59f);
+        Close(t.WorldRoll, -10.25f);
+        // Heading is seeded from rot.y; the ship is not rotating, so the rig tilt is level.
         Close(t.Yaw, 0);
-        Close(t.Pitch, 3.59f);
-        Close(t.Roll, -10.25f);
+        Close(t.Pitch, 0);
+        Close(t.Roll, 0);
         Close(t.MaxSpeed, 100);
         Close(t.ShieldFront, 200);
         Close(t.Hull, 100);
@@ -88,6 +95,9 @@ public sealed class DecodeTests(ITestOutputHelper log)
             Assert.InRange(t.Yaw, 0, 360);
             Assert.InRange(t.Pitch, -180, 180);
             Assert.InRange(t.Roll, -180, 180);
+            Assert.InRange(t.WorldYaw, 0, 360);
+            Assert.InRange(t.WorldPitch, -180, 180);
+            Assert.InRange(t.WorldRoll, -180, 180);
             Assert.InRange(t.Throttle, 0, 100);
             if (t.LaserFired > 0) fired.Add(index);
             Assert.Equal(0, t.WarheadFired);
@@ -113,9 +123,9 @@ public sealed class DecodeTests(ITestOutputHelper log)
             {
                 float dt = time - previousTime;
                 // Current conventions: Pitch nose-down +, PitchInertia nose-up +; Roll left +, RollInertia right +.
-                pitch += Agree(Delta(t.Pitch, p.Pitch) / dt, -(t.PitchInertia + p.PitchInertia) / 2);
-                yaw += Agree(Delta(t.Yaw, p.Yaw) / dt, (t.YawInertia + p.YawInertia) / 2);
-                roll += Agree(Delta(t.Roll, p.Roll) / dt, -(t.RollInertia + p.RollInertia) / 2);
+                pitch += Agree(Delta(t.WorldPitch, p.WorldPitch) / dt, -(t.PitchInertia + p.PitchInertia) / 2);
+                yaw += Agree(Delta(t.WorldYaw, p.WorldYaw) / dt, (t.YawInertia + p.YawInertia) / 2);
+                roll += Agree(Delta(t.WorldRoll, p.WorldRoll) / dt, -(t.RollInertia + p.RollInertia) / 2);
             }
             previous = t;
             previousTime = time;
@@ -138,9 +148,10 @@ public sealed class DecodeTests(ITestOutputHelper log)
         var converter = new XwvmConverter();
         Decode(converter, Json(new { p = 1, t = 5.0, rot = "10 20 30", thr = 75, hull = 80, fShd = 150, maxSpd = 120 }));
         var t = Decode(converter, Json(new { p = 2, t = 5.02, rot = "11 21 31" }));
-        Close(t.Pitch, 11);
-        Close(t.Yaw, 21);
-        Close(t.Roll, 31);
+        Close(t.WorldPitch, 11);
+        Close(t.WorldYaw, 21);
+        Close(t.WorldRoll, 31);
+        Close(t.Yaw, 20); // seeded heading; no yaw rate
         Close(t.Throttle, 75);
         Close(t.Hull, 80);
         Close(t.ShieldFront, 150);
@@ -148,11 +159,13 @@ public sealed class DecodeTests(ITestOutputHelper log)
 
         t = Decode(converter, Json(new { hull = 40 }));
         Close(t.Hull, 40);
-        Close(t.Yaw, 21);
+        Close(t.WorldYaw, 21);
+        Close(t.Yaw, 20);
 
         converter.Reset();
         t = Decode(converter, Json(new { p = 1 }));
         Close(t.Hull, 0);
+        Close(t.WorldYaw, 0);
         Close(t.Yaw, 0);
     }
 
@@ -189,9 +202,10 @@ public sealed class DecodeTests(ITestOutputHelper log)
     public void VectorArraysAreAccepted()
     {
         var t = Decode(new XwvmConverter(), Json(new { rot = new[] { 350.0, 90.0, 190.0 }, vel = new[] { 0, 0, 42 } }));
-        Close(t.Pitch, -10);
+        Close(t.WorldPitch, -10);
+        Close(t.WorldYaw, 90);
+        Close(t.WorldRoll, -170);
         Close(t.Yaw, 90);
-        Close(t.Roll, -170);
         Close(t.Speed, 42);
     }
 
@@ -205,12 +219,12 @@ public sealed class DecodeTests(ITestOutputHelper log)
     [InlineData(360, 0)]
     [InlineData(-90, -90)]
     [InlineData(720 + 45, 45)]
-    public void PitchAndRollWrapToSigned180(float unity, float expected)
+    public void WorldPitchAndRollWrapToSigned180(float unity, float expected)
     {
         var t = Decode(new XwvmConverter(), Json(new { rot = Vec(unity, unity, unity) }));
-        Close(t.Pitch, expected);
-        Close(t.Roll, expected);
-        Close(t.Yaw, unity);
+        Close(t.WorldPitch, expected);
+        Close(t.WorldRoll, expected);
+        Close(t.WorldYaw, unity);
     }
 
     [Theory]
@@ -317,10 +331,13 @@ public sealed class DecodeTests(ITestOutputHelper log)
         Close(t.AccelInertia, 21);
         Close(t.Ejected, 0);
         Close(t.Paused, 0);
-        // SimHub carries rates only; no orientation.
+        // SimHub carries rates only; no orientation. Tilt comes from rates against the 80 deg/s fallback maximum.
+        Close(t.WorldYaw, 0);
+        Close(t.WorldPitch, 0);
+        Close(t.WorldRoll, 0);
         Close(t.Yaw, 0);
-        Close(t.Pitch, 0);
-        Close(t.Roll, 0);
+        Close(t.Pitch, 12 / 80f * 90);
+        Close(t.Roll, -(13 + Telemetry.YawAxisComponent * 11) / 80f * 90);
     }
 
     [Fact]
@@ -350,7 +367,7 @@ public sealed class DecodeTests(ITestOutputHelper log)
         // Switching the game to JSON must not leave a stale SimHub pause flag behind.
         t = Decode(converter, Json(new { p = 1, rot = "0 45 0" }));
         Assert.Equal(0, t.Paused);
-        Close(t.Yaw, 45);
+        Close(t.WorldYaw, 45);
         Assert.Equal(1, t.Ejected);
     }
 
@@ -360,8 +377,46 @@ public sealed class DecodeTests(ITestOutputHelper log)
         var converter = new XwvmConverter();
         Decode(converter, Json(new { rot = "5 90 10" }));
         var t = Decode(converter, new SimHub().F32(SimHub.YawRate, 7).Bytes);
+        Close(t.WorldYaw, 90);
         Close(t.Yaw, 90);
         Close(t.YawInertia, 7);
+    }
+
+    [Theory]
+    [InlineData(80, 1, 80 * 0.70710678f)]
+    [InlineData(-80, 1, 360 - 80 * 0.70710678f)]
+    [InlineData(80, 0.5, 40 * 0.70710678f)]
+    [InlineData(80, 1.5, 0)]   // gap longer than a second: resync, no jump
+    [InlineData(80, -1, 0)]    // clock went backwards: resync, no jump
+    [InlineData(80, 0, 0)]     // paused clock
+    public void HeadingIntegratesBodyYawRateOverMissionTime(float yawInput, double dt, float expected)
+    {
+        var converter = new XwvmConverter();
+        Decode(converter, Json(new { t = 10.0, rot = "0 0 0" }));
+        var t = Decode(converter, Json(new { t = 10.0 + dt, aVel = $"0 {yawInput} 0" }));
+        Close(t.Yaw, expected);
+    }
+
+    [Fact]
+    public void ConverterResetReseedsHeadingFromRot()
+    {
+        var converter = new XwvmConverter();
+        Decode(converter, Json(new { t = 1.0, rot = "0 10 0" }));
+        Decode(converter, Json(new { t = 2.0, aVel = "0 50 0" }));
+        converter.Reset();
+        Close(Decode(converter, Json(new { t = 0.5, rot = "0 200 0", aVel = "0 50 0" })).Yaw, 200);
+    }
+
+    [Theory]
+    [InlineData(10, 0, 0)]
+    [InlineData(0, 40, 0)]
+    [InlineData(0, 0, 40)]
+    [InlineData(-30, 20, -60)]
+    public void TiltIsTheBodyRateScaledToTheShipMaximum(float pitchInput, float yawInput, float rollInput)
+    {
+        var t = Decode(new XwvmConverter(), Json(new { aVel = $"{pitchInput} {yawInput} {rollInput}", maxAVel = "79.1 77.34 77.34" }));
+        Close(t.Pitch, pitchInput / 79.1f * 90);
+        Close(t.Roll, -(rollInput + Telemetry.YawAxisComponent * yawInput) / 77.34f * 90);
     }
 
     [Fact]
@@ -406,5 +461,39 @@ public sealed class DecodeTests(ITestOutputHelper log)
     private static float Delta(float to, float from) => (float)Math.IEEERemainder((double)to - from, 360);
 
     private static void Close(float actual, float expected) =>
-        Assert.True(float.IsFinite(actual) && Math.Abs(actual - expected) <= 0.001f, $"Expected {expected}, got {actual}.");
+        Assert.True(float.IsFinite(actual) && Math.Abs(actual - expected) <= 0.001f, $"Expected {expected},         got {actual}.");
+
+            [Fact]
+            public void HeldYawStickTurnsTheHeadingSteadilyWithoutReversals()
+    {
+        // Live capture: left stick held right ~20 s, centred, then held left ~10 s.
+        // XWVM yaws about (Up - Forward), so world Euler yaw speed varies and the rig must not follow it.
+        var converter = new XwvmConverter();
+        Telemetry? previous = null;
+        double previousTime = 0;
+        int right = 0, left = 0;
+        foreach (var line in File.ReadLines(DataFile("yaw-hold-capture.jsonl")))
+        {
+            var t = Decode(converter, System.Text.Encoding.UTF8.GetBytes(line));
+            double time = Convert.ToDouble(converter.Data["t"]);
+            if (previous is { } p && Math.Abs(t.YawInertia) > 40 && Math.Abs(p.YawInertia) > 40 && Math.Sign(t.YawInertia) == Math.Sign(p.YawInertia))
+            {
+                var dt = (float)(time - previousTime);
+                if (dt > 0 && dt < 1)
+                {
+                    var expected = Telemetry.YawAxisComponent * t.YawInertia * dt;
+                    var step = Delta(t.Yaw, p.Yaw);
+                    Assert.Equal(Math.Sign(t.YawInertia), Math.Sign(step));
+                    Assert.InRange(step, expected - Math.Abs(expected) * 0.05 - 0.01, expected + Math.Abs(expected) * 0.05 + 0.01);
+                    Assert.Equal(-Math.Sign(t.YawInertia), Math.Sign(t.Roll));
+                    Assert.InRange(Math.Abs(t.Pitch), 0, 1);
+                    if (t.YawInertia > 0) right++; else left++;
+                }
+            }
+            previous = t;
+            previousTime = time;
+        }
+        Assert.True(right > 50, $"right samples {right}");
+        Assert.True(left > 20, $"left samples {left}");
+    }
 }

@@ -14,8 +14,9 @@ namespace XWVMPlugin.Tests;
 /// <summary>Builds wire packets and runs them through the plugin's own decode path.</summary>
 internal static class Packets
 {
-    public const int InputCount = 26;
+    public const int InputCount = 29;
     public const int Yaw = 22, Pitch = 23, Roll = 24;
+    public const int WorldYaw = 26, WorldPitch = 27, WorldRoll = 28;
 
     public static string DataFile(string name) => Path.Combine(AppContext.BaseDirectory, "Data", name);
 
@@ -42,7 +43,47 @@ internal static class Packets
 
     public static float Unity(float degrees) => ((degrees % 360) + 360) % 360;
 
-    public static Telemetry Decode(XwvmConverter converter, byte[] packet) => Telemetry.From(converter.FromBytes(packet));
+    public static Telemetry Decode(XwvmConverter converter, byte[] packet) =>
+        Telemetry.From(converter.FromBytes(packet), converter.Heading);
+
+    /// <summary>
+    /// Flies the plugin to requested rig Yaw/Pitch/Roll inputs by sending the body rates XWVM would report
+    /// (yaw input also rolls the ship right, see <see cref="Telemetry.YawAxisComponent"/>).
+    /// </summary>
+    internal sealed class Flight
+    {
+        public const float MaxRate = 80;
+        public const double Dt = 0.02;
+        public readonly XwvmConverter Converter = new();
+        private long frame;
+        private float? lastYaw;
+
+        public Telemetry Next(float yaw, float pitch, float roll)
+        {
+            frame++;
+            double yawInput = lastYaw is { } previous
+                ? Math.IEEERemainder((double)yaw - previous, 360) / Dt / Telemetry.YawAxisComponent
+                : 0;
+            lastYaw = yaw;
+            double pitchInput = pitch / 90.0 * MaxRate;
+            double rollInput = -(roll / 90.0 * MaxRate) - Telemetry.YawAxisComponent * yawInput;
+            return Decode(Converter, Json(new Dictionary<string, object>
+            {
+                ["p"] = frame,
+                ["t"] = 10 + frame * Dt,
+                ["rot"] = Vec(Unity(pitch), Unity(yaw), Unity(roll)),
+                ["aVel"] = string.Create(CultureInfo.InvariantCulture, $"{pitchInput:R} {yawInput:R} {rollInput:R}"),
+                ["maxAVel"] = Vec(MaxRate, MaxRate, MaxRate),
+                ["vel"] = "0 0 50",
+                ["acc"] = "0 0 0",
+                ["thr"] = 50,
+                ["maxSpd"] = 100,
+                ["canN"] = 0, ["canFT"] = new float[8],
+                ["lauN"] = 0, ["lauFT"] = new float[8],
+                ["dmgT"] = -1, ["ejcT"] = -1,
+            }));
+        }
+    }
 
     public static float[] Inputs(Telemetry telemetry, IDeviceParameters limits) =>
         InputHelper.GetValues(telemetry)

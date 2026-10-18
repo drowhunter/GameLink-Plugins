@@ -47,21 +47,27 @@ fed to Core with the embedded `Default.yawglprofile`.
 - Synthetic SimHub packets written at independently computed offsets: every mapped
   field, throttle ×100, pause and ejection flags, JSON-after-SimHub clearing `paused`,
   SimHub-after-JSON keeping orientation, short binary packets not treated as SimHub.
+- Heading integration (rate × mission time, gaps > 1 s and backwards clocks resync,
+  reset reseeds from `rot.y`), rate-based tilt scaled to `maxAVel`, and a live
+  held-yaw-stick capture (`yaw-hold-capture.jsonl`) where Yaw must advance steadily
+  in the stick direction with no reversals.
 
 `DeviceLimitTests`
 
 - `ScaleInput` with distinct forward/backward/roll limits over -180..180.
   Pitch is nose-down positive and not inverted by the profile, so positive pitch uses
   `PitchLimitF` and negative uses `PitchLimitB`. Other inputs pass through.
-- Final Core pitch/roll outputs bounded and monotonic, and smooth across the Unity
-  0/360 boundary. Samples ramp in from level because the pitch spike filter (limit 10)
-  flattens the first jump.
+- Final Core pitch/roll outputs bounded and monotonic, and smooth through level.
+  Samples ramp in from level because the pitch spike filter (limit 10) flattens the
+  first jump.
 
 `YawOutputTests`
 
 - Multiple full turns at several tilts, simultaneous yaw/pitch/roll, full pitch and
-  roll rotations, a seeded 20,000-step walk, a heading/tilt grid, Unity 0/360 and
+  roll rotations, a seeded 20,000-step walk, a heading/tilt grid, 0/360 and
   Core ±180 wraps, yaw reset, the captured flight, and isolated 1:1 yaw.
+  Packets come from `Packets.Flight`, which emits the `aVel` rates that make the
+  decoded Yaw/Pitch/Roll hit the requested targets.
 - Vibration: shake and warheads drive amplitude 50 at constant frequency 1, clamped to 254.
 
 ## Intentionally failing contracts
@@ -76,6 +82,14 @@ These are not skipped. They expose real defects:
 
 ## Sign conventions
 
-Pitch is nose-down positive and Roll is left positive (raw Unity Euler angles), while
-PitchInertia is nose-up positive and RollInertia is right positive.
-`CapturedAngularRatesMatchCapturedOrientationChanges` pins these conventions.
+XWVM yaws the ship about the normalized `Up - Forward` axis (`Ship.RotateFromInput`),
+so holding yaw both yaws and banks the ship at 45°, and the world Euler yaw speeds up,
+slows and can briefly reverse. The rig inputs therefore come from body rates:
+
+- `Yaw`: heading seeded from `rot.y`, then integrated from `0.7071 × aVel.y` over `t`.
+- `Pitch`: `aVel.x / maxAVel.x × 90`, nose-down positive.
+- `Roll`: `-(aVel.z + 0.7071 × aVel.y) / maxAVel.z × 90`, left positive (includes the
+  yaw-induced bank).
+- `WorldYaw`/`WorldPitch`/`WorldRoll` (inputs 26–28): raw Unity Euler angles, pitch and
+  roll wrapped to ±180. PitchInertia is nose-up positive and RollInertia is right positive.
+  `CapturedAngularRatesMatchCapturedOrientationChanges` pins these conventions.

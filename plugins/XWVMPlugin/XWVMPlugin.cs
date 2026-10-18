@@ -102,7 +102,7 @@ namespace YawVR_Game_Engine.Plugin
                     }
                     lastPacket = packet;
 
-                    var telemetry = Telemetry.From(data);
+                    var telemetry = Telemetry.From(data, converter.Heading);
 
                     // JSON has no pause flag; the mission clock stops while paused
                     var time = data.TryGetValue("t", out var tv) ? Convert.ToSingle(tv) : 0f;

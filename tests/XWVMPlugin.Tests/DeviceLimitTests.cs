@@ -1,4 +1,4 @@
-using Xunit;
+﻿using Xunit;
 using YawGLAPI;
 using static XWVMPlugin.Tests.Packets;
 using Plugin = YawVR_Game_Engine.Plugin.XWVMPlugin;
@@ -53,15 +53,15 @@ public sealed class DeviceLimitTests
         var limits = new Limits((byte)forward, (byte)backward, (byte)roll);
         dynamic manager = CoreSourceCompiler.Create();
         manager.Configure(LoadProfile(), false, 30, 1f);
-        var converter = new YawVR_Game_Engine.Plugin.XwvmConverter();
+        var flight = new Flight();
         // Ramp in from level so the pitch spike filter (limit 10) sees no initial jump.
         for (int sample = 0; sample >= -360; sample--)
-            manager.Step(Inputs(Decode(converter, Orientation(sample + 500, 37, sample / 4f, sample / 4f)), limits));
+            manager.Step(Inputs(flight.Next(37, sample / 4f, sample / 4f), limits));
         float? previousPitch = null, previousRoll = null;
         for (int sample = -360; sample <= 360; sample++)
         {
             float angle = sample / 4f;
-            var inputs = Inputs(Decode(converter, Orientation(sample + 1000, 37, angle, angle)), limits);
+            var inputs = Inputs(flight.Next(37, angle, angle), limits);
             manager.Step(inputs);
             float pitchOutput = manager.GetCapturedOutput(1);
             float rollOutput = manager.GetCapturedOutput(2);
@@ -85,23 +85,23 @@ public sealed class DeviceLimitTests
     [Theory]
     [InlineData(1)]
     [InlineData(-1)]
-    public void PitchAndRollStaySmoothAcrossTheUnityZeroBoundary(int direction)
+    public void PitchAndRollStaySmoothThroughLevel(int direction)
     {
-        // Unity reports small negative angles as 359.x; output must not jump at 0/360.
+        // Rate-based tilt crosses zero when the stick reverses; output must not jump at level.
         var limits = new Limits(30, 30, 30);
         dynamic manager = CoreSourceCompiler.Create();
         manager.Configure(LoadProfile(), false, 30, 1f);
-        var converter = new YawVR_Game_Engine.Plugin.XwvmConverter();
+        var flight = new Flight();
         for (int i = 0; i <= 80; i++)
         {
             float start = -direction * i * 0.25f;
-            manager.Step(Inputs(Decode(converter, Orientation(i - 100, 90, start, start)), limits));
+            manager.Step(Inputs(flight.Next(90, start, start), limits));
         }
         float? previousPitch = null, previousRoll = null;
         for (int i = 0; i <= 160; i++)
         {
             float angle = direction * (-20 + i * 0.25f);
-            manager.Step(Inputs(Decode(converter, Orientation(i, 90, angle, angle)), limits));
+            manager.Step(Inputs(flight.Next(90, angle, angle), limits));
             float pitch = manager.GetCapturedOutput(1);
             float roll = manager.GetCapturedOutput(2);
             AssertClose(pitch, angle / 90f * 30);

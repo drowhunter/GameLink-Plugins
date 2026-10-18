@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using Xunit;
 using Xunit.Abstractions;
 using YawGLAPI;
@@ -42,13 +42,13 @@ public sealed class YawOutputTests(ITestOutputHelper log)
     public void MultipleFullTurnsHaveSmoothFinalAngularOutput(int direction, float pitch, float roll)
     {
         dynamic pipeline = NewPipeline();
-        var converter = new XwvmConverter();
+        var flight = new Flight();
         float? previous = null;
         float maxRawStep = 0, maxAngularStep = 0;
         for (int i = 0; i <= 5760; i++)
         {
             float yaw = direction * (-720 + i * StepDegrees);
-            float output = Output(pipeline, converter, yaw, pitch, roll, i);
+            float output = Output(pipeline, flight, yaw, pitch, roll, i);
             Close(AngularDelta(output, yaw), 0, $"yaw={yaw}, pitch={pitch}, roll={roll}");
             if (previous.HasValue)
             {
@@ -70,13 +70,13 @@ public sealed class YawOutputTests(ITestOutputHelper log)
     public void SimultaneousSmoothYawPitchAndRollStaySmooth(float startHeading)
     {
         dynamic pipeline = NewPipeline();
-        var converter = new XwvmConverter();
+        var flight = new Flight();
         float? previous = null;
         for (int i = 0; i <= 14400; i++)
         {
             float t = i * MathF.PI / 1800;
             float yaw = startHeading + i * StepDegrees;
-            float output = Output(pipeline, converter, yaw, 80 * MathF.Sin(t), 170 * MathF.Sin(t * 0.7f), i);
+            float output = Output(pipeline, flight, yaw, 80 * MathF.Sin(t), 170 * MathF.Sin(t * 0.7f), i);
             Close(AngularDelta(output, yaw), 0, $"combined rotations at sample {i}");
             if (previous.HasValue)
                 Close(AngularDelta(output, previous.Value), StepDegrees, $"combined final step {i}");
@@ -92,11 +92,11 @@ public sealed class YawOutputTests(ITestOutputHelper log)
     public void FullPitchOrRollRotationsDoNotChangeFinalYaw(string axis, int direction)
     {
         dynamic pipeline = NewPipeline();
-        var converter = new XwvmConverter();
+        var flight = new Flight();
         for (int i = 0; i <= 2880; i++)
         {
             float angle = direction * (-360 + i * StepDegrees);
-            float output = Output(pipeline, converter, 37, axis == "pitch" ? angle : 20, axis == "roll" ? angle : 0, i);
+            float output = Output(pipeline, flight, 37, axis == "pitch" ? angle : 20, axis == "roll" ? angle : 0, i);
             Close(AngularDelta(output, 37), 0, $"{axis}={angle}");
         }
     }
@@ -106,16 +106,16 @@ public sealed class YawOutputTests(ITestOutputHelper log)
     {
         var random = new Random(25151);
         dynamic pipeline = NewPipeline();
-        var converter = new XwvmConverter();
+        var flight = new Flight();
         float yaw = 0, pitch = 0, roll = 0;
-        float previous = Output(pipeline, converter, yaw, pitch, roll, 0);
+        float previous = Output(pipeline, flight, yaw, pitch, roll, 0);
         for (int i = 1; i <= 20000; i++)
         {
             float dy = (float)(random.NextDouble() - 0.5);
             yaw += dy;
             pitch = Math.Clamp(pitch + (float)(random.NextDouble() - 0.5), -85, 85);
             roll += (float)(random.NextDouble() - 0.5);
-            float output = Output(pipeline, converter, yaw, pitch, roll, i);
+            float output = Output(pipeline, flight, yaw, pitch, roll, i);
             Close(AngularDelta(output, previous), dy, $"random sample {i}");
             previous = output;
         }
@@ -130,11 +130,11 @@ public sealed class YawOutputTests(ITestOutputHelper log)
             for (int roll = -180; roll <= 180; roll += 45)
             {
                 dynamic pipeline = NewPipeline();
-                var converter = new XwvmConverter();
+                var flight = new Flight();
                 float? previous = null;
                 for (int yaw = 0; yaw <= 720; yaw++)
                 {
-                    float output = Output(pipeline, converter, yaw, pitch, roll, samples++);
+                    float output = Output(pipeline, flight, yaw, pitch, roll, samples++);
                     Close(AngularDelta(output, yaw), 0, $"heading grid: yaw={yaw}, pitch={pitch}, roll={roll}");
                     if (previous.HasValue)
                         Close(AngularDelta(output, previous.Value), 1, $"heading grid final step at {yaw}");
@@ -149,14 +149,14 @@ public sealed class YawOutputTests(ITestOutputHelper log)
     public void UnityHeadingWrapIsANumericJumpButNotAnAngularReversal()
     {
         dynamic pipeline = NewPipeline();
-        var converter = new XwvmConverter();
+        var flight = new Flight();
         // rot.y 359.75 -> 0.25 on the wire.
-        float before = Output(pipeline, converter, 359.75f, 10, 15, 0);
-        float after = Output(pipeline, converter, 360.25f, 10, 15, 1);
+        float before = Output(pipeline, flight, 359.75f, 10, 15, 0);
+        float after = Output(pipeline, flight, 360.25f, 10, 15, 1);
         Close(AngularDelta(after, before), 0.5f, "final shortest-arc motion across Unity 0/360");
         // Core's own +/-180 wrap.
-        before = Output(pipeline, converter, 179.75f, 10, 15, 2);
-        after = Output(pipeline, converter, 180.25f, 10, 15, 3);
+        before = Output(pipeline, flight, 179.75f, 10, 15, 2);
+        after = Output(pipeline, flight, 180.25f, 10, 15, 3);
         Assert.True(Math.Abs(after - before) > 359, $"Expected wrapped output; got {before} -> {after}.");
         Close(AngularDelta(after, before), 0.5f, "final shortest-arc motion across Core +/-180");
     }
@@ -167,13 +167,13 @@ public sealed class YawOutputTests(ITestOutputHelper log)
     public void ResetYawOffsetKeepsSubsequentFinalHeadingSmooth(float start, int direction)
     {
         dynamic pipeline = NewPipeline();
-        var converter = new XwvmConverter();
+        var flight = new Flight();
         pipeline.RequestYawReset();
-        float previous = Output(pipeline, converter, start, 15, -10, 0);
+        float previous = Output(pipeline, flight, start, 15, -10, 0);
         Close(AngularDelta(previous, 0), 0, "first output after reset");
         for (int i = 1; i <= 2880; i++)
         {
-            float output = Output(pipeline, converter, start + direction * i * StepDegrees, 15, -10, i);
+            float output = Output(pipeline, flight, start + direction * i * StepDegrees, 15, -10, i);
             Close(AngularDelta(output, previous), direction * StepDegrees, $"reset sample {i}");
             previous = output;
         }
@@ -248,14 +248,14 @@ public sealed class YawOutputTests(ITestOutputHelper log)
     public void AntijumpMustNotDiscardASmoothTurnAtTheHeadingBoundary(int direction)
     {
         dynamic pipeline = NewPipeline(antijump: true);
-        var converter = new XwvmConverter();
-        float previous = Output(pipeline, converter, 0, 0, 0, 0);
+        var flight = new Flight();
+        float previous = Output(pipeline, flight, 0, 0, 0, 0);
         float maximumError = 0;
         string worst = "";
         for (int i = 1; i <= 1600; i++)
         {
             float yaw = direction * i * StepDegrees;
-            float output = Output(pipeline, converter, yaw, 0, 0, i);
+            float output = Output(pipeline, flight, yaw, 0, 0, i);
             float error = Math.Abs(AngularDelta(output, previous) - direction * StepDegrees);
             if (!float.IsFinite(output) || error > maximumError)
             {
@@ -275,14 +275,14 @@ public sealed class YawOutputTests(ITestOutputHelper log)
     public void WashoutMustNotCreateALargeFinalAngularJumpDuringASmoothTurn(int direction, float washout)
     {
         dynamic pipeline = NewPipeline(washout: washout);
-        var converter = new XwvmConverter();
-        float previous = Output(pipeline, converter, 0, 10, -15, 0);
+        var flight = new Flight();
+        float previous = Output(pipeline, flight, 0, 10, -15, 0);
         float maximumStep = 0;
         string worst = "";
         for (int i = 1; i <= 1600; i++)
         {
             float yaw = direction * i * StepDegrees;
-            float output = Output(pipeline, converter, yaw, 10, -15, i);
+            float output = Output(pipeline, flight, yaw, 10, -15, i);
             float delta = AngularDelta(output, previous);
             if (!float.IsFinite(output) || Math.Abs(delta) > maximumStep)
             {
@@ -301,11 +301,11 @@ public sealed class YawOutputTests(ITestOutputHelper log)
     {
         dynamic pipeline = CoreSourceCompiler.Create();
         pipeline.Configure(LoadIsolatedProfile(), false, 30, 1f);
-        var converter = new XwvmConverter();
+        var flight = new Flight();
         for (int i = 0; i <= 5760; i++)
         {
             float yaw = direction * i * StepDegrees;
-            float output = Output(pipeline, converter, yaw, 30 * MathF.Sin(i / 100f), 45 * MathF.Cos(i / 70f), i, assertOneToOne: true);
+            float output = Output(pipeline, flight, yaw, 30 * MathF.Sin(i / 100f), 45 * MathF.Cos(i / 70f), i, assertOneToOne: true);
             Close(AngularDelta(output, yaw), 0, $"isolated yaw {yaw}");
         }
     }
@@ -347,10 +347,10 @@ public sealed class YawOutputTests(ITestOutputHelper log)
         return profile;
     }
 
-    private static float Output(dynamic manager, XwvmConverter converter, float yaw, float pitch, float roll, int frame,
+    private static float Output(dynamic manager, Flight flight, float yaw, float pitch, float roll, int frame,
         bool assertOneToOne = false)
     {
-        var inputs = Inputs(Decode(converter, Orientation(frame, yaw, pitch, roll)), Limits);
+        var inputs = Inputs(flight.Next(yaw, pitch, roll), Limits);
         Assert.Equal(InputCount, inputs.Length);
         float output = manager.Step(inputs);
         if (assertOneToOne)

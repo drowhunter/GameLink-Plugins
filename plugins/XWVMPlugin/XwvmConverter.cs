@@ -1,4 +1,4 @@
-using SharedLib.TelemetryHelper;
+﻿using SharedLib.TelemetryHelper;
 using SharedLib.TelemetryHelper.Convertors;
 
 using System;
@@ -21,7 +21,13 @@ namespace YawVR_Game_Engine.Plugin
 
         public Dictionary<string, object> Data => json.Data;
 
-        public void Reset() => json.Reset();
+        public Heading Heading { get; } = new();
+
+        public void Reset()
+        {
+            json.Reset();
+            Heading.Reset();
+        }
 
         public byte[] ToBytes(Dictionary<string, object> data) => json.ToBytes(data);
 

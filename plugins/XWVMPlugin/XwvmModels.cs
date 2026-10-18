@@ -44,13 +44,24 @@ namespace YawVR_Game_Engine.Plugin
 
         public float Paused;
 
+        public float WorldYaw;
+        public float WorldPitch;
+        public float WorldRoll;
+
         private const float FireWindow = 0.2f;
         private const float ShakeWindow = 0.5f;
+        private const float DefaultMaxRate = 80f;
+
+        /// <summary>
+        /// XWVM yaws about normalized (Up - Forward) (Ship.RotateFromInput), so each degree of yaw input is
+        /// cos 45 deg of yaw about the ship's up axis plus the same amount of roll to the right.
+        /// </summary>
+        internal const float YawAxisComponent = 0.70710678f;
 
         /// <summary>
         /// Builds the inputs from the merged (sparse) XWVM JSON dictionary.
         /// </summary>
-        public static Telemetry From(IReadOnlyDictionary<string, object> d)
+        public static Telemetry From(IReadOnlyDictionary<string, object> d, Heading heading = null)
         {
             var t = Num(d, "t");
             var rot = Vec(d, "rot");
@@ -60,6 +71,13 @@ namespace YawVR_Game_Engine.Plugin
             var hit = Vec(d, "hitD");
             var dmgT = Num(d, "dmgT", -1);
             var ejcT = Num(d, "ejcT", -1);
+            var maxAVel = Vec(d, "maxAVel");
+            var hasRot = d != null && d.ContainsKey("rot");
+
+            // Body rates (deg/s): pitch nose-down +, yaw about the ship's up axis right +, roll left +.
+            var pitchRate = aVel.x;
+            var yawRate = YawAxisComponent * aVel.y;
+            var rollRate = -(aVel.z + YawAxisComponent * aVel.y);
 
             return new Telemetry
             {
@@ -90,13 +108,30 @@ namespace YawVR_Game_Engine.Plugin
                 HyperspacePhase = Num(d, "hypM"),
                 Ejected = ejcT >= 0 ? 1f : 0f,
 
-                // Unity eulerAngles (0..360): x = pitch (nose down +), y = yaw, z = roll (left +)
-                Yaw = rot.y,
-                Pitch = -Wrap(rot.x),
-                Roll = -Wrap(rot.z),
+                // World Euler angles corkscrew during XWVM's banked yaw, so the rig uses the ship's own rotation:
+                // Yaw is the heading accumulated from the body yaw rate, Pitch/Roll tilt with the body rates
+                // (full rate = 90, nose-down + / left +) and return to level when the stick is centered.
+                Yaw = heading?.Update(Time(d), yawRate, hasRot ? rot.y : null) ?? (hasRot ? rot.y : 0f),
+                Pitch = pitchRate / Max(maxAVel.x) * 90f,
+                Roll = rollRate / Max(maxAVel.z) * 90f,
 
                 Paused = Num(d, "paused") > 0 ? 1f : 0f,
+
+                // Unity eulerAngles (0..360): x = pitch (nose down +), y = yaw, z = roll (left +)
+                WorldYaw = rot.y,
+                WorldPitch = Wrap(rot.x),
+                WorldRoll = Wrap(rot.z),
             };
+        }
+
+        private static float Max(float rate) => rate > 1f ? rate : DefaultMaxRate;
+
+        private static double Time(IReadOnlyDictionary<string, object> d)
+        {
+            if (d == null || !d.TryGetValue("t", out var v)) return 0d;
+            if (v is JValue jv) v = jv.Value;
+            try { return Convert.ToDouble(v, CultureInfo.InvariantCulture); }
+            catch { return 0d; }
         }
 
         private static float Wrap(float deg)
@@ -168,6 +203,30 @@ namespace YawVR_Game_Engine.Plugin
                 max = Math.Max(max, ToFloat(item, -1f));
             }
             return max;
+        }
+    }
+
+    /// <summary>Ship heading (0..360) accumulated from the body yaw rate, so a held yaw always turns the same way.</summary>
+    public sealed class Heading
+    {
+        private const float MaxGap = 1f;
+
+        private double value;
+        private double lastTime = double.NaN;
+
+        public void Reset() => lastTime = double.NaN;
+
+        public float Update(double time, float yawRate, float? seed)
+        {
+            if (double.IsNaN(lastTime))
+                value = seed ?? 0f;
+            else if (time > lastTime && time - lastTime <= MaxGap)
+                value += yawRate * (time - lastTime);
+
+            lastTime = time;
+            value %= 360d;
+            if (value < 0) value += 360d;
+            return (float)value;
         }
     }
 }

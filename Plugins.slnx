@@ -68,6 +68,7 @@
     <Project Path="plugins/rFactor2Plugin/RFactor2Plugin.csproj" />
     <Project Path="plugins/RotoPlugin/RotoPlugin.csproj" />
     <Project Path="plugins/RushOfBloodPlugin/RushOfBloodPlugin.csproj" />
+    <Project Path="plugins/StarCitizenPlugin/StarCitizenPlugin.csproj" />
     <Project Path="plugins/StarWarsSquadron/StarWarsSquadron.csproj" />
     <Project Path="plugins/SubnauticaPlugin/SubnauticaPlugin.csproj" />
     <Project Path="plugins/TDUSCPlugin/TDUSCPlugin.csproj" />
@@ -89,6 +90,7 @@
     <Project Path="tests/DistancePlugin.Tests/DistancePlugin.Tests.csproj" />
     <Project Path="tests/RushOfBloodPlugin.Tests/RushOfBloodPlugin.Tests.csproj" />
     <Project Path="tests/SharedLib.Tests/SharedLib.Tests.csproj" />
+    <Project Path="tests/StarCitizenPlugin.Tests/StarCitizenPlugin.Tests.csproj" />
     <Project Path="tests/XWVMPlugin.Tests/XWVMPlugin.Tests.csproj" />
   </Folder>
 </Solution>

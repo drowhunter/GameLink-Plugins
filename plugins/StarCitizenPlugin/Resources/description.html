@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Star Citizen</title>
+    <style type="text/css">
+
+        li {
+            margin: 10px unset;
+        }
+
+        a, a:visited {
+            color: #37E5DB;
+        }
+
+        code {
+            display: block;
+            background-color: black;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            padding: 2px 5px;
+        }
+    </style>
+</head>
+<body>
+    <h3>Star Citizen</h3>
+    <p>Star Citizen sends motion telemetry through D-BOX's LiveMotion connector. <a href="https://github.com/DMUSER15/SC-Motion-Haptic-Bridge">SC-Motion-Haptic-Bridge</a> receives it and forwards every game event as JSON over UDP; this plugin reads those events directly, so SimHub is not needed.</p>
+
+    <h3>Setup</h3>
+    <ol>
+        <li>Install SC-Motion-Haptic-Bridge and follow its install guide (D-BOX HaptiSync Center, certificate setup).</li>
+        <li>Make its capture server <b>SC_Motion_Server.py</b> also send to this plugin's port, <b>127.0.0.1:61703</b>.</li>
+    </ol>
+
+    <h3>Play</h3>
+    <ol>
+        <li>Start the capture server (or the bridge's <b>Start StarCitizen - Motion Enabled</b> launcher).</li>
+        <li>Select this game in GameLink and press <b>Start</b>.</li>
+        <li>Launch Star Citizen and take a pilot seat. Motion only runs while you are seated in a vehicle.</li>
+    </ol>
+
+    <h3>Notes</h3>
+    <ul>
+        <li>The motion inputs are the same values the bridge sends to SimHub (rates in deg/s, velocities in m/s), with the same landed gate, glitch hold, stale ramp and seat gate. Accelerations (Surge/Sway/Heave) are in m/s&sup2; and are not scaled by the bridge's 0.1.</li>
+        <li>The game sends no orientation, so Yaw is a heading accumulated from the yaw rate.</li>
+        <li>Impact is a 0..1 pulse for collisions, explosions, touchdowns and hull/shield hits. Speed, EngineRpm, Throttle, EngineOn, Boost and OnGround are available for effects.</li>
+    </ul>
+
+    <small>Version 1.0.0</small>
+</body>
+</html>

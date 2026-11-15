@@ -358,3 +358,4 @@ MigrationBackup/
 /_build
 *.bak
 /*.7z
+/tools/

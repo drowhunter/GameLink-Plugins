@@ -74,6 +74,8 @@ namespace GT7Plugin
                 udpClient = new UdpClient(port);
             }
 
+            DisableIcmpConnectionReset(udpClient.Client);
+
             if (port == 33740) {
                 // only send heartbeats if we are listening on the default port,
                 // otherwise the data is coming from localhost which is NOT the playstation.
@@ -89,25 +91,61 @@ namespace GT7Plugin
 
         private async Task Receive(CancellationToken cancelToken)
         {
+            // This loop is fire-and-forget: any exception that escapes it stops telemetry for good
+            // with no error shown, so only cancellation or disposal may end it.
+            while (!cancelToken.IsCancellationRequested)
+            {
+                UdpReceiveResult result;
+                try
+                {
+                    result = await udpClient.ReceiveAsync(cancelToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+                catch (ObjectDisposedException)
+                {
+                    break;
+                }
+                catch (SocketException)
+                {
+                    // e.g. ICMP "port unreachable" from a heartbeat sent while the game was not running.
+                    continue;
+                }
+
+                if (result.Buffer.Length != GetExpectedPacketSize())
+                    continue; // game latched onto a different packet type, or a stray packet
+
+                try
+                {
+                    _cryptor.Decrypt(result.Buffer);
+                    OnPacketReceived?.Invoke(this, result.Buffer);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"GT7Plugin: packet handler failed: {ex}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// On Windows an ICMP "port unreachable" for a UDP send (heartbeat while the game is down)
+        /// is reported as WSAECONNRESET on the next receive. Turn that reporting off.
+        /// </summary>
+        private static void DisableIcmpConnectionReset(Socket socket)
+        {
+            if (!OperatingSystem.IsWindows())
+                return;
+
+            const int SIO_UDP_CONNRESET = unchecked((int)0x9800000C);
             try
             {
-                while (!cancelToken.IsCancellationRequested)
-                {
-                    UdpReceiveResult result = await udpClient.ReceiveAsync(cancelToken);
-
-                    if (result.Buffer.Length == GetExpectedPacketSize())
-                    {
-                        _cryptor.Decrypt(result.Buffer);
-                        OnPacketReceived.Invoke(this, result.Buffer);
-                    }
-                    else
-                    {
-                        //throw new InvalidDataException($"Expected packet size to be 0x{GetExpectedPacketSize():X} bytes. Was {result.Buffer.Length:X4} bytes.");
-                    }
-                }
-            } 
-            catch(OperationCanceledException)
+                socket.IOControl(SIO_UDP_CONNRESET, new byte[] { 0, 0, 0, 0 }, null);
+            }
+            catch (SocketException)
             {
+                // Not supported on this stack; the receive loop also tolerates the error.
             }
         }
 

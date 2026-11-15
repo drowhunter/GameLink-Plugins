@@ -6,6 +6,7 @@ using SharedLib;
 
 using System.ComponentModel.Composition;
 using System.Diagnostics;
+using System.Net;
 using System.Net.Sockets;
 using System.Numerics;
 using System.Reflection;
@@ -62,7 +63,17 @@ namespace GT7Plugin
         public void Init()
         {
             this.settings = dispatcher.GetConfigObject<Config>();
-            listener = new UDPListener(SimInterfacePacketType.PacketType2, settings.Port);
+            var packetType = settings.PacketType switch
+            {
+                1 => SimInterfacePacketType.PacketType1,
+                3 => SimInterfacePacketType.PacketType3,
+                _ => SimInterfacePacketType.PacketType2,
+            };
+
+            if (!IPAddress.TryParse(settings.IP, out var gameAddress))
+                gameAddress = IPAddress.Broadcast;
+
+            listener = new UDPListener(packetType, gameAddress, settings.Port);
             listener.OnPacketReceived += Listener_OnPacketReceived;
             suspStopwatch.Restart();
         }

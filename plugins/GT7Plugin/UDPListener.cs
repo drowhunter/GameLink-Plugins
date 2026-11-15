@@ -34,7 +34,8 @@ namespace GT7Plugin
         /// <param name="port"></param>
         /// <param name="packetType"></param>
         /// <param name="sharedMode">Enable shared UDP port listening (allows multiple apps on same port). Default: true</param>
-        public UDPListener(SimInterfacePacketType packetType, int port = 33740, bool sharedMode = true)
+        /// <param name="gameAddress">Heartbeat destination. Broadcast for a PlayStation on the LAN, loopback/host IP for RyGT7 on this PC.</param>
+        public UDPListener(SimInterfacePacketType packetType, IPAddress gameAddress, int port = 33740, bool sharedMode = true)
         {
             _packetType = packetType;
 
@@ -76,7 +77,7 @@ namespace GT7Plugin
             if (port == 33740) {
                 // only send heartbeats if we are listening on the default port,
                 // otherwise the data is coming from localhost which is NOT the playstation.
-                remoteEndPoint = new IPEndPoint(IPAddress.Broadcast, heartBeatPort);
+                remoteEndPoint = new IPEndPoint(gameAddress ?? IPAddress.Broadcast, heartBeatPort);
 
                 hbTimer = new Timer(TimeSpan.FromSeconds(1));
                 hbTimer.Elapsed += SendHeartbeat;
@@ -112,7 +113,7 @@ namespace GT7Plugin
 
         public void Stop()
         {
-            hbTimer.Stop();
+            hbTimer?.Stop();
             cancellationTokenSource.Cancel();
 
             udpClient.Dispose();
@@ -121,7 +122,17 @@ namespace GT7Plugin
 
         private void SendHeartbeat(object? sender, ElapsedEventArgs e)
         {
-            udpClient.Send(_heartbeatBytes, remoteEndPoint);
+            try
+            {
+                udpClient?.Send(_heartbeatBytes, remoteEndPoint);
+            }
+            catch (SocketException)
+            {
+                // Game not up yet / host unreachable - keep retrying on the next tick.
+            }
+            catch (ObjectDisposedException)
+            {
+            }
         }
 
         /// <summary>

@@ -31,7 +31,7 @@ namespace GT7Plugin
         private Stopwatch suspStopwatch = new Stopwatch();
         public int STEAM_ID => 0;
 
-        public string PROCESS_NAME => string.Empty;
+        public string PROCESS_NAME => "GT7";
 
         public bool PATCH_AVAILABLE => false;
 

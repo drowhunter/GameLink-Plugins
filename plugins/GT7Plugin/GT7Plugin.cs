@@ -53,7 +53,8 @@ namespace GT7Plugin
         #endregion
 
         private UDPListener listener;
-        
+        private RaceStateTracker raceState = new RaceStateTracker();
+
         public void Exit() => listener?.Stop();
 
         public string[] GetInputData() => InputHelper.GetValues<GT7Output>(default).Keys();
@@ -66,9 +67,11 @@ namespace GT7Plugin
             var packetType = settings.PacketType switch
             {
                 1 => SimInterfacePacketType.PacketType1,
-                3 => SimInterfacePacketType.PacketType3,
-                _ => SimInterfacePacketType.PacketType2,
+                2 => SimInterfacePacketType.PacketType2,
+                _ => SimInterfacePacketType.PacketType3,
             };
+
+            raceState = new RaceStateTracker();
 
             if (!IPAddress.TryParse(settings.IP, out var gameAddress))
                 gameAddress = IPAddress.Broadcast;
@@ -83,15 +86,24 @@ namespace GT7Plugin
             var sp = new SimulatorPacket();
             sp.Read(buffer);
 
-            // after race finishes game still sends telemetry, checking the laps to detect when actually racing  
-            bool preRace = sp.LapsInRace == 0 && sp.LapCount == 0;
-            bool raceFinished = sp.LapCount > sp.LapsInRace;
-            bool inRace = !preRace && !raceFinished;
-            
-            if (inRace && sp.Flags.HasFlag(SimulatorFlags.CarOnTrack) && !sp.Flags.HasFlag(SimulatorFlags.Paused) && !sp.Flags.HasFlag(SimulatorFlags.LoadingOrProcessing))
+            // The game keeps sending telemetry in menus, the post-race autopilot lap and the results
+            // screen; only live driving may move the rig.
+            bool wasActive = raceState.Active;
+            if (raceState.Update(sp))
             {
                 ReadFunction(sp);
             }
+            else if (wasActive)
+            {
+                SendNeutral();
+            }
+        }
+
+        /// <summary>Zero every input once when live driving ends, so the rig does not hold the last pose.</summary>
+        private void SendNeutral()
+        {
+            foreach (var (i, key, value) in InputHelper.GetValues(new GT7Output()).WithIndex())
+                controller.SetInput(i, value);
         }
 
         private void ReadFunction(SimulatorPacket sp)
@@ -121,7 +133,7 @@ namespace GT7Plugin
                 OnTrack = sp.Flags.HasFlag(SimulatorFlags.CarOnTrack) ? 1 : 0,
                 IsPaused = sp.Flags.HasFlag(SimulatorFlags.Paused) ? 1 : 0,
                 Loading = sp.Flags.HasFlag(SimulatorFlags.LoadingOrProcessing) ? 1 : 0,
-                InRace = sp.LapsInRace > 0 ? 1 : 0,
+                InRace = 1, // only live driving reaches here; SendNeutral sets 0 when it ends
                 CentripetalAcceleration = CalculateCentripetalAcceleration(Maths.WorldtoLocal(sp.Rotation, sp.Velocity), sp.AngularVelocity)
             };
 
